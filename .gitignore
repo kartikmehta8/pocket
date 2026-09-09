@@ -3,9 +3,12 @@ dist
 .next
 .turbo
 *.tsbuildinfo
+# Every .env variant is a secret unless it is explicitly an example.
 .env
+.env.*
+!.env.example
+!.env.*.example
 .logs
-.env.local
 .DS_Store
 coverage
 
