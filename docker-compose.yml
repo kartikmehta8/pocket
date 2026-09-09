@@ -1,3 +1,8 @@
+# Pinned so the project name, and therefore the volume, does not follow the
+# directory name. Without it, moving or renaming the checkout points Compose at
+# a fresh empty volume and the database looks lost.
+name: pocket
+
 services:
   postgres:
     image: postgres:17-alpine
