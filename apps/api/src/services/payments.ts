@@ -65,7 +65,7 @@ export async function previewPayment(
   orgId: string,
   request: PaymentRequest,
 ): Promise<AuthorizationDecision> {
-  const context = await loadAuthorizationContext(deps.db, deps.db, orgId, request);
+  const context = await loadAuthorizationContext(deps.db, orgId, request);
   const priced = await priceIfRequired(deps.market, context.policy, context.amount, request.asset);
   return decide(context, request, priced.usdCents);
 }
@@ -91,7 +91,7 @@ export async function executePayment(
 ): Promise<PaymentResult> {
   const existing = await findByIdempotencyKey(deps.db, orgId, idempotencyKey);
   if (existing !== null) {
-    const context = await loadAuthorizationContext(deps.db, deps.db, orgId, request);
+    const context = await loadAuthorizationContext(deps.db, orgId, request);
     assertSameRequest(existing, {
       agentId: request.agentId,
       amount: context.amount,
@@ -115,7 +115,7 @@ export async function executePayment(
   const { payment, decision, providerWalletId, walletAddress } = await deps.db.transaction(
     async (tx) => {
       await lockAgent(tx, request.agentId);
-      const context = await loadAuthorizationContext(deps.db, tx, orgId, request);
+      const context = await loadAuthorizationContext(tx, orgId, request);
       const priced = await priceIfRequired(
         deps.market,
         context.policy,

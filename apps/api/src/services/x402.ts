@@ -95,7 +95,7 @@ export async function authorizeX402Payment(
 
   const existing = await findByIdempotencyKey(deps.db, orgId, idempotencyKey);
   if (existing !== null) {
-    const context = await loadAuthorizationContext(deps.db, deps.db, orgId, request);
+    const context = await loadAuthorizationContext(deps.db, orgId, request);
     return {
       payment: existing,
       decision: decide(context, request),
@@ -108,7 +108,7 @@ export async function authorizeX402Payment(
 
   const { payment, decision, wallet } = await deps.db.transaction(async (tx) => {
     await lockAgent(tx, request.agentId);
-    const context = await loadAuthorizationContext(deps.db, tx, orgId, request);
+    const context = await loadAuthorizationContext(tx, orgId, request);
     const priced = await priceIfRequired(deps.market, context.policy, context.amount, asset);
     const verdict = decide(context, request, priced.usdCents);
     const status =

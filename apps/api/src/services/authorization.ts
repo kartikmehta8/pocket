@@ -83,8 +83,11 @@ export function toEvaluablePolicy(
 /**
  * Loads every fact required to authorize a payment.
  *
- * @param db - Database or transaction handle. Pass the transaction during
- *   execution so the read happens under the agent row lock.
+ * @param tx - Database or transaction handle. Pass the transaction during
+ *   execution, so every read happens under the agent row lock and on the one
+ *   connection that transaction already holds. Reading part of the context off
+ *   the pool instead deadlocks: with the pool full of transactions, each one
+ *   waits for a connection none of them will release.
  * @param orgId - Tenant scope.
  * @param request - The parsed payment request.
  * @returns The assembled context.
@@ -92,12 +95,11 @@ export function toEvaluablePolicy(
  *   or `VALIDATION_FAILED` when the amount exceeds the asset's precision.
  */
 export async function loadAuthorizationContext(
-  db: Database,
   tx: Database | Transaction,
   orgId: string,
   request: PaymentRequest,
 ): Promise<AuthorizationContext> {
-  const bundle = await getAgentBundle(db, orgId, request.agentId);
+  const bundle = await getAgentBundle(tx, orgId, request.agentId);
   if (bundle === null) {
     throw new PocketError('NOT_FOUND', 'Agent not found in this organization.', {
       agentId: request.agentId,
