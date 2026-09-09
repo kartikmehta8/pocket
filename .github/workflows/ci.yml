@@ -15,6 +15,30 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 20
 
+    # The suite owns its own database and creates it on startup, but it needs a
+    # server to create it on. Port 5434 matches the compose file, so the same
+    # connection string works here and on a developer's machine.
+    services:
+      postgres:
+        image: postgres:17-alpine
+        env:
+          POSTGRES_USER: pocket
+          POSTGRES_PASSWORD: pocket
+          POSTGRES_DB: pocket
+        ports:
+          - 5434:5432
+        options: >-
+          --health-cmd "pg_isready -U pocket -d pocket"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+
+    env:
+      # 127.0.0.1 rather than localhost: a service container listens on IPv4
+      # only, and Node resolves localhost to ::1 first, so the name would give
+      # ECONNREFUSED on a server that is up.
+      TEST_DATABASE_URL: postgres://pocket:pocket@127.0.0.1:5434/pocket_test
+
     steps:
       - uses: actions/checkout@v4
 
