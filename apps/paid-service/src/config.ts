@@ -50,6 +50,22 @@ export type SellerConfig = Omit<z.infer<typeof schema>, 'X402_NETWORK'> & {
 };
 
 /**
+ * Drops variables that are present but empty.
+ *
+ * Half of a `.env` is meant to be left blank, and Zod reads `FOO=` as `""`,
+ * which satisfies no enum, no URL and no positive number. Treating empty as
+ * absent lets those variables take their defaults instead of refusing to boot.
+ *
+ * @param env - Raw environment.
+ * @returns The same environment without its empty values.
+ */
+function withoutBlanks(env: NodeJS.ProcessEnv): NodeJS.ProcessEnv {
+  return Object.fromEntries(
+    Object.entries(env).filter(([, value]) => value !== undefined && value.trim() !== ''),
+  );
+}
+
+/**
  * Parses seller configuration.
  *
  * @param env - Raw environment, injected so tests can supply their own.
@@ -57,7 +73,7 @@ export type SellerConfig = Omit<z.infer<typeof schema>, 'X402_NETWORK'> & {
  * @throws {Error} Naming the offending variables, never their values.
  */
 export function loadSellerConfig(env: NodeJS.ProcessEnv = process.env): SellerConfig {
-  const result = schema.safeParse(env);
+  const result = schema.safeParse(withoutBlanks(env));
   if (!result.success) {
     const fields = result.error.issues.map((issue) => issue.path.join('.')).join(', ');
     throw new Error(`Invalid seller configuration. Check these variables: ${fields}`);

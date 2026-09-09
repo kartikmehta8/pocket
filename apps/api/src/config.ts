@@ -38,6 +38,24 @@ const schema = z.object({
 export type Config = z.infer<typeof schema> & { corsOrigins: string[] };
 
 /**
+ * Drops variables that are present but empty.
+ *
+ * `.env` files are written by hand and half of this one is meant to be left
+ * blank, because a blank vendor key is how an adapter is told to fall back.
+ * Zod sees `FOO=` as the string `""`, which satisfies no enum, no URL and no
+ * positive number, so a blank would refuse to boot rather than take its
+ * default. Treating empty as absent is what an operator means by it.
+ *
+ * @param env - Raw environment.
+ * @returns The same environment without its empty values.
+ */
+function withoutBlanks(env: NodeJS.ProcessEnv): NodeJS.ProcessEnv {
+  return Object.fromEntries(
+    Object.entries(env).filter(([, value]) => value !== undefined && value.trim() !== ''),
+  );
+}
+
+/**
  * Parses and validates process configuration.
  *
  * @param env - Raw environment, injected so tests can supply their own.
@@ -47,7 +65,7 @@ export type Config = z.infer<typeof schema> & { corsOrigins: string[] };
  *   leak a secret into the logs.
  */
 export function loadConfig(env: NodeJS.ProcessEnv = process.env): Config {
-  const result = schema.safeParse(env);
+  const result = schema.safeParse(withoutBlanks(env));
   if (!result.success) {
     const fields = result.error.issues.map((issue) => issue.path.join('.')).join(', ');
     throw new Error(`Invalid configuration. Check these variables: ${fields}`);

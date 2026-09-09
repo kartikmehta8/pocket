@@ -12,9 +12,25 @@ import { StreamableHTTPServerTransport } from '@modelcontextprotocol/sdk/server/
 import { PocketClient } from './client.js';
 import { registerTools } from './tools.js';
 
-const port = Number(process.env['MCP_PORT'] ?? 8081);
-const baseUrl = process.env['POCKET_API_URL'] ?? 'http://localhost:8080';
-const apiKey = process.env['MCP_AGENT_TOKEN'] ?? '';
+/**
+ * Reads a variable, treating a blank one as unset.
+ *
+ * `??` only falls back on undefined, so `MCP_PORT=` would be read as the empty
+ * string and become port 0. A variable left blank in a `.env` means "use the
+ * default", so that is what it does here.
+ *
+ * @param name - Variable to read.
+ * @param fallback - Value to use when it is missing or blank.
+ * @returns The configured value, or the fallback.
+ */
+function envOr(name: string, fallback: string): string {
+  const value = process.env[name];
+  return value === undefined || value.trim() === '' ? fallback : value;
+}
+
+const port = Number(envOr('MCP_PORT', '8081'));
+const baseUrl = envOr('POCKET_API_URL', 'http://localhost:8080');
+const apiKey = envOr('MCP_AGENT_TOKEN', '');
 
 if (apiKey === '') {
   process.stderr.write(
