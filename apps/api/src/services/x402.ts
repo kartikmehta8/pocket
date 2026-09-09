@@ -10,6 +10,7 @@
  */
 
 import { assetForTokenId, createPrivyHederaSigner, PrivyWalletProvider } from '@pocket/adapters';
+import { recordSettlement } from './x402-settle.js';
 import {
   PocketError,
   newId,
@@ -172,21 +173,34 @@ export async function authorizeX402Payment(
     throw new PocketError('WALLET_NOT_PROVISIONED', 'Agent has no wallet to pay from.');
   }
 
-  const signer = await createPrivyHederaSigner({
-    signDigest: (walletId, digest) => deps.wallet.signDigest(walletId, digest),
-    walletId: wallet.providerWalletId,
-    evmAddress: wallet.address,
-    network: input.requirements.network,
-    mirrorNodeUrl: deps.mirrorNodeUrl,
-  });
+  // The row is already `approved`, which reserves the amount against the daily
+  // budget. Signing can still fail — an account the wallet cannot sign for, a
+  // mirror node that is down, Privy refusing — and a reservation that outlives
+  // the attempt would consume budget for a payment that never existed.
+  let transaction: string;
+  try {
+    const signer = await createPrivyHederaSigner({
+      signDigest: (walletId, digest) => deps.wallet.signDigest(walletId, digest),
+      walletId: wallet.providerWalletId,
+      evmAddress: wallet.address,
+      network: input.requirements.network,
+      mirrorNodeUrl: deps.mirrorNodeUrl,
+    });
 
-  const transaction = await signer.createPartiallySignedTransferTransaction({
-    network: input.requirements.network,
-    amount: input.requirements.amount,
-    payTo: input.requirements.payTo,
-    asset: input.requirements.asset,
-    extra: input.requirements.extra ?? undefined,
-  });
+    transaction = await signer.createPartiallySignedTransferTransaction({
+      network: input.requirements.network,
+      amount: input.requirements.amount,
+      payTo: input.requirements.payTo,
+      asset: input.requirements.asset,
+      extra: input.requirements.extra ?? undefined,
+    });
+  } catch (cause) {
+    await recordSettlement(deps.db, orgId, payment.id, {
+      success: false,
+      reason: `The payment could not be signed: ${String(cause)}`,
+    });
+    throw cause;
+  }
 
   return {
     payment,

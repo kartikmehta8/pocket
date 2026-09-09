@@ -77,8 +77,9 @@ interface MirrorAccount {
  * @returns The account id and its ECDSA public key.
  * @throws {PocketError} `NOT_FOUND` when the account does not exist yet, which
  *   on Hedera means it has never received a transfer, or
- *   `VALIDATION_FAILED` when the account is not secp256k1 and therefore cannot
- *   be signed for by a Privy wallet.
+ *   `VALIDATION_FAILED` when the account has published no key yet (a hollow
+ *   account, completed by its first signed transaction) or is held by a key of
+ *   a type a Privy wallet cannot sign with.
  */
 export async function resolveHederaAccount(
   mirrorNodeUrl: string,
@@ -101,6 +102,18 @@ export async function resolveHederaAccount(
 
   if (typeof accountId !== 'string') {
     throw new PocketError('NOT_FOUND', 'Mirror node returned no account id.', { evmAddress });
+  }
+  // A hollow account — created by a transfer to an EVM address that has never
+  // signed anything — has no key on record yet. That is not the same fault as
+  // an account held by a key of the wrong type, and saying so sends the reader
+  // to the wrong place: the fix is to associate the token, whose transaction
+  // publishes the key and completes the account.
+  if (body.key === null || body.key === undefined) {
+    throw new PocketError(
+      'VALIDATION_FAILED',
+      'This Hedera account has not published a public key yet, so it cannot be signed for. It was created by a transfer and is still hollow. Associate the asset first: that transaction publishes the key and completes the account.',
+      { evmAddress, accountId },
+    );
   }
   if (keyType !== 'ECDSA_SECP256K1' || typeof keyHex !== 'string') {
     throw new PocketError(
