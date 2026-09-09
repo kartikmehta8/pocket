@@ -85,7 +85,8 @@ export function registerX402Routes(app: FastifyInstance, ctx: AppContext): void 
         mirrorNodeUrl: ctx.config.HEDERA_MIRROR_URL,
       },
       request.orgId,
-      key.trim(),
+      // A caller-supplied key, so it keeps exact semantics and no window.
+      [key.trim()],
       body,
     );
 

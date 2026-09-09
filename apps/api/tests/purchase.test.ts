@@ -9,7 +9,10 @@
 import { describe, expect, it } from 'vitest';
 import { PocketError } from '@pocket/core';
 import { isPrivateHost, parseResourceUrl } from '../src/services/resource-url.js';
-import { purchaseIdempotencyKey } from '../src/services/x402-idempotency.js';
+import {
+  purchaseIdempotencyKey,
+  purchaseIdempotencyKeys,
+} from '../src/services/x402-idempotency.js';
 
 describe('private host detection', () => {
   it.each([
@@ -84,5 +87,59 @@ describe('purchase idempotency', () => {
     expect(purchaseIdempotencyKey(base)).not.toBe(
       purchaseIdempotencyKey(['agent_2', 'https://seller/v1/prices', '', '10000']),
     );
+  });
+});
+
+describe('derived idempotency windows', () => {
+  const BASE = 'abc123';
+  const MINUTE = 60_000;
+
+  it('stamps the key so the same purchase can be made again later', () => {
+    const now = 1_000 * MINUTE;
+    const [current] = purchaseIdempotencyKeys(BASE, 120, now);
+    const [later] = purchaseIdempotencyKeys(BASE, 120, now + 10 * MINUTE);
+    expect(current).not.toBe(later);
+  });
+
+  it('gives a retry moments later the same key, so it collides instead of paying twice', () => {
+    const now = 1_000 * MINUTE;
+    const [first] = purchaseIdempotencyKeys(BASE, 120, now);
+    const [retry] = purchaseIdempotencyKeys(BASE, 120, now + 1_000);
+    expect(retry).toBe(first);
+  });
+
+  it('still matches a retry that crosses a window boundary', () => {
+    const seconds = 120;
+    // One millisecond before a boundary, and one millisecond after it.
+    const before = Math.ceil(1_000 * MINUTE) * seconds * 1_000 - 1;
+    const after = before + 2;
+    const [mintedUnder] = purchaseIdempotencyKeys(BASE, seconds, before);
+    const accepted = purchaseIdempotencyKeys(BASE, seconds, after);
+    expect(accepted).toContain(mintedUnder);
+  });
+
+  it('offers exactly the current window and the one before it', () => {
+    expect(purchaseIdempotencyKeys(BASE, 120)).toHaveLength(2);
+  });
+
+  it('will not shrink below a minute, so an ordinary retry cannot pay twice', () => {
+    const now = 1_000 * MINUTE;
+    const [a] = purchaseIdempotencyKeys(BASE, 1, now);
+    const [b] = purchaseIdempotencyKeys(BASE, 1, now + 30_000);
+    expect(b).toBe(a);
+  });
+
+  it('will not stretch past fifteen minutes, so a feed stays repurchasable', () => {
+    const now = 1_000 * MINUTE;
+    const [a] = purchaseIdempotencyKeys(BASE, 86_400, now);
+    const [b] = purchaseIdempotencyKeys(BASE, 86_400, now + 31 * MINUTE);
+    expect(b).not.toBe(a);
+  });
+
+  it('keeps two different purchases apart inside one window', () => {
+    const now = 1_000 * MINUTE;
+    const [a] = purchaseIdempotencyKeys('one', 120, now);
+    const [b] = purchaseIdempotencyKeys('two', 120, now);
+    expect(a).not.toBe(b);
   });
 });

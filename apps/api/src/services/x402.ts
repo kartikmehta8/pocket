@@ -28,6 +28,7 @@ import {
   type Database,
 } from '@pocket/db';
 import { decisionToJson } from '../serialize.js';
+import { keyToRetain, statusFor } from './x402-record.js';
 import { decide, loadAuthorizationContext } from './authorization.js';
 import { buildX402Request } from './x402-request.js';
 import { priceIfRequired } from './pricing.js';
@@ -56,7 +57,9 @@ export interface X402Authorization {
  *
  * @param deps - Database, Privy wallet provider and chain configuration.
  * @param orgId - Tenant scope.
- * @param idempotencyKey - Caller-supplied key; a replay returns the original.
+ * @param idempotencyKeys - Keys this attempt will accept a match on, most
+ *   specific first. A match returns the original payment instead of paying
+ *   again; the first key is the one a new payment is recorded under.
  * @param input - Agent, the seller's requirements, and the spending context.
  * @returns The recorded payment, the decision, and the signed payload when allowed.
  * @throws {PocketError} `VALIDATION_FAILED` when the seller's asset is not one
@@ -65,7 +68,7 @@ export interface X402Authorization {
 export async function authorizeX402Payment(
   deps: X402Deps,
   orgId: string,
-  idempotencyKey: string,
+  idempotencyKeys: readonly string[],
   input: {
     agentId: string;
     requirements: X402Requirements;
@@ -93,7 +96,7 @@ export async function authorizeX402Payment(
 
   const { request } = await buildX402Request(deps, asset, input);
 
-  const existing = await findByIdempotencyKey(deps.db, orgId, idempotencyKey);
+  const existing = await findByIdempotencyKey(deps.db, orgId, idempotencyKeys);
   if (existing !== null) {
     const context = await loadAuthorizationContext(deps.db, orgId, request);
     return {
@@ -111,19 +114,14 @@ export async function authorizeX402Payment(
     const context = await loadAuthorizationContext(tx, orgId, request);
     const priced = await priceIfRequired(deps.market, context.policy, context.amount, asset);
     const verdict = decide(context, request, priced.usdCents);
-    const status =
-      verdict.outcome === 'deny'
-        ? 'blocked'
-        : verdict.outcome === 'require_approval'
-          ? 'awaiting_approval'
-          : 'approved';
+    const status = statusFor(verdict.outcome);
 
     const row = await insertPayment(tx, {
       id: newId('pay'),
       orgId,
       agentId: request.agentId,
       taskBudgetId: request.taskBudgetId ?? null,
-      idempotencyKey: status === 'blocked' ? null : idempotencyKey,
+      idempotencyKey: keyToRetain(status, idempotencyKeys),
       amount: context.amount,
       asset,
       chain: deps.chain,

@@ -9,7 +9,7 @@
  * Spend aggregation itself lives in `./spend.js`.
  */
 
-import { and, desc, eq, sql } from 'drizzle-orm';
+import { and, desc, eq, inArray, sql } from 'drizzle-orm';
 import { PocketError, type Payment, type PaymentStatus } from '@pocket/core';
 import type { Database, Transaction } from '../client.js';
 import { agents, payments, taskBudgets } from '../schema/index.js';
@@ -34,18 +34,23 @@ export async function lockAgent(tx: Transaction, agentId: string): Promise<void>
  *
  * @param db - Database or transaction handle.
  * @param orgId - Tenant scope.
- * @param key - The `Idempotency-Key` header value.
- * @returns The original payment, or `null` when the key is new.
+ * @param key - One key, or the several a caller will accept a match on. A
+ *   derived key carries the window it was minted in, so a retry may legitimately
+ *   look under the current window and the one before it.
+ * @returns The most recent matching payment, or `null` when none matches.
  */
 export async function findByIdempotencyKey(
   db: Database | Transaction,
   orgId: string,
-  key: string,
+  key: string | readonly string[],
 ): Promise<Payment | null> {
+  const keys = typeof key === 'string' ? [key] : [...key];
+  if (keys.length === 0) return null;
   const rows = await db
     .select()
     .from(payments)
-    .where(and(eq(payments.orgId, orgId), eq(payments.idempotencyKey, key)))
+    .where(and(eq(payments.orgId, orgId), inArray(payments.idempotencyKey, keys)))
+    .orderBy(desc(payments.createdAt))
     .limit(1);
   return (rows[0] as Payment | undefined) ?? null;
 }

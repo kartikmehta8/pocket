@@ -18,7 +18,7 @@ import type { Database } from '@pocket/db';
 import { decisionToJson, paymentToJson, type PaymentJson } from '../serialize.js';
 import { payForResource, requestResource } from './x402-http.js';
 import { parseResourceUrl } from './resource-url.js';
-import { purchaseIdempotencyKey } from './x402-idempotency.js';
+import { keysForPurchase } from './x402-idempotency.js';
 import { recordSettlement } from './x402-settle.js';
 import { authorizeX402Payment } from './x402.js';
 import type { X402Requirements } from './x402-types.js';
@@ -111,14 +111,11 @@ export async function purchaseResource(
     return { status: 'failed', code: 'UPSTREAM_UNAVAILABLE', message: 'No acceptable terms.' };
   }
 
-  const key =
-    request.purchaseId ??
-    purchaseIdempotencyKey([
-      request.agentId,
-      url.toString(),
-      request.taskBudgetId ?? '',
-      requirement.amount,
-    ]);
+  const keys = keysForPurchase(
+    request.purchaseId,
+    [request.agentId, url.toString(), request.taskBudgetId ?? '', requirement.amount],
+    requirement.maxTimeoutSeconds,
+  );
 
   const authorized = await authorizeX402Payment(
     {
@@ -129,7 +126,7 @@ export async function purchaseResource(
       mirrorNodeUrl: deps.mirrorNodeUrl,
     },
     orgId,
-    key,
+    keys,
     {
       agentId: request.agentId,
       requirements: requirement,
