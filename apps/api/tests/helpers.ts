@@ -40,6 +40,10 @@ export async function createHarness(): Promise<Harness> {
     NODE_ENV: 'test',
     LOG_LEVEL: process.env['TEST_LOG_LEVEL'] ?? 'silent',
     DATABASE_URL: process.env['DATABASE_URL'] ?? 'postgres://pocket:pocket@localhost:5434/pocket',
+    // The concurrency tests fire hundreds of requests on purpose. Throttling
+    // them would prove nothing about the row lock and everything about the
+    // rate limiter, which has tests of its own.
+    RATE_LIMIT_MAX: '100000',
   });
 
   const db = getDb(config.DATABASE_URL);
