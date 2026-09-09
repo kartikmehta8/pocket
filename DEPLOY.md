@@ -91,8 +91,13 @@ organization. That is only ever right for a local demo.
 
 ### On Vercel or a similar platform
 
-Point the project at `apps/dashboard`, set the same four variables in the
-project settings, and deploy. `output: 'standalone'` is harmless there.
+Point the project at `apps/dashboard`, set the same variables in the project
+settings, and deploy.
+
+`output: 'standalone'` is switched off when `VERCEL` is set. Vercel packages
+the build itself and reads the trace files from where an ordinary build leaves
+them; standalone relocates those and the build fails looking for
+`next-server.js.nft.json`. The docs site does the same.
 
 ## 4. Documentation site
 
