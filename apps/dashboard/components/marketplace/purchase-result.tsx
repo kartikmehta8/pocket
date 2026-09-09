@@ -19,6 +19,8 @@ function chrome(outcome: PurchaseOutcome) {
       return outcome.payment.status === 'awaiting_approval'
         ? { Icon: Clock, title: 'Held for approval', tone: 'warning' as const }
         : { Icon: Ban, title: 'Refused by policy', tone: 'danger' as const };
+    case 'replayed':
+      return { Icon: CircleCheck, title: 'Already paid', tone: 'success' as const };
     case 'failed':
       return { Icon: TriangleAlert, title: 'Purchase failed', tone: 'danger' as const };
   }
@@ -66,6 +68,15 @@ function Body({ outcome }: { outcome: PurchaseOutcome }) {
     );
   }
 
+  if (outcome.status === 'replayed') {
+    return (
+      <p className="text-success-ink/90 mt-1 text-xs leading-relaxed">
+        This attempt had already gone through, so it was charged once rather than twice. The
+        seller&rsquo;s response is not kept, so buy it again to fetch fresh data.
+      </p>
+    );
+  }
+
   return <p className="text-danger-ink/90 mt-1 text-xs leading-relaxed">{outcome.message}</p>;
 }
 
@@ -100,7 +111,10 @@ export function PurchaseResult({
         >
           {(() => {
             const { Icon, title, tone } = chrome(outcome);
-            const explorerUrl = outcome.status === 'paid' ? outcome.payment.explorerUrl : null;
+            const explorerUrl =
+              outcome.status === 'paid' || outcome.status === 'replayed'
+                ? outcome.payment.explorerUrl
+                : null;
             return (
               <div className={cn('rounded-md border p-3', SHELL[tone])}>
                 <div className="flex flex-wrap items-center justify-between gap-2">

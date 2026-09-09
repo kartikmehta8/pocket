@@ -45,6 +45,8 @@ export type PurchaseOutcome =
       settlement: Record<string, unknown> | null;
     }
   | { status: 'blocked'; payment: Payment; decision: Decision; requirement: X402Requirement }
+  /** A retry of an attempt that had already paid. Nothing refused it. */
+  | { status: 'replayed'; payment: Payment }
   | { status: 'failed'; message: string; code: string; payment?: Payment };
 
 /** One acceptable payment, as a seller advertised it in a 402. */

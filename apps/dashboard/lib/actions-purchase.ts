@@ -39,6 +39,11 @@ function summarise(outcome: PurchaseOutcome): { status: 'success' | 'error'; mes
           ? `Refused: ${outcome.payment.denialCode}.`
           : 'Held for human approval before anything was signed.',
       };
+    case 'replayed':
+      return {
+        status: 'success',
+        message: `Already paid ${outcome.payment.amount} ${outcome.payment.asset} for this. Charged once, not twice.`,
+      };
     case 'failed':
       return { status: 'error', message: outcome.message };
   }

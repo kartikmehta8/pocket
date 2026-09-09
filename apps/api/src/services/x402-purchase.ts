@@ -63,6 +63,13 @@ export type PurchaseOutcome =
       decision: Record<string, unknown>;
       requirement: X402Requirements;
     }
+  /**
+   * The same attempt reaching us twice: the first one already paid. Reported
+   * apart from `blocked` because nothing refused it, and apart from `paid`
+   * because the seller's response body was never retained and cannot be
+   * served again without paying a second time.
+   */
+  | { status: 'replayed'; payment: PaymentJson }
   | { status: 'failed'; message: string; code: string; payment?: PaymentJson };
 
 /**
@@ -141,6 +148,13 @@ export async function purchaseResource(
 
   const explorer = (hash: string): string => deps.chain.explorerUrl(hash) ?? '';
   const payment = paymentToJson(authorized.payment, explorer);
+
+  // A retry of an attempt that already paid. Not a refusal: the money moved,
+  // and reporting it as blocked would tell an agent its policy stopped a
+  // payment that in fact succeeded.
+  if (authorized.replayed) {
+    return { status: 'replayed', payment };
+  }
 
   // Pocket refused, or held it for a human. Either way nothing was signed, so
   // there is no payload to present and the seller is never contacted again.

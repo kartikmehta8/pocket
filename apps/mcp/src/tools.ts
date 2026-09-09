@@ -97,8 +97,9 @@ export function registerTools(server: McpServer, client: PocketClient): void {
       title: 'Buy a paid resource',
       description:
         'Fetch a URL and, if it responds 402 Payment Required, pay for it through Pocket and ' +
-        'return the content. Pocket decides whether the payment is permitted. A refusal comes ' +
-        'back as status "blocked" with the remaining budget, so you can choose a cheaper provider.',
+        'return the content. A refusal comes back as "blocked" with the remaining budget, so ' +
+        'you can pick a cheaper provider. A retry of one that already paid comes back as ' +
+        '"replayed" with the original receipt: charged once, not twice.',
       inputSchema: {
         agentId: z.string(),
         url: z.string().url().describe('The paid resource to fetch.'),
@@ -122,7 +123,7 @@ export function registerTools(server: McpServer, client: PocketClient): void {
         purchaseId: z
           .string()
           .optional()
-          .describe('Pass a new value to deliberately buy the same resource twice.'),
+          .describe('Buy the same resource twice inside the retry window.'),
       },
     },
     async (args) => guard(() => client.purchase(args)),
