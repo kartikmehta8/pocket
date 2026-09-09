@@ -175,10 +175,14 @@ export function registerAgentRoutes(app: FastifyInstance, ctx: AppContext): void
       trustedRecipients: body.trustedRecipients.map((address) => address.toLowerCase()),
       unknownRecipientBehaviour: body.unknownRecipientBehaviour,
       approvalThreshold:
-        body.approvalThreshold === undefined ? null : parseAmount(body.approvalThreshold, decimals),
+        body.approvalThreshold === undefined || body.approvalThreshold === null
+          ? null
+          : parseAmount(body.approvalThreshold, decimals),
       // USD ceilings are stored in cents, so two decimal places.
       maxUsdCents:
-        body.maxUsdPerTransaction === undefined ? null : parseAmount(body.maxUsdPerTransaction, 2),
+        body.maxUsdPerTransaction === undefined || body.maxUsdPerTransaction === null
+          ? null
+          : parseAmount(body.maxUsdPerTransaction, 2),
     });
     await appendAuditEvent(ctx.db, {
       orgId: request.orgId,

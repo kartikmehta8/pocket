@@ -92,9 +92,16 @@ export const setPolicySchema = z.object({
   maxTransactionAmount: amountSchema,
   trustedRecipients: z.array(addressSchema).default([]),
   unknownRecipientBehaviour: z.enum(UNKNOWN_RECIPIENT_BEHAVIOURS),
-  approvalThreshold: amountSchema.optional(),
+  /**
+   * Value above which a payment needs human sign-off.
+   *
+   * `null` and absent both mean "no threshold". Null is accepted because that
+   * is what the policy endpoint returns for an unset one, and a document the
+   * API hands out has to be a document the API takes back.
+   */
+  approvalThreshold: amountSchema.nullish(),
   /** Ceiling on a payment's value in USD, as a decimal string of dollars. */
-  maxUsdPerTransaction: amountSchema.optional(),
+  maxUsdPerTransaction: amountSchema.nullish(),
 });
 
 /** Body accepted by payment preview and payment execution. */
