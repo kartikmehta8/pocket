@@ -2,7 +2,7 @@
  * A Hedera transaction signer backed by Privy custody.
  *
  * The x402 Hedera `exact` scheme expects a `ClientHederaSigner`, and the
- * reference implementation takes a raw Hedera private key. Purse has no
+ * reference implementation takes a raw Hedera private key. Pocket has no
  * private key and does not want one, so this signer satisfies the same
  * interface while delegating the actual signature to Privy.
  *
@@ -26,7 +26,7 @@ import {
 } from '@hiero-ledger/sdk';
 import { createHederaClient, HBAR_ASSET_ID } from '@x402/hedera';
 import { keccak256, getBytes } from 'ethers';
-import { PurseError } from '@purse/core';
+import { PocketError } from '@pocket/core';
 
 /** The subset of a payment requirement this signer reads. */
 export interface HederaPaymentRequirements {
@@ -75,7 +75,7 @@ interface MirrorAccount {
  * @param mirrorNodeUrl - Mirror node base URL.
  * @param evmAddress - The wallet's `0x` address.
  * @returns The account id and its ECDSA public key.
- * @throws {PurseError} `NOT_FOUND` when the account does not exist yet, which
+ * @throws {PocketError} `NOT_FOUND` when the account does not exist yet, which
  *   on Hedera means it has never received a transfer, or
  *   `VALIDATION_FAILED` when the account is not secp256k1 and therefore cannot
  *   be signed for by a Privy wallet.
@@ -89,7 +89,7 @@ export async function resolveHederaAccount(
     { signal: AbortSignal.timeout(15_000) },
   );
   if (!response.ok) {
-    throw new PurseError('NOT_FOUND', 'No Hedera account exists for this wallet yet.', {
+    throw new PocketError('NOT_FOUND', 'No Hedera account exists for this wallet yet.', {
       evmAddress,
     });
   }
@@ -100,10 +100,10 @@ export async function resolveHederaAccount(
   const keyHex = body.key?.key;
 
   if (typeof accountId !== 'string') {
-    throw new PurseError('NOT_FOUND', 'Mirror node returned no account id.', { evmAddress });
+    throw new PocketError('NOT_FOUND', 'Mirror node returned no account id.', { evmAddress });
   }
   if (keyType !== 'ECDSA_SECP256K1' || typeof keyHex !== 'string') {
-    throw new PurseError(
+    throw new PocketError(
       'VALIDATION_FAILED',
       'Hedera account is not secp256k1, so a Privy wallet cannot sign for it.',
       { evmAddress, keyType: String(keyType) },
@@ -141,14 +141,14 @@ export async function createPrivyHederaSigner(
     ): Promise<string> {
       const feePayer = requirements.extra?.['feePayer'];
       if (typeof feePayer !== 'string') {
-        throw new PurseError(
+        throw new PocketError(
           'VALIDATION_FAILED',
           'The payment requirement carries no facilitator fee payer.',
         );
       }
       const amount = BigInt(requirements.amount);
       if (amount <= 0n) {
-        throw new PurseError('VALIDATION_FAILED', 'Payment amount must be greater than zero.');
+        throw new PocketError('VALIDATION_FAILED', 'Payment amount must be greater than zero.');
       }
 
       const payTo = AccountId.fromString(requirements.payTo);

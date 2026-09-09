@@ -6,15 +6,15 @@
  * globals.
  */
 
-import type { AdapterMode } from '@purse/adapters';
+import type { AdapterMode } from '@pocket/adapters';
 import type {
   AnalyticsProvider,
   ChainProvider,
   IdentityVerifier,
   MarketDataProvider,
   WalletProvider,
-} from '@purse/core';
-import type { Database } from '@purse/db';
+} from '@pocket/core';
+import type { Database } from '@pocket/db';
 import type { Config } from './config.js';
 
 /** Everything an HTTP handler is allowed to depend on. */

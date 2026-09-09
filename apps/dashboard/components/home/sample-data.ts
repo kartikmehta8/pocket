@@ -86,6 +86,6 @@ export const SAMPLE_STATS: readonly SampleStat[] = [
   {
     value: '0',
     label: 'keys your agent ever held',
-    detail: 'It asks Purse to pay. It cannot sign for itself, so a leaked prompt cannot spend.',
+    detail: 'It asks Pocket to pay. It cannot sign for itself, so a leaked prompt cannot spend.',
   },
 ];

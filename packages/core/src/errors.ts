@@ -1,9 +1,9 @@
 /**
- * Typed error codes and the single error class used across Purse.
+ * Typed error codes and the single error class used across Pocket.
  *
- * Every HTTP and MCP error response is derived from a {@link PurseError}, so
+ * Every HTTP and MCP error response is derived from a {@link PocketError}, so
  * clients can branch on a stable `code` instead of parsing prose. Internal
- * details never cross the wire; see {@link PurseError.toPublicJSON}.
+ * details never cross the wire; see {@link PocketError.toPublicJSON}.
  */
 
 /** Stable, documented error codes. Never renumber or reuse a retired code. */
@@ -35,7 +35,7 @@ export const ERROR_CODES = {
   INTERNAL_ERROR: 500,
 } as const;
 
-/** Union of every error code Purse can emit. */
+/** Union of every error code Pocket can emit. */
 export type ErrorCode = keyof typeof ERROR_CODES;
 
 /** Shape of an error as it appears to an API or MCP client. */
@@ -44,13 +44,13 @@ export interface PublicErrorBody {
 }
 
 /**
- * The only error type thrown intentionally by Purse application code.
+ * The only error type thrown intentionally by Pocket application code.
  *
  * @remarks
  * `details` is safe to expose. Anything sensitive belongs in `cause`, which is
  * logged but never serialized to a client.
  */
-export class PurseError extends Error {
+export class PocketError extends Error {
   /** Stable machine-readable code. */
   public readonly code: ErrorCode;
   /** HTTP status derived from {@link ERROR_CODES}. */
@@ -66,7 +66,7 @@ export class PurseError extends Error {
    */
   public constructor(code: ErrorCode, message: string, details?: unknown, cause?: unknown) {
     super(message, cause === undefined ? undefined : { cause });
-    this.name = 'PurseError';
+    this.name = 'PocketError';
     this.code = code;
     this.httpStatus = ERROR_CODES[code];
     this.details = details;
@@ -83,7 +83,7 @@ export class PurseError extends Error {
   }
 
   /** Type guard for `unknown` values caught in handlers. */
-  public static is(value: unknown): value is PurseError {
-    return value instanceof PurseError;
+  public static is(value: unknown): value is PocketError {
+    return value instanceof PocketError;
   }
 }

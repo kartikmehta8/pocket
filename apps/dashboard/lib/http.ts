@@ -15,14 +15,14 @@ export interface ApiErr {
   message: string;
 }
 
-/** Result of any Purse API call — the transport never throws at the call site. */
+/** Result of any Pocket API call — the transport never throws at the call site. */
 export type ApiResult<T> = ApiOk<T> | ApiErr;
 
 const DEFAULT_BASE_URL = 'http://localhost:8080';
 
 /** Resolve the API base URL from the server environment, without a trailing slash. */
 function baseUrl(): string {
-  return (process.env.PURSE_API_URL ?? DEFAULT_BASE_URL).replace(/\/+$/, '');
+  return (process.env.POCKET_API_URL ?? DEFAULT_BASE_URL).replace(/\/+$/, '');
 }
 
 /** Narrow an unknown JSON body to a plain object, or `null` if it is not one. */
@@ -46,18 +46,18 @@ function readError(body: unknown, status: number): ApiErr {
 /**
  * Resolve the credential this request should present.
  *
- * The signed-in person's token wins. `PURSE_API_KEY` is a fallback for running
+ * The signed-in person's token wins. `POCKET_API_KEY` is a fallback for running
  * the dashboard against a single tenant with no identity provider configured,
  * which is what local development and the offline demo do.
  *
  * @returns The bearer token, or `null` when the caller is anonymous.
  */
 async function credential(): Promise<string | null> {
-  return (await sessionToken()) ?? process.env.PURSE_API_KEY ?? null;
+  return (await sessionToken()) ?? process.env.POCKET_API_KEY ?? null;
 }
 
 /**
- * Perform one authenticated request against the Purse API.
+ * Perform one authenticated request against the Pocket API.
  *
  * The credential never leaves the server: this module is marked `server-only`,
  * so it cannot be pulled into the browser bundle.
@@ -102,7 +102,7 @@ export async function request<T>(
     return {
       ok: false,
       code: 'UNREACHABLE',
-      message: 'Could not reach the Purse API. Check that it is running.',
+      message: 'Could not reach the Pocket API. Check that it is running.',
     };
   }
 }

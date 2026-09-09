@@ -6,8 +6,8 @@
  * affect payments that were never going to be priced.
  */
 
-import { decimalsOf, type AssetId, type MarketDataProvider } from '@purse/core';
-import type { EvaluablePolicy } from '@purse/core';
+import { decimalsOf, type AssetId, type MarketDataProvider } from '@pocket/core';
+import type { EvaluablePolicy } from '@pocket/core';
 
 /** A price lookup and the evidence behind it. */
 export interface PricingOutcome {

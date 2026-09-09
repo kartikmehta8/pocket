@@ -12,8 +12,8 @@ import {
   MockWalletProvider,
   LedgerAnalyticsProvider,
   StubMarketDataProvider,
-} from '@purse/adapters';
-import { getDb, createOrganization } from '@purse/db';
+} from '@pocket/adapters';
+import { getDb, createOrganization } from '@pocket/db';
 import type { FastifyInstance } from 'fastify';
 import { loadConfig } from '../src/config.js';
 import { buildServer } from '../src/server.js';
@@ -39,7 +39,7 @@ export async function createHarness(): Promise<Harness> {
     ...process.env,
     NODE_ENV: 'test',
     LOG_LEVEL: process.env['TEST_LOG_LEVEL'] ?? 'silent',
-    DATABASE_URL: process.env['DATABASE_URL'] ?? 'postgres://purse:purse@localhost:5434/purse',
+    DATABASE_URL: process.env['DATABASE_URL'] ?? 'postgres://pocket:pocket@localhost:5434/pocket',
   });
 
   const db = getDb(config.DATABASE_URL);

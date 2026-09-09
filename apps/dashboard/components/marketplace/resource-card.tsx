@@ -35,7 +35,7 @@ export function ResourceCard({
               {resource.description}
             </p>
           </div>
-          <Hint label="Charged per call, settled in stablecoin on Hedera. The seller quotes this price in its 402 response; Purse evaluates the same number.">
+          <Hint label="Charged per call, settled in stablecoin on Hedera. The seller quotes this price in its 402 response; Pocket evaluates the same number.">
             <span className="text-text figures shrink-0 cursor-help text-sm font-semibold">
               {resource.price}
               <span className="text-text-muted ml-1 text-xs font-medium">
@@ -49,7 +49,7 @@ export function ResourceCard({
           <Badge
             tone="neutral"
             icon={Database}
-            hint={`Purse does not generate this data. It is fetched live from ${resource.provider}.`}
+            hint={`Pocket does not generate this data. It is fetched live from ${resource.provider}.`}
           >
             {resource.provider}
           </Badge>

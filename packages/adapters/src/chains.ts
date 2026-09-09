@@ -1,12 +1,12 @@
 /**
  * Chain configuration.
  *
- * Hedera exposes an Ethereum-compatible JSON-RPC relay, so Purse addresses it
+ * Hedera exposes an Ethereum-compatible JSON-RPC relay, so Pocket addresses it
  * with ordinary EVM tooling: EIP-155 chain ids, CAIP-2 identifiers for Privy,
  * and `0x` addresses throughout.
  */
 
-import type { AssetId, ChainId } from '@purse/core';
+import type { AssetId, ChainId } from '@pocket/core';
 
 /** Everything needed to read from and settle on one chain. */
 export interface ChainConfig {
@@ -87,13 +87,13 @@ export function tokenIdToEvmAddress(tokenId: string): string | null {
 }
 
 /**
- * Resolves a Hedera token id to a Purse asset ticker.
+ * Resolves a Hedera token id to a Pocket asset ticker.
  *
  * @param chain - Chain the token lives on.
  * @param tokenId - Native token id, or `HBAR` for the native asset.
  * @returns The asset ticker, or `null` when the token is not configured.
  * @remarks Comparison goes through the configured contract address rather than
- * a hard-coded id, so pointing Purse at a different token needs no code change.
+ * a hard-coded id, so pointing Pocket at a different token needs no code change.
  */
 export function assetForTokenId(chain: ChainId, tokenId: string): AssetId | null {
   if (tokenId === 'HBAR' || tokenId === CHAIN_CONFIGS[chain].nativeAsset) {
@@ -121,7 +121,7 @@ export const IHRC719_ASSOCIATE: `0x${string}` = '0x0a754de6';
 /** `isAssociated()` selector. Returns 1 when the caller holds the association. */
 export const IHRC719_IS_ASSOCIATED: `0x${string}` = '0x4d8fdd6d';
 
-/** Minimal ERC-20 surface Purse needs: move tokens and read a balance. */
+/** Minimal ERC-20 surface Pocket needs: move tokens and read a balance. */
 export const ERC20_ABI = [
   'function transfer(address to, uint256 amount) returns (bool)',
   'function balanceOf(address owner) view returns (uint256)',

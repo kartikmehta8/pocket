@@ -1,5 +1,5 @@
 /**
- * How Purse describes itself.
+ * How Pocket describes itself.
  *
  * @remarks Must match `apps/dashboard/lib/brand.ts`, which carries the same
  * note pointing back here. The product describes itself the same way in every

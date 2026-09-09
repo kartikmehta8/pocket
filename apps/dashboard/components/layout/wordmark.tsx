@@ -4,7 +4,7 @@ import { TAGLINE } from '@/lib/brand';
 import { cn } from '@/lib/cn';
 
 /**
- * The Purse wordmark: the name, set tight, and nothing else.
+ * The Pocket wordmark: the name, set tight, and nothing else.
  *
  * No glyph. A one-word product does not need a logo beside its own name, and
  * a generic mark next to it reads as filler.
@@ -28,7 +28,7 @@ export function Wordmark({
           'tracking-[-0.03em] transition-opacity duration-(--duration-fast) hover:opacity-70',
         )}
       >
-        Purse
+        Pocket
         <span aria-hidden className="bg-accent-500 ml-[3px] size-1 self-end rounded-full" />
       </Link>
       {tagline ? <p className="text-text-muted mt-1.5 text-xs leading-snug">{TAGLINE}</p> : null}

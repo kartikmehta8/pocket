@@ -1,5 +1,5 @@
 specVersion: 1.0.0
-description: Indexes ERC-20 transfers on Hedera so Purse can reconcile its ledger against the chain.
+description: Indexes ERC-20 transfers on Hedera so Pocket can reconcile its ledger against the chain.
 schema:
   file: ./schema.graphql
 dataSources:

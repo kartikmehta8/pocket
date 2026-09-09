@@ -69,7 +69,7 @@ export function ApiKeyMinter({ existing }: { existing: number }) {
               className="border-border bg-surface mt-2.5"
               code={state.secret}
               label="API key"
-              caption="PURSE_API_KEY"
+              caption="POCKET_API_KEY"
             />
           </motion.div>
         )}

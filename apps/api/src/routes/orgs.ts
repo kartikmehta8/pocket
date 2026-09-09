@@ -3,7 +3,7 @@
  */
 
 import type { FastifyInstance } from 'fastify';
-import { createOrgSchema, renameOrgSchema, PurseError } from '@purse/core';
+import { createOrgSchema, renameOrgSchema, PocketError } from '@pocket/core';
 import {
   appendAuditEvent,
   countMembers,
@@ -11,7 +11,7 @@ import {
   findOrganizationById,
   findUserById,
   renameOrganization,
-} from '@purse/db';
+} from '@pocket/db';
 import { requireHuman } from '../auth.js';
 import type { AppContext } from '../context.js';
 
@@ -42,7 +42,7 @@ export function registerOrgRoutes(app: FastifyInstance, ctx: AppContext): void {
 
   app.get('/v1/orgs/me', async (request) => {
     const org = await findOrganizationById(ctx.db, request.orgId);
-    if (org === null) throw new PurseError('NOT_FOUND', 'Organization not found.');
+    if (org === null) throw new PocketError('NOT_FOUND', 'Organization not found.');
     const [members, user] = await Promise.all([
       countMembers(ctx.db, request.orgId),
       request.userId === null ? Promise.resolve(null) : findUserById(ctx.db, request.userId),
@@ -63,7 +63,7 @@ export function registerOrgRoutes(app: FastifyInstance, ctx: AppContext): void {
     requireHuman(request);
     const body = renameOrgSchema.parse(request.body);
     const org = await renameOrganization(ctx.db, request.orgId, body.name);
-    if (org === null) throw new PurseError('NOT_FOUND', 'Organization not found.');
+    if (org === null) throw new PocketError('NOT_FOUND', 'Organization not found.');
 
     await appendAuditEvent(ctx.db, {
       orgId: org.id,

@@ -9,11 +9,11 @@
 import express from 'express';
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { StreamableHTTPServerTransport } from '@modelcontextprotocol/sdk/server/streamableHttp.js';
-import { PurseClient } from './client.js';
+import { PocketClient } from './client.js';
 import { registerTools } from './tools.js';
 
 const port = Number(process.env['MCP_PORT'] ?? 8081);
-const baseUrl = process.env['PURSE_API_URL'] ?? 'http://localhost:8080';
+const baseUrl = process.env['POCKET_API_URL'] ?? 'http://localhost:8080';
 const apiKey = process.env['MCP_AGENT_TOKEN'] ?? '';
 
 if (apiKey === '') {
@@ -23,7 +23,7 @@ if (apiKey === '') {
   process.exit(1);
 }
 
-const client = new PurseClient({ baseUrl, apiKey });
+const client = new PocketClient({ baseUrl, apiKey });
 const app = express();
 app.use(express.json({ limit: '1mb' }));
 
@@ -40,7 +40,7 @@ app.get('/health', (_request, response) => {
  */
 app.post('/mcp', (request, response) => {
   void (async () => {
-    const server = new McpServer({ name: 'purse', version: '0.1.0' });
+    const server = new McpServer({ name: 'pocket', version: '0.1.0' });
     registerTools(server, client);
 
     const transport = new StreamableHTTPServerTransport({ sessionIdGenerator: undefined });
@@ -78,5 +78,5 @@ for (const method of ['get', 'delete'] as const) {
 }
 
 app.listen(port, () => {
-  process.stdout.write(`Purse MCP server listening on http://localhost:${port}/mcp\n`);
+  process.stdout.write(`Pocket MCP server listening on http://localhost:${port}/mcp\n`);
 });

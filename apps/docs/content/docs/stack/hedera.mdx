@@ -3,7 +3,7 @@ title: Hedera
 description: Where the money moves. Stablecoin payments settled in seconds, with fees paid for your agent.
 ---
 
-Every purchase Purse allows ends as a real stablecoin transfer with a public
+Every purchase Pocket allows ends as a real stablecoin transfer with a public
 receipt.
 
 ## Why it suits agent payments
@@ -28,29 +28,29 @@ That removes a whole class of failure: an agent stuck mid-task because nobody
 noticed a gas balance ran out.
 
 <Sequence
-  caption="Purse signs but never broadcasts; the facilitator pays the fee and submits"
+  caption="Pocket signs but never broadcasts; the facilitator pays the fee and submits"
   steps={[
     {
-      from: 'Purse',
+      from: 'Pocket',
       action: 'builds the transfer',
       note: 'The decision has already passed at this point.',
     },
-    { from: 'Purse', to: 'Privy', action: 'asks for a signature' },
-    { from: 'Purse', to: 'Seller', action: 'presents the signed payment' },
+    { from: 'Pocket', to: 'Privy', action: 'asks for a signature' },
+    { from: 'Pocket', to: 'Seller', action: 'presents the signed payment' },
     { from: 'Seller', to: 'Facilitator', action: 'asks it to verify and settle' },
     { from: 'Facilitator', action: 'co-signs and pays the fee', decides: true },
     { from: 'Facilitator', to: 'Hedera', action: 'submits the transfer' },
-    { from: 'Seller', to: 'Purse', action: 'returns the data and the receipt' },
+    { from: 'Seller', to: 'Pocket', action: 'returns the data and the receipt' },
   ]}
 />
 
-Purse never broadcasts anything. It produces a partly signed transaction that
-the facilitator has to co-sign, so a compromised Purse still cannot move money
+Pocket never broadcasts anything. It produces a partly signed transaction that
+the facilitator has to co-sign, so a compromised Pocket still cannot move money
 on its own.
 
 ## Wallets opt into tokens
 
-Hedera asks an account to opt into a token before it can hold it. Purse does
+Hedera asks an account to opt into a token before it can hold it. Pocket does
 this when it creates the wallet, not at the first payment, so a funded wallet is
 never in a state where money sent to it would bounce.
 

@@ -8,7 +8,7 @@
 
 import { z } from 'zod';
 import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
-import { PurseApiError, type PurseClient } from './client.js';
+import { PocketApiError, type PocketClient } from './client.js';
 
 /** Renders any value as a single JSON text block. */
 function json(value: unknown) {
@@ -25,7 +25,7 @@ async function guard(run: () => Promise<unknown>) {
   try {
     return json(await run());
   } catch (cause) {
-    if (cause instanceof PurseApiError) {
+    if (cause instanceof PocketApiError) {
       return json({ error: { code: cause.code, message: cause.message, details: cause.details } });
     }
     return json({ error: { code: 'MCP_TOOL_FAILED', message: String(cause) } });
@@ -33,14 +33,14 @@ async function guard(run: () => Promise<unknown>) {
 }
 
 /**
- * Registers every Purse tool on an MCP server.
+ * Registers every Pocket tool on an MCP server.
  *
  * @param server - The MCP server to register on.
- * @param client - Authenticated Purse API client.
+ * @param client - Authenticated Pocket API client.
  */
-export function registerTools(server: McpServer, client: PurseClient): void {
+export function registerTools(server: McpServer, client: PocketClient): void {
   server.registerTool(
-    'purse_list_agents',
+    'pocket_list_agents',
     {
       title: 'List agents',
       description:
@@ -51,7 +51,7 @@ export function registerTools(server: McpServer, client: PurseClient): void {
   );
 
   server.registerTool(
-    'purse_get_agent',
+    'pocket_get_agent',
     {
       title: 'Get agent',
       description: 'Load one agent with its spending policy, task budgets and wallet balance.',
@@ -61,7 +61,7 @@ export function registerTools(server: McpServer, client: PurseClient): void {
   );
 
   server.registerTool(
-    'purse_preview_payment',
+    'pocket_preview_payment',
     {
       title: 'Preview a payment',
       description:
@@ -92,12 +92,12 @@ export function registerTools(server: McpServer, client: PurseClient): void {
   );
 
   server.registerTool(
-    'purse_pay_for_resource',
+    'pocket_pay_for_resource',
     {
       title: 'Buy a paid resource',
       description:
-        'Fetch a URL and, if it responds 402 Payment Required, pay for it through Purse and ' +
-        'return the content. Purse decides whether the payment is permitted. A refusal comes ' +
+        'Fetch a URL and, if it responds 402 Payment Required, pay for it through Pocket and ' +
+        'return the content. Pocket decides whether the payment is permitted. A refusal comes ' +
         'back as status "blocked" with the remaining budget, so you can choose a cheaper provider.',
       inputSchema: {
         agentId: z.string(),
@@ -129,7 +129,7 @@ export function registerTools(server: McpServer, client: PurseClient): void {
   );
 
   server.registerTool(
-    'purse_create_task_budget',
+    'pocket_create_task_budget',
     {
       title: 'Open a task budget',
       description: 'Open a spending envelope scoped to one unit of work.',
@@ -144,7 +144,7 @@ export function registerTools(server: McpServer, client: PurseClient): void {
   );
 
   server.registerTool(
-    'purse_spend_summary',
+    'pocket_spend_summary',
     {
       title: 'Spend summary',
       description:
@@ -165,7 +165,7 @@ export function registerTools(server: McpServer, client: PurseClient): void {
   );
 
   server.registerTool(
-    'purse_list_payments',
+    'pocket_list_payments',
     {
       title: 'List payments',
       description: 'List recent payments, including the ones policy blocked and why.',
@@ -187,7 +187,7 @@ export function registerTools(server: McpServer, client: PurseClient): void {
   );
 
   server.registerTool(
-    'purse_audit_trail',
+    'pocket_audit_trail',
     {
       title: 'Read the audit trail',
       description: 'Read the organization audit trail, newest first.',

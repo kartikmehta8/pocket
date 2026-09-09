@@ -67,7 +67,7 @@ export function actorPresentation(actorType: AuditEvent['actorType']): StatusPre
         tone: 'neutral',
         label: 'System',
         Icon: Cpu,
-        hint: 'Purse itself recorded this: a settlement confirmation, or a budget reset.',
+        hint: 'Pocket itself recorded this: a settlement confirmation, or a budget reset.',
       };
   }
 }

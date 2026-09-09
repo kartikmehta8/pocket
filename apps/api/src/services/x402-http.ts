@@ -29,7 +29,7 @@ export const SETTLE_TIMEOUT_MS = 60_000;
  * @returns The parsed object, or `null` when absent, malformed, or not an
  *   object.
  * @remarks Malformed is treated as absent rather than thrown. A seller that
- *   sends a header Purse cannot read is a seller Purse will not transact with,
+ *   sends a header Pocket cannot read is a seller Pocket will not transact with,
  *   and the caller gets a clear message instead of a parse stack.
  */
 export function decodeHeader(header: string | null): Record<string, unknown> | null {

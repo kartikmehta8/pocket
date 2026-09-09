@@ -2,7 +2,7 @@
  * Seller configuration.
  *
  * Every value is read from the environment and validated once at startup. The
- * seller is an independent business, so it shares nothing with Purse but the
+ * seller is an independent business, so it shares nothing with Pocket but the
  * network it settles on.
  */
 

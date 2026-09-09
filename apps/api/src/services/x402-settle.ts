@@ -1,20 +1,20 @@
 /**
  * Recording what the facilitator did.
  *
- * Purse does not submit the x402 transaction — the facilitator does — so the
+ * Pocket does not submit the x402 transaction — the facilitator does — so the
  * outcome has to be reported back rather than observed. This is the one place
  * that writes it, shared by the `settlement` route an external buyer calls and
  * by the purchase flow that runs inside the API.
  */
 
-import { PurseError, type Payment } from '@purse/core';
+import { PocketError, type Payment } from '@pocket/core';
 import {
   appendAuditEvent,
   chargeTaskBudget,
   getPayment,
   updatePaymentStatus,
   type Database,
-} from '@purse/db';
+} from '@pocket/db';
 
 /** What the facilitator reported. */
 export interface SettlementReport {
@@ -32,7 +32,7 @@ export interface SettlementReport {
  * @param paymentId - The payment the facilitator acted on.
  * @param report - What happened.
  * @returns The updated payment row.
- * @throws {PurseError} `NOT_FOUND` when the payment is not in this
+ * @throws {PocketError} `NOT_FOUND` when the payment is not in this
  *   organization, or `CONFLICT` when it is in a state that cannot settle. A
  *   payment that policy blocked has no transaction to report on.
  * @remarks On failure the task-budget reservation is released, because the
@@ -46,9 +46,9 @@ export async function recordSettlement(
   report: SettlementReport,
 ): Promise<Payment> {
   const payment = await getPayment(db, orgId, paymentId);
-  if (payment === null) throw new PurseError('NOT_FOUND', 'Payment not found.');
+  if (payment === null) throw new PocketError('NOT_FOUND', 'Payment not found.');
   if (payment.status !== 'approved' && payment.status !== 'submitted') {
-    throw new PurseError('CONFLICT', `Payment is ${payment.status} and cannot be settled.`, {
+    throw new PocketError('CONFLICT', `Payment is ${payment.status} and cannot be settled.`, {
       status: payment.status,
     });
   }

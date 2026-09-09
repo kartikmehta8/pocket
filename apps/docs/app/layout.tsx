@@ -19,7 +19,7 @@ const mono = Space_Mono({
 });
 
 export const metadata: Metadata = {
-  title: { default: 'Purse Docs', template: '%s · Purse Docs' },
+  title: { default: 'Pocket Docs', template: '%s · Pocket Docs' },
   description: DESCRIPTION,
 };
 

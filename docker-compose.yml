@@ -1,21 +1,21 @@
 services:
   postgres:
     image: postgres:17-alpine
-    container_name: purse-postgres
+    container_name: pocket-postgres
     restart: unless-stopped
     environment:
-      POSTGRES_USER: purse
-      POSTGRES_PASSWORD: purse
-      POSTGRES_DB: purse
+      POSTGRES_USER: pocket
+      POSTGRES_PASSWORD: pocket
+      POSTGRES_DB: pocket
     ports:
       - '5434:5432'
     volumes:
-      - purse-pgdata:/var/lib/postgresql/data
+      - pocket-pgdata:/var/lib/postgresql/data
     healthcheck:
-      test: ['CMD-SHELL', 'pg_isready -U purse -d purse']
+      test: ['CMD-SHELL', 'pg_isready -U pocket -d pocket']
       interval: 5s
       timeout: 5s
       retries: 10
 
 volumes:
-  purse-pgdata:
+  pocket-pgdata:

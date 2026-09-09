@@ -3,7 +3,7 @@
  *
  * The browser holds a Privy access token; server components need one too. This
  * route is the handover: it proves the token works by using it against the
- * Purse API, and only then writes it into an `httpOnly` cookie. A token that
+ * Pocket API, and only then writes it into an `httpOnly` cookie. A token that
  * the API refuses never becomes a session.
  */
 
@@ -30,7 +30,7 @@ interface SessionRequest {
 
 /** Resolve the API base URL, without a trailing slash. */
 function apiBaseUrl(): string {
-  return (process.env.PURSE_API_URL ?? 'http://localhost:8080').replace(/\/+$/, '');
+  return (process.env.POCKET_API_URL ?? 'http://localhost:8080').replace(/\/+$/, '');
 }
 
 /**
@@ -67,7 +67,7 @@ export async function POST(request: Request): Promise<NextResponse> {
 
   if (response === null) {
     return NextResponse.json(
-      { error: { code: 'UNREACHABLE', message: 'Could not reach the Purse API.' } },
+      { error: { code: 'UNREACHABLE', message: 'Could not reach the Pocket API.' } },
       { status: 502 },
     );
   }

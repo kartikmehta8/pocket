@@ -10,7 +10,7 @@
  * only when an operator has explicitly said this deployment is local.
  */
 
-import { PurseError } from '@purse/core';
+import { PocketError } from '@pocket/core';
 
 /** Hostnames that always resolve to the machine itself. */
 const LOOPBACK_NAMES = new Set(['localhost', '127.0.0.1', '::1', '0.0.0.0', '[::1]']);
@@ -51,7 +51,7 @@ export function isPrivateHost(hostname: string): boolean {
  *   addresses. True for local development, where the seller runs on
  *   `localhost`; false anywhere reachable from outside.
  * @returns The parsed URL.
- * @throws {PurseError} `VALIDATION_FAILED` when the URL is malformed, uses a
+ * @throws {PocketError} `VALIDATION_FAILED` when the URL is malformed, uses a
  *   scheme other than HTTP, or names a destination this deployment refuses.
  */
 export function parseResourceUrl(raw: string, allowPrivateHosts: boolean): URL {
@@ -59,17 +59,17 @@ export function parseResourceUrl(raw: string, allowPrivateHosts: boolean): URL {
   try {
     url = new URL(raw);
   } catch {
-    throw new PurseError('VALIDATION_FAILED', 'The resource URL is not a valid URL.');
+    throw new PocketError('VALIDATION_FAILED', 'The resource URL is not a valid URL.');
   }
 
   if (url.protocol !== 'http:' && url.protocol !== 'https:') {
-    throw new PurseError('VALIDATION_FAILED', 'The resource URL must use http or https.', {
+    throw new PocketError('VALIDATION_FAILED', 'The resource URL must use http or https.', {
       protocol: url.protocol,
     });
   }
 
   if (!allowPrivateHosts && isPrivateHost(url.hostname)) {
-    throw new PurseError(
+    throw new PocketError(
       'VALIDATION_FAILED',
       'This deployment will not fetch resources on private or loopback addresses.',
       { host: url.hostname },

@@ -1,7 +1,7 @@
 /**
  * The identity port.
  *
- * Purse authenticates two very different callers. Agents present a long-lived
+ * Pocket authenticates two very different callers. Agents present a long-lived
  * organization API key. People present a short-lived token from an identity
  * provider. Only the second needs a vendor, so only the second gets a port —
  * and the port is deliberately tiny, because a bug here is an authentication
@@ -30,7 +30,7 @@ export interface IdentityVerifier {
    *
    * @param token - The bearer token presented by the browser.
    * @returns The identity the provider vouches for.
-   * @throws {PurseError} `UNAUTHORIZED` when the token is absent, malformed,
+   * @throws {PocketError} `UNAUTHORIZED` when the token is absent, malformed,
    *   expired, or issued for a different application.
    */
   verify(token: string): Promise<VerifiedIdentity>;

@@ -9,7 +9,7 @@
 
 import { fetchJson, type DataSource } from './types.js';
 
-/** Assets quoted, by CoinGecko id. HBAR is here because Purse settles on Hedera. */
+/** Assets quoted, by CoinGecko id. HBAR is here because Pocket settles on Hedera. */
 const ASSETS: ReadonlyArray<{ id: string; symbol: string }> = [
   { id: 'ethereum', symbol: 'ETH' },
   { id: 'bitcoin', symbol: 'BTC' },

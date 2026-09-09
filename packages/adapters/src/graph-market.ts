@@ -15,12 +15,12 @@
  */
 
 import {
-  PurseError,
+  PocketError,
   type AssetId,
   type MarketDataProvider,
   type PriceQuote,
   type PriceResult,
-} from '@purse/core';
+} from '@pocket/core';
 
 /** Configuration for {@link GraphMarketDataProvider}. */
 export interface GraphMarketOptions {
@@ -57,7 +57,7 @@ export interface GraphMarketOptions {
  * other. Both come from the same block, so the two cannot drift apart.
  */
 const PRICE_QUERY = `
-  query PurseTokenPrice($id: ID!) {
+  query PocketTokenPrice($id: ID!) {
     token(id: $id) {
       symbol
       derivedETH
@@ -93,13 +93,13 @@ export class GraphMarketDataProvider implements MarketDataProvider {
    * @param asset - Asset ticker to price.
    * @returns The composed result. `usdCentsPerUnit` is `null` when either
    *   source failed or the two disagreed beyond the tolerance.
-   * @throws {PurseError} `VALIDATION_FAILED` when the asset has no configured
+   * @throws {PocketError} `VALIDATION_FAILED` when the asset has no configured
    *   contract address, because guessing one would price the wrong token.
    */
   public async priceUsdCents(asset: AssetId): Promise<PriceResult> {
     const contract = this.#options.contracts[asset];
     if (contract === undefined) {
-      throw new PurseError('VALIDATION_FAILED', `No price contract configured for ${asset}.`, {
+      throw new PocketError('VALIDATION_FAILED', `No price contract configured for ${asset}.`, {
         asset,
       });
     }

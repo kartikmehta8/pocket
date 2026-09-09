@@ -1,5 +1,5 @@
 ---
-title: What is Purse
+title: What is Pocket
 description: Give each agent its own wallet and a hard cap it cannot raise.
 ---
 
@@ -10,7 +10,7 @@ invoice from a language model.
 So you have a choice. Hand your agent a card and hope, or give it an account
 that cannot be talked into anything.
 
-**Purse is the second option.** Your agent gets its own wallet, its own budget,
+**Pocket is the second option.** Your agent gets its own wallet, its own budget,
 and limits it cannot argue its way past. It buys what it needs. You get a
 receipt for every attempt, including the ones you refused.
 
@@ -35,16 +35,16 @@ receipt for every attempt, including the ones you refused.
 ## The idea in one line
 
 <Flow
-  caption="Your agent asks, Purse checks your limits, and only then does a wallet sign"
+  caption="Your agent asks, Pocket checks your limits, and only then does a wallet sign"
   nodes={[
     { label: 'Your agent', note: 'asks to buy something' },
-    { label: 'Purse', note: 'checks your limits', decides: true },
+    { label: 'Pocket', note: 'checks your limits', decides: true },
     { label: 'Wallet', note: 'signs, only if allowed' },
     { label: 'Your agent', note: 'gets what it asked for' },
   ]}
 />
 
-The order matters. Purse decides **before** anything is signed, so a refused
+The order matters. Pocket decides **before** anything is signed, so a refused
 purchase has no signature attached to it. There is nothing sitting around that a
 clever prompt could talk an agent into using.
 
@@ -53,11 +53,11 @@ clever prompt could talk an agent into using.
 **Nothing is allowed until you allow it.** A new agent cannot spend a cent.
 Every permission is one you granted, on purpose.
 
-**Refusals are kept, not dropped.** When Purse stops a purchase it records what
+**Refusals are kept, not dropped.** When Pocket stops a purchase it records what
 was asked for, what stopped it, and how much room was left. Weeks later you can
 still answer "why did my agent stop?".
 
-**Your agent never holds a key.** It asks Purse to pay. It cannot sign for
+**Your agent never holds a key.** It asks Pocket to pay. It cannot sign for
 itself, so a leaked prompt cannot spend anything.
 
 ## Works with what you already run

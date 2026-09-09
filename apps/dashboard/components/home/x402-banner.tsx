@@ -54,8 +54,9 @@ export function X402Banner() {
             Buy from any seller that speaks x402
           </h2>
           <p className="text-text-secondary mt-2 leading-relaxed">
-            Purse is not a marketplace and there is no catalogue to get listed in. Any API priced in
-            the open x402 standard can take your agent’s money, whether we have heard of it or not.
+            Pocket is not a marketplace and there is no catalogue to get listed in. Any API priced
+            in the open x402 standard can take your agent’s money, whether we have heard of it or
+            not.
           </p>
         </div>
       </motion.div>

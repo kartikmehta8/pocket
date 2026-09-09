@@ -59,7 +59,7 @@ export default async function MarketplacePage() {
             <CardTitle>Buy from any x402 seller</CardTitle>
             <CardDescription>
               Any URL that answers <InlineCode>402 Payment Required</InlineCode> with x402 terms
-              Purse can settle.
+              Pocket can settle.
             </CardDescription>
           </div>
         </CardHeader>
@@ -67,7 +67,7 @@ export default async function MarketplacePage() {
           <BuyForm
             agents={agents}
             url=""
-            reason="Purchased from the Purse dashboard"
+            reason="Purchased from the Pocket dashboard"
             category="data"
             label="Fetch and pay"
             editableUrl

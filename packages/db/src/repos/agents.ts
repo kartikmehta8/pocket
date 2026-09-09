@@ -3,7 +3,7 @@
  */
 
 import { and, eq } from 'drizzle-orm';
-import { newId, type Agent, type AgentStatus, type Budget, type Wallet } from '@purse/core';
+import { newId, type Agent, type AgentStatus, type Budget, type Wallet } from '@pocket/core';
 import type { Database, Transaction } from '../client.js';
 import { agents, budgets, policies, wallets } from '../schema/index.js';
 

@@ -103,7 +103,7 @@ export default async function CapabilitiesPage() {
           <div>
             <CardTitle>What makes it work</CardTitle>
             <CardDescription>
-              Three vendors, each responsible for one thing Purse deliberately does not do itself.
+              Three vendors, each responsible for one thing Pocket deliberately does not do itself.
             </CardDescription>
           </div>
         </CardHeader>

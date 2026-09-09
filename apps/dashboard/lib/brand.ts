@@ -1,5 +1,5 @@
 /**
- * How Purse describes itself.
+ * How Pocket describes itself.
  *
  * One short form and one long form, used everywhere the product introduces
  * itself: page metadata, the wordmark, the footer, and the docs site.

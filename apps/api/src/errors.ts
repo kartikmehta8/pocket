@@ -7,7 +7,7 @@
 
 import type { FastifyInstance } from 'fastify';
 import { ZodError } from 'zod';
-import { PurseError } from '@purse/core';
+import { PocketError } from '@pocket/core';
 
 /**
  * Registers the error and not-found handlers.
@@ -22,7 +22,7 @@ export function registerErrorHandler(app: FastifyInstance): void {
   });
 
   app.setErrorHandler((error, request, reply) => {
-    if (PurseError.is(error)) {
+    if (PocketError.is(error)) {
       if (error.httpStatus >= 500) {
         request.log.error({ code: error.code, cause: error.cause }, error.message);
       }

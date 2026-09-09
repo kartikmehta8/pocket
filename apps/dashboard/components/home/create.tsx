@@ -17,7 +17,7 @@ const STEPS = [
   },
   {
     title: 'Hand it the job',
-    body: 'One line points your agent at Purse. Works with anything that speaks MCP.',
+    body: 'One line points your agent at Pocket. Works with anything that speaks MCP.',
   },
 ] as const;
 

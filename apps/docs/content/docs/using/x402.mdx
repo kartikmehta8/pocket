@@ -7,11 +7,11 @@ x402 is an open way for a web service to say "this costs money" and be paid for
 it in the same request. Your agent asks for something, the seller answers with a
 price instead of the data, your agent pays, and the data comes back.
 
-Purse handles all of it. You do not need to understand the protocol to use it.
+Pocket handles all of it. You do not need to understand the protocol to use it.
 
 ## Why it matters to you
 
-**You are not locked into a marketplace.** Purse does not run a catalogue and
+**You are not locked into a marketplace.** Pocket does not run a catalogue and
 there is nothing to get listed in. Any API priced this way can take your agent's
 money, whether we have heard of it or not.
 
@@ -28,7 +28,7 @@ invoice to reconcile. The payment is the request.
   steps={[
     { from: 'Your agent', to: 'Seller', action: 'asks for the data' },
     { from: 'Seller', to: 'Your agent', action: 'answers with a price' },
-    { from: 'Purse', action: 'checks your limits and pays', decides: true },
+    { from: 'Pocket', action: 'checks your limits and pays', decides: true },
     { from: 'Seller', to: 'Your agent', action: 'returns the data' },
   ]}
 />
@@ -64,17 +64,17 @@ Get current token prices from the market data feed using agent
 agent_1a2b3c, then tell me which asset moved most in the last 24 hours.
 ```
 
-Behind the scenes it calls one tool, `purse_pay_for_resource`, and Purse does
+Behind the scenes it calls one tool, `pocket_pay_for_resource`, and Pocket does
 the rest.
 
 ## Buying from your own code
 
-If you are calling Purse directly rather than through an agent, one request does
+If you are calling Pocket directly rather than through an agent, one request does
 the whole thing:
 
 ```bash
 POST /v1/payments/x402/purchase
-Authorization: Bearer purse_sk_...
+Authorization: Bearer pocket_sk_...
 
 {
   "agentId": "agent_1a2b3c",

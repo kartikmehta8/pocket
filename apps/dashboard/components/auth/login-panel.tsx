@@ -78,7 +78,7 @@ export function LoginPanel({ configured }: { configured: boolean }) {
         <p className="text-warning-ink/85 mt-1 text-xs leading-relaxed">
           Set <code className="font-mono">NEXT_PUBLIC_PRIVY_APP_ID</code> in the dashboard
           environment and restart. Until then the dashboard can only run against a single tenant
-          using <code className="font-mono">PURSE_API_KEY</code>.
+          using <code className="font-mono">POCKET_API_KEY</code>.
         </p>
       </div>
     );
@@ -109,7 +109,7 @@ export function LoginPanel({ configured }: { configured: boolean }) {
       ) : (
         <p className="text-text-muted flex items-start gap-1.5 text-xs leading-relaxed">
           <ShieldCheck aria-hidden className="mt-0.5 size-3.5 shrink-0" strokeWidth={1.75} />
-          Email, Google, GitHub or an existing wallet. Purse never holds a private key. Agent
+          Email, Google, GitHub or an existing wallet. Pocket never holds a private key. Agent
           wallets are custodied by Privy.
         </p>
       )}

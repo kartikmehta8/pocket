@@ -28,7 +28,7 @@ let database: Database | undefined;
  * Returns the process-wide database handle, opening the pool on first use.
  *
  * @param connectionString - Postgres URL. Read from `DATABASE_URL` when absent.
- * @returns A Drizzle database bound to the Purse schema.
+ * @returns A Drizzle database bound to the Pocket schema.
  * @throws {Error} When no connection string is available.
  */
 export function getDb(connectionString?: string): Database {

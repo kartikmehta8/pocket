@@ -1,17 +1,17 @@
 /**
  * The asset and chain registry.
  *
- * Purse only moves assets it knows the decimal precision of, because guessing
+ * Pocket only moves assets it knows the decimal precision of, because guessing
  * precision is a money bug. Adding an asset here is a deliberate act.
  */
 
-/** Chains Purse can settle on. */
+/** Chains Pocket can settle on. */
 export const CHAINS = ['hedera-testnet', 'hedera-mainnet'] as const;
 
 /** Union of supported chain identifiers. */
 export type ChainId = (typeof CHAINS)[number];
 
-/** Assets Purse can price and move. */
+/** Assets Pocket can price and move. */
 export const ASSETS = ['USDC', 'HBAR'] as const;
 
 /** Union of supported asset identifiers. */

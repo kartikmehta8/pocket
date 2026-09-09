@@ -1,23 +1,23 @@
 /**
  * The Privy wallet adapter.
  *
- * Privy holds custody. Purse never sees a private key, and no signing material
+ * Privy holds custody. Pocket never sees a private key, and no signing material
  * ever reaches the language model, the database or a log line. Privy's own
  * policy engine is installed as a second, provider-side ceiling underneath
- * Purse's application policy, so a bug in Purse cannot by itself authorise an
+ * Pocket's application policy, so a bug in Pocket cannot by itself authorise an
  * unbounded transfer.
  */
 
 import { PrivyClient } from '@privy-io/server-auth';
 import {
-  PurseError,
+  PocketError,
   type AssociateTokenInput,
   type ProvisionedWallet,
   type SendPaymentInput,
   type SubmittedTransaction,
   type WalletProvider,
   type ChainId,
-} from '@purse/core';
+} from '@pocket/core';
 import { chainConfig } from './chains.js';
 import { createWalletPolicy } from './privy-policy.js';
 import { buildAssociateTransaction, buildTransferTransaction } from './privy-transactions.js';
@@ -85,7 +85,7 @@ export class PrivyWalletProvider implements WalletProvider {
    *
    * @param input - Owning organization, agent and target chain.
    * @returns The provider wallet id and public address. Never a secret.
-   * @throws {PurseError} `UPSTREAM_UNAVAILABLE` when Privy cannot be reached.
+   * @throws {PocketError} `UPSTREAM_UNAVAILABLE` when Privy cannot be reached.
    */
   public async createWallet(input: {
     orgId: string;
@@ -100,7 +100,7 @@ export class PrivyWalletProvider implements WalletProvider {
       });
       return { providerWalletId: wallet.id, address: wallet.address };
     } catch (cause) {
-      throw new PurseError(
+      throw new PocketError(
         'UPSTREAM_UNAVAILABLE',
         'Privy could not provision a wallet.',
         { agentId: input.agentId },
@@ -115,7 +115,7 @@ export class PrivyWalletProvider implements WalletProvider {
    * @param walletId - Provider wallet identifier.
    * @param digest - `0x`-prefixed 32-byte hash to sign.
    * @returns The `0x`-prefixed signature. 65 bytes: r, s and the recovery byte.
-   * @throws {PurseError} `PAYMENT_FAILED` when Privy refuses, which includes a
+   * @throws {PocketError} `PAYMENT_FAILED` when Privy refuses, which includes a
    *   wallet policy denying the signing method.
    * @remarks This is the primitive that lets a Privy-custodied wallet sign for
    *   chains Privy has no native integration with. The caller supplies the
@@ -126,7 +126,7 @@ export class PrivyWalletProvider implements WalletProvider {
       const result = await this.#privy.walletApi.ethereum.secp256k1Sign({ walletId, hash: digest });
       return result.signature;
     } catch (cause) {
-      throw new PurseError(
+      throw new PocketError(
         'PAYMENT_FAILED',
         'Privy refused to sign the digest.',
         { walletId },
@@ -141,7 +141,7 @@ export class PrivyWalletProvider implements WalletProvider {
    * @param input - Wallet, asset and chain.
    * @returns The broadcast transaction, or `null` when the asset is native and
    *   association does not apply.
-   * @throws {PurseError} `VALIDATION_FAILED` when the token has no configured
+   * @throws {PocketError} `VALIDATION_FAILED` when the token has no configured
    *   contract address, or `PAYMENT_FAILED` when Privy rejects the call.
    */
   public async associateToken(input: AssociateTokenInput): Promise<SubmittedTransaction | null> {
@@ -156,7 +156,7 @@ export class PrivyWalletProvider implements WalletProvider {
       });
       return { txHash: result.hash };
     } catch (cause) {
-      throw new PurseError(
+      throw new PocketError(
         'PAYMENT_FAILED',
         'Privy rejected the token association.',
         { chain: input.chain, asset: input.asset },
@@ -170,7 +170,7 @@ export class PrivyWalletProvider implements WalletProvider {
    *
    * @param input - Wallet, recipient, amount in base units, asset and chain.
    * @returns The broadcast transaction hash.
-   * @throws {PurseError} `VALIDATION_FAILED` when a token asset has no
+   * @throws {PocketError} `VALIDATION_FAILED` when a token asset has no
    *   configured contract address, or `PAYMENT_FAILED` when Privy rejects the
    *   transaction, including when its own policy denies it.
    */
@@ -187,7 +187,7 @@ export class PrivyWalletProvider implements WalletProvider {
       });
       return { txHash: result.hash };
     } catch (cause) {
-      throw new PurseError(
+      throw new PocketError(
         'PAYMENT_FAILED',
         'Privy rejected the transaction.',
         { chain: input.chain, asset: input.asset },

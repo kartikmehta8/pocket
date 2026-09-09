@@ -1,5 +1,5 @@
 /**
- * Display formatting for the Purse dashboard.
+ * Display formatting for the Pocket dashboard.
  *
  * Money arrives as a decimal string and is formatted as a string: the integer
  * part is grouped and the fraction is padded or trimmed textually, so no value

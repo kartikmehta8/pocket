@@ -8,7 +8,7 @@
  */
 
 import { and, desc, eq, lt } from 'drizzle-orm';
-import { newId, type AuditEvent } from '@purse/core';
+import { newId, type AuditEvent } from '@pocket/core';
 import type { Database, Transaction } from '../client.js';
 import { auditEvents } from '../schema/index.js';
 

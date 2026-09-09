@@ -7,13 +7,13 @@
 
 import { Contract, JsonRpcProvider, formatUnits } from 'ethers';
 import {
-  PurseError,
+  PocketError,
   decimalsOf,
   type AssetId,
   type ChainId,
   type ChainProvider,
   type TransactionReceipt,
-} from '@purse/core';
+} from '@pocket/core';
 import { chainConfig, ERC20_ABI, IHRC719_IS_ASSOCIATED, tokenAddress } from './chains.js';
 
 /** Chain provider backed by a Hedera JSON-RPC relay. */
@@ -39,7 +39,7 @@ export class HederaChainProvider implements ChainProvider {
    * @param asset - Asset to read. Native assets read the account balance;
    *   token assets read the ERC-20 contract.
    * @returns Balance in the asset's base units.
-   * @throws {PurseError} `UPSTREAM_UNAVAILABLE` when the relay cannot be
+   * @throws {PocketError} `UPSTREAM_UNAVAILABLE` when the relay cannot be
    *   reached, or `VALIDATION_FAILED` when a token has no configured address.
    */
   public async getBalance(address: string, asset: AssetId): Promise<bigint> {
@@ -51,14 +51,14 @@ export class HederaChainProvider implements ChainProvider {
       }
       const token = tokenAddress(this.chain, asset);
       if (token === null) {
-        throw new PurseError('VALIDATION_FAILED', `No contract address configured for ${asset}.`);
+        throw new PocketError('VALIDATION_FAILED', `No contract address configured for ${asset}.`);
       }
       const contract = new Contract(token, [...ERC20_ABI], this.#provider);
       const raw: unknown = await contract['balanceOf']?.(address);
       return typeof raw === 'bigint' ? raw : BigInt(String(raw));
     } catch (cause) {
-      if (PurseError.is(cause)) throw cause;
-      throw new PurseError(
+      if (PocketError.is(cause)) throw cause;
+      throw new PocketError(
         'UPSTREAM_UNAVAILABLE',
         'Could not read balance from the Hedera relay.',
         { chain: this.chain, asset },
@@ -89,7 +89,7 @@ export class HederaChainProvider implements ChainProvider {
    * @param txHash - Hash returned by the wallet provider.
    * @param timeoutMs - Deadline. Defaults to 60 seconds.
    * @returns The receipt, reporting success or revert.
-   * @throws {PurseError} `SETTLEMENT_FAILED` when the deadline passes without
+   * @throws {PocketError} `SETTLEMENT_FAILED` when the deadline passes without
    *   a receipt. The payment is left `submitted` rather than marked settled,
    *   because a missing receipt is not evidence of failure.
    */
@@ -97,7 +97,7 @@ export class HederaChainProvider implements ChainProvider {
     try {
       const receipt = await this.#provider.waitForTransaction(txHash, 1, timeoutMs);
       if (receipt === null) {
-        throw new PurseError(
+        throw new PocketError(
           'SETTLEMENT_FAILED',
           'Timed out waiting for the transaction receipt.',
           {
@@ -107,8 +107,8 @@ export class HederaChainProvider implements ChainProvider {
       }
       return { txHash, success: receipt.status === 1, blockNumber: receipt.blockNumber };
     } catch (cause) {
-      if (PurseError.is(cause)) throw cause;
-      throw new PurseError(
+      if (PocketError.is(cause)) throw cause;
+      throw new PocketError(
         'SETTLEMENT_FAILED',
         'Could not confirm the transaction.',
         { txHash },

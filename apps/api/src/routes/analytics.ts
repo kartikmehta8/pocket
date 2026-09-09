@@ -4,8 +4,8 @@
 
 import type { FastifyInstance } from 'fastify';
 import { z } from 'zod';
-import { isAssetId, type AssetId } from '@purse/core';
-import { countByStatus, getAgentBundle, listAuditEvents } from '@purse/db';
+import { isAssetId, type AssetId } from '@pocket/core';
+import { countByStatus, getAgentBundle, listAuditEvents } from '@pocket/db';
 import type { AppContext } from '../context.js';
 import { auditEventToJson } from '../serialize.js';
 import { spendSummary, spendTimeseries } from '../services/analytics.js';

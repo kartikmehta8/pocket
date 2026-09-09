@@ -2,15 +2,15 @@
  * Provisions the demo seller's wallet.
  *
  * The paid service is an independent business, so its wallet does not belong
- * in Purse's agent table. This mints one through the same Privy app the agents
+ * in Pocket's agent table. This mints one through the same Privy app the agents
  * use, which means it lives in an account the operator controls and can be
  * inspected in the Privy dashboard.
  *
- * Run once:  pnpm --filter @purse/api exec tsx src/provision-merchant.ts
+ * Run once:  pnpm --filter @pocket/api exec tsx src/provision-merchant.ts
  */
 
-import { buildAdapters } from '@purse/adapters';
-import { decimalsOf, formatAmount, type AssetId, type ChainId } from '@purse/core';
+import { buildAdapters } from '@pocket/adapters';
+import { decimalsOf, formatAmount, type AssetId, type ChainId } from '@pocket/core';
 
 /** The placeholder that must not survive into a live configuration. */
 const BURN_PLACEHOLDER = '0x000000000000000000000000000000000000dead';

@@ -1,9 +1,9 @@
 ---
 title: Privy
-description: Where the keys live. Your agent never holds one, and neither does Purse.
+description: Where the keys live. Your agent never holds one, and neither does Pocket.
 ---
 
-Privy holds every agent wallet. Purse never sees a private key, and no signing
+Privy holds every agent wallet. Pocket never sees a private key, and no signing
 material reaches your agent, the database, or a log line.
 
 The same account also signs you in to the dashboard, so there is no second set
@@ -12,25 +12,25 @@ of credentials to manage.
 ## What crosses the line
 
 <Flow
-  caption="Purse instructs and Privy signs; only a signature comes back"
+  caption="Pocket instructs and Privy signs; only a signature comes back"
   nodes={[
-    { label: 'Purse', note: 'holds no key' },
+    { label: 'Pocket', note: 'holds no key' },
     { label: 'Decision', note: 'passed your limits', decides: true },
     { label: 'Privy', note: 'holds every key' },
     { label: 'Signature', note: 'the only thing returned' },
   ]}
 />
 
-The only thing that ever crosses is a signature. There is no path in Purse that
+The only thing that ever crosses is a signature. There is no path in Pocket that
 could export a key, because the ability to do so is explicitly switched off on
 every wallet it creates.
 
 ## Two ceilings, not one
 
-Your limits in Purse are the first ceiling. Underneath them, each wallet carries
+Your limits in Pocket are the first ceiling. Underneath them, each wallet carries
 a second set of rules held by Privy.
 
-That means a bug in Purse cannot on its own authorise an unbounded transfer,
+That means a bug in Pocket cannot on its own authorise an unbounded transfer,
 because Privy would refuse to sign it. You get two independent things that both
 have to fail before money moves incorrectly.
 

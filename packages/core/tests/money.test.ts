@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { formatAmount, parseAmount, remaining, sum } from '../src/money.js';
-import { PurseError } from '../src/errors.js';
+import { PocketError } from '../src/errors.js';
 
 describe('parseAmount', () => {
   it('parses whole and fractional amounts at the asset precision', () => {
@@ -15,12 +15,12 @@ describe('parseAmount', () => {
   });
 
   it('rejects more precision than the asset supports', () => {
-    expect(() => parseAmount('0.1234567', 6)).toThrow(PurseError);
+    expect(() => parseAmount('0.1234567', 6)).toThrow(PocketError);
   });
 
   it('rejects signs, whitespace, empties and scientific notation', () => {
     for (const bad of ['-1', ' 1', '1 ', '', '1e6', '.5', '1.', 'abc', '1,5']) {
-      expect(() => parseAmount(bad, 6), bad).toThrow(PurseError);
+      expect(() => parseAmount(bad, 6), bad).toThrow(PocketError);
     }
   });
 

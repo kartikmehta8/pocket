@@ -3,7 +3,7 @@ title: How it works
 description: What happens between your agent wanting something and having it.
 ---
 
-Your agent asks for something. It gets a price instead. Purse checks that price
+Your agent asks for something. It gets a price instead. Pocket checks that price
 against your limits, and only then does a wallet sign for it.
 
 The whole exchange takes a couple of seconds and needs nothing from you.
@@ -13,25 +13,25 @@ The whole exchange takes a couple of seconds and needs nothing from you.
 <Sequence
   caption="The decision sits between the price and the signature"
   steps={[
-    { from: 'Your agent', to: 'Purse', action: 'asks to buy something' },
-    { from: 'Purse', to: 'Seller', action: 'requests it' },
-    { from: 'Seller', to: 'Purse', action: 'answers with a price instead' },
+    { from: 'Your agent', to: 'Pocket', action: 'asks to buy something' },
+    { from: 'Pocket', to: 'Seller', action: 'requests it' },
+    { from: 'Seller', to: 'Pocket', action: 'answers with a price instead' },
     {
-      from: 'Purse',
+      from: 'Pocket',
       action: 'checks every limit you set',
       decides: true,
       note: 'If any limit fails, it stops here and the refusal is recorded.',
     },
-    { from: 'Purse', to: 'Wallet', action: 'asks for a signature, only if allowed' },
-    { from: 'Purse', to: 'Seller', action: 'presents the signed payment' },
-    { from: 'Seller', to: 'Purse', action: 'takes payment and returns the data' },
-    { from: 'Purse', to: 'Your agent', action: 'hands over what it asked for' },
+    { from: 'Pocket', to: 'Wallet', action: 'asks for a signature, only if allowed' },
+    { from: 'Pocket', to: 'Seller', action: 'presents the signed payment' },
+    { from: 'Seller', to: 'Pocket', action: 'takes payment and returns the data' },
+    { from: 'Pocket', to: 'Your agent', action: 'hands over what it asked for' },
   ]}
 />
 
 ## Why the order matters
 
-Purse decides **before** anything is signed.
+Pocket decides **before** anything is signed.
 
 A refused purchase has no signature attached to it, because one was never
 created. There is no signed payment sitting around that a clever prompt could
@@ -67,5 +67,5 @@ the wallet is never asked for one until you release it.
 
 - Read your API key
 - Change its own budget or rules
-- Pay for something Purse refused
+- Pay for something Pocket refused
 - Sign anything itself

@@ -6,7 +6,7 @@ description: Every purchase, every refusal, and every change you made, kept with
 Most systems drop what they blocked. That is exactly the record you want three
 weeks later, when someone asks what a line on an invoice was for.
 
-Purse keeps all of it.
+Pocket keeps all of it.
 
 ## Payments
 
@@ -52,11 +52,11 @@ policy changes, new agents, new keys, approvals and rejections.
 
 Each entry names who did it:
 
-| Who    | Means                                |
-| ------ | ------------------------------------ |
-| Agent  | An agent acting on its own           |
-| Human  | Someone signed in to the dashboard   |
-| System | Purse itself, recording a settlement |
+| Who    | Means                                 |
+| ------ | ------------------------------------- |
+| Agent  | An agent acting on its own            |
+| Human  | Someone signed in to the dashboard    |
+| System | Pocket itself, recording a settlement |
 
 A purchase you make from the dashboard and one your agent makes go through
 identical checks. Who asked is the only difference recorded, which is why it is
@@ -67,7 +67,7 @@ recorded rather than guessed at.
 The **Overview** screen rolls it up: spend over the last fourteen days against
 your ceiling, spend by category, and anything unusual.
 
-Your agent can read the same summary through `purse_spend_summary`, so you can
+Your agent can read the same summary through `pocket_spend_summary`, so you can
 ask it directly:
 
 ```text
@@ -78,5 +78,5 @@ by category. List anything that was blocked and why.
 ## What is never recorded
 
 No key, no token, and no credential of any kind appears in the audit trail or in
-any log. There is nothing there to leak, because Purse never holds signing
+any log. There is nothing there to leak, because Pocket never holds signing
 material in the first place.

@@ -8,14 +8,14 @@
  */
 
 import {
-  PurseError,
+  PocketError,
   newId,
   type MarketDataProvider,
   type AuthorizationDecision,
   type Payment,
   type PaymentRequest,
   type PaymentStatus,
-} from '@purse/core';
+} from '@pocket/core';
 import {
   appendAuditEvent,
   assertSameRequest,
@@ -24,7 +24,7 @@ import {
   insertPayment,
   lockAgent,
   type Database,
-} from '@purse/db';
+} from '@pocket/db';
 import { decisionToJson } from '../serialize.js';
 import { decide, loadAuthorizationContext } from './authorization.js';
 import { priceIfRequired } from './pricing.js';
@@ -79,7 +79,7 @@ export async function previewPayment(
  *   payment untouched.
  * @param request - The parsed payment request.
  * @returns The payment and the decision that produced its status.
- * @throws {PurseError} `IDEMPOTENCY_KEY_REUSED` when the key was already used
+ * @throws {PocketError} `IDEMPOTENCY_KEY_REUSED` when the key was already used
  *   for different money, `NOT_FOUND` for an unknown agent, or
  *   `WALLET_NOT_PROVISIONED` when an authorized agent has no wallet.
  */
@@ -187,7 +187,7 @@ export async function executePayment(
   }
 
   if (providerWalletId === null) {
-    throw new PurseError('WALLET_NOT_PROVISIONED', 'Agent has no wallet to pay from.', {
+    throw new PocketError('WALLET_NOT_PROVISIONED', 'Agent has no wallet to pay from.', {
       agentId: request.agentId,
     });
   }

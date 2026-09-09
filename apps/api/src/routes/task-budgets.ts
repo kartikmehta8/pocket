@@ -4,14 +4,14 @@
 
 import type { FastifyInstance } from 'fastify';
 import { z } from 'zod';
-import { PurseError, createTaskBudgetSchema, decimalsOf, parseAmount } from '@purse/core';
+import { PocketError, createTaskBudgetSchema, decimalsOf, parseAmount } from '@pocket/core';
 import {
   appendAuditEvent,
   closeTaskBudget,
   createTaskBudget,
   getAgentBundle,
   listTaskBudgets,
-} from '@purse/db';
+} from '@pocket/db';
 import type { AppContext } from '../context.js';
 import { taskBudgetToJson } from '../serialize.js';
 
@@ -27,7 +27,7 @@ export function registerTaskBudgetRoutes(app: FastifyInstance, ctx: AppContext):
   app.post<{ Params: { id: string } }>('/v1/agents/:id/task-budgets', async (request, reply) => {
     const body = createTaskBudgetSchema.parse(request.body);
     const bundle = await getAgentBundle(ctx.db, request.orgId, request.params.id);
-    if (bundle === null) throw new PurseError('NOT_FOUND', 'Agent not found.');
+    if (bundle === null) throw new PocketError('NOT_FOUND', 'Agent not found.');
 
     const task = await createTaskBudget(ctx.db, {
       orgId: request.orgId,
@@ -58,14 +58,14 @@ export function registerTaskBudgetRoutes(app: FastifyInstance, ctx: AppContext):
   app.get<{ Params: { id: string } }>('/v1/agents/:id/task-budgets', async (request) => {
     const query = listQuerySchema.parse(request.query);
     const bundle = await getAgentBundle(ctx.db, request.orgId, request.params.id);
-    if (bundle === null) throw new PurseError('NOT_FOUND', 'Agent not found.');
+    if (bundle === null) throw new PocketError('NOT_FOUND', 'Agent not found.');
     const rows = await listTaskBudgets(ctx.db, request.params.id, query.open === 'true');
     return { taskBudgets: rows.map(taskBudgetToJson) };
   });
 
   app.post<{ Params: { id: string } }>('/v1/task-budgets/:id/close', async (request) => {
     const task = await closeTaskBudget(ctx.db, request.orgId, request.params.id);
-    if (task === null) throw new PurseError('NOT_FOUND', 'Task budget not found.');
+    if (task === null) throw new PocketError('NOT_FOUND', 'Task budget not found.');
     await appendAuditEvent(ctx.db, {
       orgId: request.orgId,
       actorType: 'human',

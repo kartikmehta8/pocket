@@ -1,9 +1,9 @@
 /**
- * Public surface of the Purse domain package.
+ * Public surface of the Pocket domain package.
  *
  * Everything exported here is pure: types, schemas, and side-effect-free
- * decision engines. Persistence lives in `@purse/db` and vendor calls live in
- * `@purse/adapters`.
+ * decision engines. Persistence lives in `@pocket/db` and vendor calls live in
+ * `@pocket/adapters`.
  */
 
 export * from './assets.js';

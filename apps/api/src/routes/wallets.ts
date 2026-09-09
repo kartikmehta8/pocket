@@ -9,8 +9,8 @@
 
 import type { FastifyInstance } from 'fastify';
 import { z } from 'zod';
-import { PurseError, assetSchema, type ChainId } from '@purse/core';
-import { appendAuditEvent, getAgentBundle } from '@purse/db';
+import { PocketError, assetSchema, type ChainId } from '@pocket/core';
+import { appendAuditEvent, getAgentBundle } from '@pocket/db';
 import type { AppContext } from '../context.js';
 
 /** Body accepted when opting an agent wallet into holding a token. */
@@ -26,9 +26,9 @@ export function registerWalletRoutes(app: FastifyInstance, ctx: AppContext): voi
   app.post<{ Params: { id: string } }>('/v1/agents/:id/wallet/associate', async (request) => {
     const body = associateSchema.parse(request.body ?? {});
     const bundle = await getAgentBundle(ctx.db, request.orgId, request.params.id);
-    if (bundle === null) throw new PurseError('NOT_FOUND', 'Agent not found.');
+    if (bundle === null) throw new PocketError('NOT_FOUND', 'Agent not found.');
     if (bundle.wallet === null) {
-      throw new PurseError('WALLET_NOT_PROVISIONED', 'Agent has no wallet to associate.');
+      throw new PocketError('WALLET_NOT_PROVISIONED', 'Agent has no wallet to associate.');
     }
 
     // Associating twice reverts on chain, so check first rather than spending

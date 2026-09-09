@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
-# Call one Purse MCP tool and print its JSON result.
-#   ./scripts/mcp-call.sh purse_list_agents '{}'
+# Call one Pocket MCP tool and print its JSON result.
+#   ./scripts/mcp-call.sh pocket_list_agents '{}'
 set -euo pipefail
 TOOL=${1:?tool name required}
 ARGS=${2:-'{}'}

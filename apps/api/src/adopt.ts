@@ -6,10 +6,10 @@
  * the funded agents and the settled payments all live under the old
  * organization. This moves the user row across so they see it.
  *
- * Usage: `pnpm --filter @purse/api adopt -- <email> <orgId>`
+ * Usage: `pnpm --filter @pocket/api adopt -- <email> <orgId>`
  */
 
-import { closeDb, getDb, findOrganizationById, moveUserToOrganization } from '@purse/db';
+import { closeDb, getDb, findOrganizationById, moveUserToOrganization } from '@pocket/db';
 import { loadConfig } from './config.js';
 
 /**
@@ -22,7 +22,7 @@ import { loadConfig } from './config.js';
 async function adopt(): Promise<void> {
   const [email, orgId] = process.argv.slice(2);
   if (email === undefined || orgId === undefined) {
-    throw new Error('Usage: pnpm --filter @purse/api adopt -- <email> <orgId>');
+    throw new Error('Usage: pnpm --filter @pocket/api adopt -- <email> <orgId>');
   }
 
   const config = loadConfig();

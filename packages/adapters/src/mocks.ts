@@ -22,7 +22,7 @@ import {
   type TransactionReceipt,
   type TransferQuery,
   type WalletProvider,
-} from '@purse/core';
+} from '@pocket/core';
 
 /** Derives a stable fake address from any seed, so a demo replays identically. */
 function deterministicAddress(seed: string): string {
@@ -165,7 +165,7 @@ export class MockChainProvider implements ChainProvider {
  * Analytics provider that indexes nothing.
  *
  * @remarks Selected when no subgraph is configured. It reports `isLive()` as
- * false so the analytics service falls back to Purse's own ledger and labels
+ * false so the analytics service falls back to Pocket's own ledger and labels
  * the result `ledger` rather than claiming on-chain provenance it does not have.
  */
 export class LedgerAnalyticsProvider implements AnalyticsProvider {

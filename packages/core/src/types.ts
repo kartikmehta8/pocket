@@ -2,7 +2,7 @@
  * Domain vocabulary and entity shapes.
  *
  * The closed sets here (statuses, categories, behaviours) are the single
- * source of truth for what Purse understands. The schemas that validate
+ * source of truth for what Pocket understands. The schemas that validate
  * untrusted input against them live in `./schemas.js`.
  */
 
@@ -40,7 +40,7 @@ export const PAYMENT_STATUSES = [
 /** Union of payment lifecycle states. */
 export type PaymentStatus = (typeof PAYMENT_STATUSES)[number];
 
-/** What Purse does when an agent pays an address it has never paid before. */
+/** What Pocket does when an agent pays an address it has never paid before. */
 export const UNKNOWN_RECIPIENT_BEHAVIOURS = ['block', 'require_approval', 'allow'] as const;
 
 /** Union of unknown-recipient behaviours. */

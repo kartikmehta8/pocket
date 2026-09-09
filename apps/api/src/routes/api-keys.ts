@@ -7,7 +7,7 @@
  */
 
 import type { FastifyInstance } from 'fastify';
-import { createApiKeySchema, PurseError } from '@purse/core';
+import { createApiKeySchema, PocketError } from '@pocket/core';
 import {
   appendAuditEvent,
   countLiveApiKeys,
@@ -15,7 +15,7 @@ import {
   listApiKeys,
   revokeApiKey,
   type ApiKeySummary,
-} from '@purse/db';
+} from '@pocket/db';
 import { requireHuman } from '../auth.js';
 import type { AppContext } from '../context.js';
 
@@ -73,14 +73,14 @@ export function registerApiKeyRoutes(app: FastifyInstance, ctx: AppContext): voi
     // browser, which is exactly the situation an operator is trying to avoid.
     const live = await countLiveApiKeys(ctx.db, request.orgId);
     if (live <= 1) {
-      throw new PurseError(
+      throw new PocketError(
         'VALIDATION_FAILED',
         'Create a replacement key before revoking the last one.',
       );
     }
 
     const key = await revokeApiKey(ctx.db, request.orgId, id);
-    if (key === null) throw new PurseError('NOT_FOUND', 'API key not found.', { keyId: id });
+    if (key === null) throw new PocketError('NOT_FOUND', 'API key not found.', { keyId: id });
 
     await appendAuditEvent(ctx.db, {
       orgId: request.orgId,

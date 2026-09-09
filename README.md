@@ -1,13 +1,13 @@
-# Purse
+# Pocket
 
 **Spending limits for AI agents.**
 
 Give each agent its own wallet and a hard cap it cannot raise.
 
 An agent asks for a paid resource. The seller answers `402 Payment Required`.
-Purse decides whether that money may be spent, and only if it may does the
+Pocket decides whether that money may be spent, and only if it may does the
 payment happen and the data come back. The agent never touches a key, and never
-learns whether it was allowed until Purse has already decided.
+learns whether it was allowed until Pocket has already decided.
 
 ---
 
@@ -34,7 +34,7 @@ recovered later.
 ### Signing in
 
 The dashboard is multi-tenant. Set `NEXT_PUBLIC_PRIVY_APP_ID` in
-`apps/dashboard/.env.local`, leave `PURSE_API_KEY` **empty**, and open
+`apps/dashboard/.env.local`, leave `POCKET_API_KEY` **empty**, and open
 `http://localhost:3000`. Signing in creates your organization, its first API
 key, and drops you on a five-step setup page that ends with an agent that has
 paid for something.
@@ -42,7 +42,7 @@ paid for something.
 Add `http://localhost:3000` to your Privy application's allowed domains first,
 or the login modal opens and never completes.
 
-Setting `PURSE_API_KEY` instead bypasses sign-in entirely and pins the dashboard
+Setting `POCKET_API_KEY` instead bypasses sign-in entirely and pins the dashboard
 to one organization. That is the offline demo mode, not a deployment.
 
 To wire real Privy, Hedera and The Graph credentials, see
@@ -103,7 +103,7 @@ Call any single tool with `./scripts/mcp-call.sh <tool> '<json args>'`.
 Agent runtime
     │  MCP over HTTP
     ▼
-MCP server ──────────► Purse API ──────► Policy engine   (deny by default)
+MCP server ──────────► Pocket API ──────► Policy engine   (deny by default)
   8 tools                 8080           Budget engine   (daily, per-tx, task)
                             │            Audit trail     (append-only)
                             │
@@ -128,7 +128,7 @@ verifies payment on chain before serving.
 | Task budget                        | Budget engine   | Reserved at authorization, released only on definitive failure.                         |
 | Unknown recipients                 | Policy engine   | Block, escalate to a human, or allow. Only a _settled_ payment makes a recipient known. |
 | Human approval                     | Policy engine   | Above a threshold, or for a stranger.                                                   |
-| Provider ceiling                   | Privy policy    | A second cap Purse itself cannot exceed.                                                |
+| Provider ceiling                   | Privy policy    | A second cap Pocket itself cannot exceed.                                               |
 | Idempotency                        | Database        | A replay returns the original payment. A key reused for different money is refused.     |
 
 Missing configuration denies. An agent with no policy row, or no budget row,
@@ -152,7 +152,7 @@ packages/db         Drizzle schema and repositories. Tenancy and money-path inva
 packages/adapters   Privy, Hedera, The Graph, plus deterministic fakes and the selector.
 apps/api            Fastify HTTP API. Payment orchestration, settlement, analytics.
 apps/mcp            Remote MCP server. Eight tools, including autonomous x402 purchase.
-apps/paid-service   An x402-gated seller, independent of Purse.
+apps/paid-service   An x402-gated seller, independent of Pocket.
 apps/dashboard      Next.js dashboard. Sign-in, light mode, server components, server actions.
 subgraph            Local Graph Node subgraph indexing Hedera transfers, plus its Docker stack.
 Dockerfile          One image for the API, the MCP server and the paid service.
@@ -181,20 +181,20 @@ credentials and no network access are required.
 
 ## How payment actually works
 
-Purse implements x402 v2 with the official `@x402/*` packages, settling through
+Pocket implements x402 v2 with the official `@x402/*` packages, settling through
 a facilitator on Hedera. The seller advertises a price, the buyer presents a
 signed payload, and the facilitator verifies and submits it.
 
 Three properties are worth stating plainly.
 
-**Purse never holds a private key.** The x402 Hedera scheme expects a signer
-holding a Hedera key. Purse has none, so it implements the same interface and
+**Pocket never holds a private key.** The x402 Hedera scheme expects a signer
+holding a Hedera key. Pocket has none, so it implements the same interface and
 delegates to Privy: the transaction body is hashed with keccak-256 and signed
 by the Privy-custodied wallet, and the resulting signature verifies against the
 account's Hedera public key. See `packages/adapters/src/privy-hedera-signer.ts`.
 
 **The policy engine gates the signing.** Authorization runs before anything is
-signed, so an agent cannot produce a payable transaction for a payment Purse
+signed, so an agent cannot produce a payable transaction for a payment Pocket
 refused. A payment that needs a human is recorded as `awaiting_approval` and no
 payload is returned at all.
 
@@ -204,7 +204,7 @@ agent wallets never need native currency to transact.
 ## Hedera specifics that will surprise you
 
 An account cannot receive a token it has not **associated** with, unlike other
-EVM chains. Purse handles it through HIP-719, and checks the recipient before
+EVM chains. Pocket handles it through HIP-719, and checks the recipient before
 settling so a doomed transfer is never broadcast. See
 `POST /v1/agents/:id/wallet/associate`.
 

@@ -1,7 +1,7 @@
 /**
  * Server-side identifier generation.
  *
- * Identifiers are always minted by Purse, never accepted from a client, and
+ * Identifiers are always minted by Pocket, never accepted from a client, and
  * carry a type prefix so a stray id in a log line is self-describing.
  */
 
@@ -25,10 +25,10 @@ export function newId(prefix: IdPrefix): string {
  * Mints an organization API key.
  *
  * @returns The plaintext key, shown to the caller exactly once. Only its hash
- *   is persisted; see `hashApiKey` in `@purse/db`.
+ *   is persisted; see `hashApiKey` in `@pocket/db`.
  */
 export function newApiKey(): string {
-  return `purse_sk_${randomUUID().replaceAll('-', '')}${randomBytes(8).toString('hex')}`;
+  return `pocket_sk_${randomUUID().replaceAll('-', '')}${randomBytes(8).toString('hex')}`;
 }
 
 /** Extracts the human-readable prefix stored alongside a hashed API key. */

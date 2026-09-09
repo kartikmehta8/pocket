@@ -4,7 +4,7 @@
 
 import type { FastifyInstance } from 'fastify';
 import {
-  PurseError,
+  PocketError,
   createAgentSchema,
   decimalsOf,
   parseAmount,
@@ -12,7 +12,7 @@ import {
   setPolicySchema,
   updateAgentSchema,
   type AssetId,
-} from '@purse/core';
+} from '@pocket/core';
 import {
   appendAuditEvent,
   attachWallet,
@@ -22,7 +22,7 @@ import {
   updateAgent,
   upsertBudget,
   upsertPolicy,
-} from '@purse/db';
+} from '@pocket/db';
 import type { AppContext } from '../context.js';
 import { summariseAgent, summariseAllAgents } from '../services/agent-view.js';
 import { money, taskBudgetToJson } from '../serialize.js';
@@ -35,13 +35,13 @@ import { policyToJson } from '../serialize-policy.js';
  * @param orgId - Tenant scope.
  * @param agentId - Agent identifier.
  * @returns The agent bundle.
- * @throws {PurseError} `NOT_FOUND` when the agent is not in this organization.
+ * @throws {PocketError} `NOT_FOUND` when the agent is not in this organization.
  *   The same error is returned for "does not exist" and "belongs to someone
  *   else", so the API does not confirm the existence of another tenant's data.
  */
 async function requireAgent(ctx: AppContext, orgId: string, agentId: string) {
   const bundle = await getAgentBundle(ctx.db, orgId, agentId);
-  if (bundle === null) throw new PurseError('NOT_FOUND', 'Agent not found.', { agentId });
+  if (bundle === null) throw new PocketError('NOT_FOUND', 'Agent not found.', { agentId });
   return bundle;
 }
 
@@ -125,7 +125,7 @@ export function registerAgentRoutes(app: FastifyInstance, ctx: AppContext): void
     const body = updateAgentSchema.parse(request.body);
     await requireAgent(ctx, request.orgId, request.params.id);
     const agent = await updateAgent(ctx.db, request.orgId, request.params.id, body);
-    if (agent === null) throw new PurseError('NOT_FOUND', 'Agent not found.');
+    if (agent === null) throw new PocketError('NOT_FOUND', 'Agent not found.');
     await appendAuditEvent(ctx.db, {
       orgId: request.orgId,
       actorType: 'human',

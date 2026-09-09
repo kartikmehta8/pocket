@@ -8,7 +8,7 @@
  * never reaches this code.
  */
 
-import { PurseError, type IdentityVerifier, type VerifiedIdentity } from '@purse/core';
+import { PocketError, type IdentityVerifier, type VerifiedIdentity } from '@pocket/core';
 
 /**
  * Identity verifier that trusts the caller.
@@ -25,12 +25,12 @@ export class OpenIdentityVerifier implements IdentityVerifier {
    *
    * @param token - Any non-empty string.
    * @returns An identity whose subject is the token.
-   * @throws {PurseError} `UNAUTHORIZED` when the token is empty.
+   * @throws {PocketError} `UNAUTHORIZED` when the token is empty.
    */
   public verify(token: string): Promise<VerifiedIdentity> {
     const subject = token.trim();
     if (subject === '') {
-      throw new PurseError('UNAUTHORIZED', 'The session token is not valid.');
+      throw new PocketError('UNAUTHORIZED', 'The session token is not valid.');
     }
     return Promise.resolve({ subject: `offline:${subject}`, email: null });
   }

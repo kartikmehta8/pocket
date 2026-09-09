@@ -1,5 +1,5 @@
 {
-  "name": "@purse/adapters",
+  "name": "@pocket/adapters",
   "version": "0.1.0",
   "private": true,
   "type": "module",
@@ -19,7 +19,7 @@
   "dependencies": {
     "@hiero-ledger/sdk": "2.85.0",
     "@privy-io/server-auth": "^1.21.0",
-    "@purse/core": "workspace:*",
+    "@pocket/core": "workspace:*",
     "@x402/core": "2.25.0",
     "@x402/hedera": "2.25.0",
     "ethers": "^6.13.4"

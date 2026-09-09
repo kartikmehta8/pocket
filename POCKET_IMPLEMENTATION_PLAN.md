@@ -1,8 +1,8 @@
-# Purse
+# Pocket
 
 ## Claude-Ready Execution & Implementation Plan
 
-> **Product name:** Purse  
+> **Product name:** Pocket  
 > **Project type:** Agent financial infrastructure for autonomous AI agents  
 > **Flagship agent:** Hermes Agent  
 > **Primary tracks:** Privy + Hedera + The Graph  
@@ -74,17 +74,17 @@ If those skills are not available, do **not** stop. Follow the conventions in th
 
 ## 1.1 One-line pitch
 
-> **Purse gives autonomous AI agents secure programmable wallets with budgets, policies, x402 payments, and real-time onchain spending intelligence.**
+> **Pocket gives autonomous AI agents secure programmable wallets with budgets, policies, x402 payments, and real-time onchain spending intelligence.**
 
 Positioning:
 
-> **Purse is the financial control plane for autonomous agents.**
+> **Pocket is the financial control plane for autonomous agents.**
 
 Tagline:
 
-> **Every agent gets a purse. You decide what is in it.**
+> **Every agent gets a pocket. You decide what is in it.**
 
-Naming is final. Use `purse` for the repo and the npm scope `@purse/*`. Environment variables stay grouped by concern (`PRIVY_`, `HEDERA_`, `GRAPH_`, `MCP_`), not brand-prefixed.
+Naming is final. Use `pocket` for the repo and the npm scope `@pocket/*`. Environment variables stay grouped by concern (`PRIVY_`, `HEDERA_`, `GRAPH_`, `MCP_`), not brand-prefixed.
 
 ---
 
@@ -117,7 +117,7 @@ A company needs answers to:
 - Can an agent pay an x402 service automatically?
 - Can all spending be reconstructed later?
 
-Purse solves this.
+Pocket solves this.
 
 ---
 
@@ -178,7 +178,7 @@ Without payment:
 HTTP 402 Payment Required
 ```
 
-Hermes discovers the payment requirement and uses Purse to authorize and pay.
+Hermes discovers the payment requirement and uses Pocket to authorize and pay.
 
 After successful Hedera settlement:
 
@@ -272,7 +272,7 @@ Hermes Agent
   |
   | MCP
   v
-Purse MCP
+Pocket MCP
   |
   +--> identity
   +--> wallet
@@ -308,7 +308,7 @@ Agent daily budget remaining: 18.42.
 Policy: allowed.
 ```
 
-Purse:
+Pocket:
 
 ```text
 PAYMENT APPROVED
@@ -322,7 +322,7 @@ Cost: 0.75
 Task budget remaining: 0.42
 ```
 
-Purse:
+Pocket:
 
 ```text
 PAYMENT BLOCKED
@@ -458,7 +458,7 @@ Do not implement these until the core demo works:
            | MCP over HTTP
            v
 +----------------------+
-| Purse MCP            |
+| Pocket MCP            |
 +----------+-----------+
            |
            v
@@ -573,7 +573,7 @@ Do not over-design the dashboard.
 # 7. Repository Structure
 
 ```text
-purse/
+pocket/
 ├── apps/
 │   ├── api/
 │   │   ├── src/
@@ -2035,7 +2035,7 @@ Document both remote and local setup.
 Example conceptual command:
 
 ```bash
-hermes mcp add purse --url https://YOUR_HOST/mcp
+hermes mcp add pocket --url https://YOUR_HOST/mcp
 ```
 
 Use the exact current Hermes syntax verified against the version installed during implementation.
@@ -2045,7 +2045,7 @@ Use the exact current Hermes syntax verified against the version installed durin
 Provide `examples/hermes/SYSTEM.md`:
 
 ```md
-You have access to Purse MCP tools.
+You have access to Pocket MCP tools.
 
 Rules:
 
@@ -2626,7 +2626,7 @@ Denied: ...
 
 End pitch:
 
-> Purse lets autonomous agents spend money without giving them financial freedom they should not have.
+> Pocket lets autonomous agents spend money without giving them financial freedom they should not have.
 
 ---
 
@@ -2634,7 +2634,7 @@ End pitch:
 
 ## Privy
 
-> Privy is the wallet and transaction-control foundation. Every autonomous agent receives a secure wallet without exposing signing secrets to the LLM. Privy wallet controls combine with Purse’s application-level policies and budgets.
+> Privy is the wallet and transaction-control foundation. Every autonomous agent receives a secure wallet without exposing signing secrets to the LLM. Privy wallet controls combine with Pocket’s application-level policies and budgets.
 
 ## Hedera
 
@@ -2642,7 +2642,7 @@ End pitch:
 
 ## The Graph
 
-> The Graph is the live blockchain observability layer. Purse uses Graph data to reconstruct agent transactions, analyze spending, detect anomalies, and make the information available to Hermes through MCP.
+> The Graph is the live blockchain observability layer. Pocket uses Graph data to reconstruct agent transactions, analyze spending, detect anomalies, and make the information available to Hermes through MCP.
 
 ---
 
@@ -2932,7 +2932,7 @@ Each with separate policies.
 ## SDK
 
 ```ts
-const purse = new Purse({
+const pocket = new Pocket({
   agentToken: process.env.MCP_AGENT_TOKEN,
 });
 ```
@@ -2954,7 +2954,7 @@ Hermes needs data
 paid x402 service
       |
       v
-Purse checks policy
+Pocket checks policy
       |
       v
 Privy wallet authorizes secure transaction
@@ -3032,7 +3032,7 @@ Copy this after adding this file to the repository:
 ```text
 Read IMPLEMENTATION_PLAN.md completely before making changes.
 
-We are building Purse according to the plan.
+We are building Pocket according to the plan.
 
 Do not generate the full application at once.
 

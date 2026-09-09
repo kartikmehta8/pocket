@@ -2,21 +2,21 @@
  * Settlement: turning an authorized payment into an on-chain transfer.
  *
  * Settlement runs outside the authorization transaction, so the payment row
- * always describes what is actually true. `approved` means Purse said yes,
+ * always describes what is actually true. `approved` means Pocket said yes,
  * `submitted` means a hash exists, `settled` means the chain confirmed it, and
  * `failed` means it will not happen. A reserved budget is released only on
  * `failed`, never on a merely uncertain outcome.
  */
 
 import {
-  PurseError,
+  PocketError,
   type ChainProvider,
   type Payment,
   type WalletProvider,
   type AssetId,
   type ChainId,
-} from '@purse/core';
-import { appendAuditEvent, chargeTaskBudget, updatePaymentStatus, type Database } from '@purse/db';
+} from '@pocket/core';
+import { appendAuditEvent, chargeTaskBudget, updatePaymentStatus, type Database } from '@pocket/db';
 
 /** Collaborators settlement needs. */
 export interface SettlementDeps {
@@ -123,7 +123,7 @@ export async function settlePayment(
     txHash = submitted.txHash;
   } catch (cause) {
     deps.logger.error(
-      { paymentId: payment.id, code: PurseError.is(cause) ? cause.code : 'INTERNAL_ERROR' },
+      { paymentId: payment.id, code: PocketError.is(cause) ? cause.code : 'INTERNAL_ERROR' },
       'Broadcast failed',
     );
     return markFailed(deps, orgId, payment, 'The wallet provider rejected the transaction.');
@@ -155,7 +155,7 @@ export async function settlePayment(
       action: 'payment.unconfirmed',
       subjectType: 'payment',
       subjectId: payment.id,
-      payload: { txHash, note: String(PurseError.is(cause) ? cause.message : cause) },
+      payload: { txHash, note: String(PocketError.is(cause) ? cause.message : cause) },
     });
     return submitted;
   }

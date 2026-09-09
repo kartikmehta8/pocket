@@ -3,13 +3,13 @@
  *
  * The dashboard signs people in with Privy's hosted login and forwards the
  * resulting access token to the API. This adapter is what turns that token
- * into a subject Purse will trust with an organization's money, so it fails
+ * into a subject Pocket will trust with an organization's money, so it fails
  * closed on every path: any error from Privy — expired, forged, or issued for
  * another application — becomes `UNAUTHORIZED` rather than a partial success.
  */
 
 import { PrivyClient } from '@privy-io/server-auth';
-import { PurseError, type IdentityVerifier, type VerifiedIdentity } from '@purse/core';
+import { PocketError, type IdentityVerifier, type VerifiedIdentity } from '@pocket/core';
 
 /** Options for {@link PrivyIdentityVerifier}. */
 export interface PrivyIdentityOptions {
@@ -51,14 +51,14 @@ export class PrivyIdentityVerifier implements IdentityVerifier {
    * @param token - The JWT the browser received from Privy.
    * @returns The Privy user id as the subject. Email is resolved separately by
    *   {@link PrivyIdentityVerifier.profile}, because the token does not carry it.
-   * @throws {PurseError} `UNAUTHORIZED` for any token Privy will not vouch for.
+   * @throws {PocketError} `UNAUTHORIZED` for any token Privy will not vouch for.
    */
   public async verify(token: string): Promise<VerifiedIdentity> {
     try {
       const claims = await this.#privy.verifyAuthToken(token, this.#verificationKey);
       return { subject: claims.userId, email: null };
     } catch (cause) {
-      throw new PurseError('UNAUTHORIZED', 'The session token is not valid.', {}, cause);
+      throw new PocketError('UNAUTHORIZED', 'The session token is not valid.', {}, cause);
     }
   }
 

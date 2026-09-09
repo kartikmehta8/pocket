@@ -1,9 +1,9 @@
 /**
  * The Privy-side wallet policy.
  *
- * This is defence in depth, not the primary control. Purse's own policy engine
+ * This is defence in depth, not the primary control. Pocket's own policy engine
  * decides every payment before anything is signed; this policy is a ceiling
- * the provider enforces even if Purse itself is wrong.
+ * the provider enforces even if Pocket itself is wrong.
  *
  * Privy policies are **default-deny**: once a policy is attached to a wallet,
  * every RPC method that wallet uses must be explicitly allowed, and a `DENY`
@@ -64,7 +64,7 @@ export function walletPolicyRules(options: WalletPolicyOptions) {
  * @param options - The ceiling to enforce.
  * @returns The new policy's id, or `null` when Privy rejected the request.
  * @remarks A failure is reported, not swallowed, but it does not block wallet
- * creation: Purse's own engine remains authoritative and always runs.
+ * creation: Pocket's own engine remains authoritative and always runs.
  */
 export async function createWalletPolicy(
   privy: PrivyClient,
@@ -72,7 +72,7 @@ export async function createWalletPolicy(
 ): Promise<string | null> {
   try {
     const policy = await privy.walletApi.createPolicy({
-      name: 'purse-wallet-controls',
+      name: 'pocket-wallet-controls',
       version: '1.0',
       chainType: 'ethereum',
       rules: walletPolicyRules(options),
@@ -80,7 +80,7 @@ export async function createWalletPolicy(
     return policy.id;
   } catch (cause) {
     process.emitWarning(
-      `Privy policy creation failed; wallets rely on Purse policy alone. ${String(cause)}`,
+      `Privy policy creation failed; wallets rely on Pocket policy alone. ${String(cause)}`,
     );
     return null;
   }

@@ -1,5 +1,5 @@
 {
-  "name": "@purse/db",
+  "name": "@pocket/db",
   "version": "0.1.0",
   "private": true,
   "type": "module",
@@ -19,7 +19,7 @@
     "test": "vitest run --passWithNoTests"
   },
   "dependencies": {
-    "@purse/core": "workspace:*",
+    "@pocket/core": "workspace:*",
     "drizzle-orm": "^0.38.3",
     "pg": "^8.13.1"
   },

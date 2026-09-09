@@ -15,7 +15,7 @@ import {
   type Payment,
   type PolicyViolation,
   type TaskBudget,
-} from '@purse/core';
+} from '@pocket/core';
 
 /**
  * Formats a base-unit amount for the wire.

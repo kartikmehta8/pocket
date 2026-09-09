@@ -13,7 +13,7 @@ export function baseOptions(): BaseLayoutProps {
     nav: {
       title: (
         <span className="text-fd-foreground inline-flex items-baseline text-[0.9375rem] font-bold tracking-[-0.03em]">
-          Purse
+          Pocket
           <span aria-hidden className="bg-fd-primary ml-[3px] size-1 self-end rounded-full" />
           <span className="text-fd-muted-foreground ml-2 text-sm font-medium">Docs</span>
         </span>

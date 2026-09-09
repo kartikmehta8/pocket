@@ -1,8 +1,8 @@
 /**
- * The agent runtimes Purse gives a wallet to.
+ * The agent runtimes Pocket gives a wallet to.
  *
- * Logos are the vendors' own marks, used to say what Purse works with. None of
- * these projects has reviewed or endorsed Purse.
+ * Logos are the vendors' own marks, used to say what Pocket works with. None of
+ * these projects has reviewed or endorsed Pocket.
  */
 
 /** One agent runtime, as the hero names it. */

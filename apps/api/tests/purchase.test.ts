@@ -7,7 +7,7 @@
  */
 
 import { describe, expect, it } from 'vitest';
-import { PurseError } from '@purse/core';
+import { PocketError } from '@pocket/core';
 import { isPrivateHost, parseResourceUrl } from '../src/services/resource-url.js';
 import { purchaseIdempotencyKey } from '../src/services/x402-idempotency.js';
 
@@ -36,7 +36,7 @@ describe('private host detection', () => {
 
 describe('resource url parsing', () => {
   it('refuses a private host when the deployment does not allow one', () => {
-    expect(() => parseResourceUrl('http://localhost:8402/v1/data', false)).toThrow(PurseError);
+    expect(() => parseResourceUrl('http://localhost:8402/v1/data', false)).toThrow(PocketError);
   });
 
   it('allows a private host when the deployment does allow one', () => {
@@ -45,12 +45,12 @@ describe('resource url parsing', () => {
   });
 
   it('refuses a non-http scheme even when private hosts are allowed', () => {
-    expect(() => parseResourceUrl('file:///etc/passwd', true)).toThrow(PurseError);
-    expect(() => parseResourceUrl('ftp://example.com/x', true)).toThrow(PurseError);
+    expect(() => parseResourceUrl('file:///etc/passwd', true)).toThrow(PocketError);
+    expect(() => parseResourceUrl('ftp://example.com/x', true)).toThrow(PocketError);
   });
 
   it('refuses something that is not a URL at all', () => {
-    expect(() => parseResourceUrl('not a url', true)).toThrow(PurseError);
+    expect(() => parseResourceUrl('not a url', true)).toThrow(PocketError);
   });
 
   it('accepts a public https resource', () => {

@@ -1,7 +1,7 @@
 /**
  * Spend intelligence.
  *
- * Purse's ledger says what it authorized. The Graph says what actually settled
+ * Pocket's ledger says what it authorized. The Graph says what actually settled
  * on chain. Reporting both, and flagging where they disagree, is the point: a
  * control plane that can only see its own decisions cannot detect the case
  * where money moved without one.
@@ -13,14 +13,14 @@ import {
   isAssetId,
   type AnalyticsProvider,
   type AssetId,
-} from '@purse/core';
+} from '@pocket/core';
 import {
   dailySpendSeries,
   spendByCategory,
   spendByRecipient,
   totalSpend,
   type Database,
-} from '@purse/db';
+} from '@pocket/db';
 import { detectAnomalies, reconcile } from './anomalies.js';
 
 /** Collaborators the analytics service needs. */

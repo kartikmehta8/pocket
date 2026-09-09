@@ -1,6 +1,6 @@
-# Purse subgraph
+# Pocket subgraph
 
-Indexes ERC-20 `Transfer` events on Hedera so Purse can compare what it
+Indexes ERC-20 `Transfer` events on Hedera so Pocket can compare what it
 authorized against what actually settled.
 
 **Why this directory exists.** The Graph's decentralized network and Subgraph
@@ -38,10 +38,10 @@ npm run create-local
 npm run deploy-local
 ```
 
-Point Purse at it, in the repo-root `.env`:
+Point Pocket at it, in the repo-root `.env`:
 
 ```bash
-GRAPH_SUBGRAPH_URL=http://localhost:8000/subgraphs/name/purse/transfers
+GRAPH_SUBGRAPH_URL=http://localhost:8000/subgraphs/name/pocket/transfers
 GRAPH_API_KEY=
 ```
 
@@ -55,10 +55,10 @@ curl -s http://localhost:8030/graphql -H 'content-type: application/json' \
   -d '{"query":"{ indexingStatuses { subgraph synced health chains { chainHeadBlock { number } latestBlock { number } } } }"}'
 ```
 
-And query it the way Purse does:
+And query it the way Pocket does:
 
 ```bash
-curl -s http://localhost:8000/subgraphs/name/purse/transfers \
+curl -s http://localhost:8000/subgraphs/name/pocket/transfers \
   -H 'content-type: application/json' \
   -d '{"query":"{ transfers(first:5, orderBy: timestamp, orderDirection: desc) { transaction from to value timestamp token { symbol } } }"}'
 ```
@@ -88,7 +88,7 @@ write your own, do the same.
 `schema.graphql` is written to match the default query in
 `packages/adapters/src/graph.ts`: a `transfers` collection with `transaction`,
 `from`, `to`, `value`, `timestamp` and `token { symbol }`. Rename a field here
-and you must pass a matching `query` through `GraphOptions`, or Purse will
+and you must pass a matching `query` through `GraphOptions`, or Pocket will
 silently index nothing useful.
 
 Amounts are stored in base units and never scaled in the mapping. Scaling in
@@ -98,5 +98,5 @@ two places is how a reconciliation report ends up off by a factor of a million.
 
 HBAR is the native asset and emits no ERC-20 `Transfer` event, so this subgraph
 will not see it. Reconciliation against The Graph is therefore a token-settled
-feature. With HBAR, Purse still reports analytics from its own ledger and
+feature. With HBAR, Pocket still reports analytics from its own ledger and
 labels the source `ledger` rather than claiming on-chain provenance it lacks.

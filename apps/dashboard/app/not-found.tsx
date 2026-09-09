@@ -12,7 +12,7 @@ export default function NotFound() {
       <EmptyState
         icon={Compass}
         title="Page not found"
-        description="That route does not exist in the Purse dashboard."
+        description="That route does not exist in the Pocket dashboard."
         action={
           <Button asChild variant="secondary" size="sm">
             <Link href="/">Back to overview</Link>

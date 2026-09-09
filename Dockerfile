@@ -2,9 +2,9 @@
 # the API, the MCP server and the paid service share a single build and a
 # single dependency graph rather than drifting apart across three Dockerfiles.
 #
-#   docker build --build-arg APP=api -t purse-api .
-#   docker build --build-arg APP=mcp -t purse-mcp .
-#   docker build --build-arg APP=paid-service -t purse-paid .
+#   docker build --build-arg APP=api -t pocket-api .
+#   docker build --build-arg APP=mcp -t pocket-mcp .
+#   docker build --build-arg APP=paid-service -t pocket-paid .
 #
 # The dashboard is a Next.js app and builds separately; see DEPLOY.md.
 
@@ -34,7 +34,7 @@ COPY apps/api apps/api
 COPY apps/mcp apps/mcp
 COPY apps/paid-service apps/paid-service
 RUN pnpm -r --filter './packages/*' build \
- && pnpm -r --filter './apps/*' --filter '!@purse/dashboard' build
+ && pnpm -r --filter './apps/*' --filter '!@pocket/dashboard' build
 
 # Drop dev dependencies from the tree that ships.
 RUN pnpm prune --prod --ignore-scripts
@@ -46,9 +46,9 @@ ENV NODE_ENV=production APP=${APP}
 WORKDIR /app
 
 # Never run as root, and never own the files the process reads.
-RUN addgroup -S purse && adduser -S purse -G purse
-COPY --from=build --chown=purse:purse /app /app
-USER purse
+RUN addgroup -S pocket && adduser -S pocket -G pocket
+COPY --from=build --chown=pocket:pocket /app /app
+USER pocket
 
 EXPOSE 8080
 # `APP` is read at start rather than baked into the entrypoint array, so one

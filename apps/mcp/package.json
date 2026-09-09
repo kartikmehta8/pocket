@@ -1,5 +1,5 @@
 {
-  "name": "@purse/mcp",
+  "name": "@pocket/mcp",
   "version": "0.1.0",
   "private": true,
   "type": "module",
@@ -12,7 +12,7 @@
   },
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.12.0",
-    "@purse/core": "workspace:*",
+    "@pocket/core": "workspace:*",
     "express": "^4.21.2",
     "zod": "^3.24.1"
   },

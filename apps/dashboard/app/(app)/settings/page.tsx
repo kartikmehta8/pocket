@@ -78,7 +78,7 @@ export default async function SettingsPage() {
           <div>
             <CardTitle>API keys</CardTitle>
             <CardDescription>
-              Presented by the MCP server and any agent runtime that calls Purse directly.
+              Presented by the MCP server and any agent runtime that calls Pocket directly.
             </CardDescription>
           </div>
         </CardHeader>
@@ -107,7 +107,7 @@ export default async function SettingsPage() {
         ) : (
           <CardContent>
             <p className="text-text-secondary text-sm leading-relaxed">
-              This dashboard is authenticated with <InlineCode>PURSE_API_KEY</InlineCode> rather
+              This dashboard is authenticated with <InlineCode>POCKET_API_KEY</InlineCode> rather
               than a signed-in account, so it cannot manage credentials. Remove that variable and
               sign in to use key management.
             </p>
@@ -124,7 +124,7 @@ export default async function SettingsPage() {
         </CardHeader>
         <CardContent className="flex flex-col gap-3">
           <CodeBlock code={urls.mcp} label="MCP endpoint" caption="MCP server" />
-          <CodeBlock code={urls.api} label="API base URL" caption="Purse API" />
+          <CodeBlock code={urls.api} label="API base URL" caption="Pocket API" />
         </CardContent>
       </Card>
 

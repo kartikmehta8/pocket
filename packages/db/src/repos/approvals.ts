@@ -2,7 +2,7 @@
  * Human approval decisions on escalated payments.
  */
 
-import { newId } from '@purse/core';
+import { newId } from '@pocket/core';
 import type { Transaction } from '../client.js';
 import { approvals } from '../schema/index.js';
 

@@ -4,5 +4,7 @@ export default defineConfig({
   schema: './dist/schema/index.js',
   out: './drizzle',
   dialect: 'postgresql',
-  dbCredentials: { url: process.env.DATABASE_URL ?? 'postgres://purse:purse@localhost:5434/purse' },
+  dbCredentials: {
+    url: process.env.DATABASE_URL ?? 'postgres://pocket:pocket@localhost:5434/pocket',
+  },
 });

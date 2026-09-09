@@ -1,4 +1,4 @@
-"""Render one `purse_pay_for_resource` result as a few readable lines.
+"""Render one `pocket_pay_for_resource` result as a few readable lines.
 
 Every outcome gets the same treatment. A refusal is not an error to be dumped
 as raw JSON — it is the product working, and it should read as clearly as a

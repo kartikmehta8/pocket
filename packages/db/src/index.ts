@@ -1,5 +1,5 @@
 /**
- * Public surface of the Purse persistence package.
+ * Public surface of the Pocket persistence package.
  *
  * Callers use the repository functions rather than composing queries
  * themselves, so tenancy scoping and the money-path invariants live in one

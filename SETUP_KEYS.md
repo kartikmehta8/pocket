@@ -1,6 +1,6 @@
 # Adding keys: Privy, Hedera and The Graph
 
-Purse runs with **no keys at all**. Every vendor slot falls back to a
+Pocket runs with **no keys at all**. Every vendor slot falls back to a
 deterministic in-memory implementation, and `GET /v1/health` reports exactly
 which mode each one resolved to:
 
@@ -28,7 +28,7 @@ Every value goes in `.env` at the repo root. Restart the API afterwards
 
 ## 1. Privy — wallets and signing
 
-Privy custodies the agent wallets. Purse never holds a private key.
+Privy custodies the agent wallets. Pocket never holds a private key.
 
 1. Sign in at **https://dashboard.privy.io** and create an app.
 2. Open **Settings → Basics**. Copy the **App ID**.
@@ -41,12 +41,12 @@ PRIVY_APP_ID=your-app-id
 PRIVY_APP_SECRET=your-app-secret
 ```
 
-That is everything Purse needs. There is **no server-wallet toggle to switch
+That is everything Pocket needs. There is **no server-wallet toggle to switch
 on**: the Wallet API is available to any app, and the App ID plus App Secret
 are the only credentials required to create a wallet. If you were looking for
 such a setting and could not find one, that is why.
 
-Purse creates **app-owned** wallets, meaning it passes no `owner` when calling
+Pocket creates **app-owned** wallets, meaning it passes no `owner` when calling
 `createWallet`. That matters for the next step.
 
 ### Sign-in uses the same app
@@ -62,7 +62,7 @@ credentials. Two more things are needed for that half:
 ```bash
 # apps/dashboard/.env.local
 NEXT_PUBLIC_PRIVY_APP_ID=your-app-id
-PURSE_API_KEY=                     # empty: setting it bypasses sign-in
+POCKET_API_KEY=                     # empty: setting it bypasses sign-in
 ```
 
 The App ID is a public identifier and is compiled into the browser bundle. The
@@ -70,7 +70,7 @@ App Secret never leaves the API.
 
 ### Authorization key — optional
 
-Privy only _requires_ a request signature when a wallet has an owner. Purse's
+Privy only _requires_ a request signature when a wallet has an owner. Pocket's
 wallets have none, so this step is genuinely optional and you can skip it and
 still transact. Add it if you want wallet actions cryptographically bound to a
 key your server holds.
@@ -106,21 +106,21 @@ Register an agent and a real Privy wallet address comes back:
 
 ```bash
 curl -sX POST localhost:8080/v1/agents \
-  -H "authorization: Bearer $PURSE_API_KEY" \
+  -H "authorization: Bearer $POCKET_API_KEY" \
   -H 'content-type: application/json' \
   -d '{"name":"Hermes"}' | jq .wallet
 ```
 
-On first wallet creation Purse also installs a **Privy-side policy** capping
+On first wallet creation Pocket also installs a **Privy-side policy** capping
 native transfer value, as a second ceiling underneath its own policy engine. If
 Privy rejects that call, wallet creation still succeeds and a warning is
-printed: Purse's policy engine remains authoritative and always runs.
+printed: Pocket's policy engine remains authoritative and always runs.
 
 ---
 
 ## 2. Hedera — settlement and balance reads
 
-Purse talks to Hedera through its Ethereum-compatible JSON-RPC relay, so this
+Pocket talks to Hedera through its Ethereum-compatible JSON-RPC relay, so this
 is ordinary EVM wiring: chain id 296 on testnet, `0x` addresses, `eth_call`.
 
 ### `HEDERA_RPC_URL`
@@ -155,7 +155,7 @@ HashScan: create one at **https://portal.hedera.com/dashboard**.
 
 ### `HEDERA_USDC_ADDRESS`
 
-**Leave this blank unless you specifically want USDC.** Blank means Purse
+**Leave this blank unless you specifically want USDC.** Blank means Pocket
 settles in HBAR, the native asset, which needs no contract address and no
 setup. For a demo that is the path of least resistance. If it is blank and an
 agent tries to pay in USDC, the payment fails with `VALIDATION_FAILED` rather
@@ -209,7 +209,7 @@ Agents spend from their own Privy wallet, so send testnet HBAR to the address
 returned when you registered the agent:
 
 ```bash
-curl -s localhost:8080/v1/agents -H "authorization: Bearer $PURSE_API_KEY" \
+curl -s localhost:8080/v1/agents -H "authorization: Bearer $POCKET_API_KEY" \
   | jq -r '.agents[].wallet.address'
 ```
 
@@ -236,7 +236,7 @@ payment record carries a real HashScan link:
 
 ```bash
 curl -s "localhost:8080/v1/payments?limit=1" \
-  -H "authorization: Bearer $PURSE_API_KEY" | jq '.payments[0].explorerUrl'
+  -H "authorization: Bearer $POCKET_API_KEY" | jq '.payments[0].explorerUrl'
 ```
 
 Mainnet works the same way: set `CHAIN=hedera-mainnet`,
@@ -248,7 +248,7 @@ something on testnet.
 
 ## 3. The Graph — composed market data and spend intelligence
 
-The Graph does two separate jobs in Purse, and only one of them needs keys.
+The Graph does two separate jobs in Pocket, and only one of them needs keys.
 
 ### 3a. Price-gated policy (needs two credentials)
 
@@ -262,7 +262,7 @@ by **two Graph products that check each other**:
 
 Composing them is the point. A single price feed is a single point of failure
 for a control that decides whether money moves, so the two must agree within a
-tolerance. When they disagree, Purse returns no price and the policy engine
+tolerance. When they disagree, Pocket returns no price and the policy engine
 **denies**. It never guesses.
 
 **Get the Token API credential.** Sign in at
@@ -292,7 +292,7 @@ Try it:
 
 ```bash
 curl -sX PUT localhost:8080/v1/agents/<AGENT_ID>/policy \
-  -H "authorization: Bearer $PURSE_API_KEY" -H 'content-type: application/json' \
+  -H "authorization: Bearer $POCKET_API_KEY" -H 'content-type: application/json' \
   -d '{"allowedAssets":["USDC"],"allowedChains":["hedera-testnet"],
        "allowedCategories":["research"],"maxTransactionAmount":"2",
        "trustedRecipients":[],"unknownRecipientBehaviour":"require_approval",
@@ -304,7 +304,7 @@ refusal can be explained after the fact.
 
 ### 3b. Spend reconciliation (no keys, self-hosted)
 
-Separately, Purse compares its own ledger against what actually settled on
+Separately, Pocket compares its own ledger against what actually settled on
 chain. **The Graph does not support Hedera**: it is absent from
 [the supported networks](https://thegraph.com/docs/en/supported-networks/), and
 Hedera's own docs say the hosted service is unavailable and you must run a
@@ -319,7 +319,7 @@ npm run create-local && npm run deploy-local
 ```
 
 ```bash
-GRAPH_SUBGRAPH_URL=http://localhost:8000/subgraphs/name/purse/transfers
+GRAPH_SUBGRAPH_URL=http://localhost:8000/subgraphs/name/pocket/transfers
 ```
 
 HBAR is native and emits no ERC-20 transfer event, so reconciliation is a
@@ -336,7 +336,7 @@ curl -s localhost:8080/v1/health | jq '.adapters.analytics, .adapters.market'
 
 ## Organization API key
 
-This one is not a vendor key. Purse mints it, and it authenticates every API
+This one is not a vendor key. Pocket mints it, and it authenticates every API
 call.
 
 ```bash
@@ -346,14 +346,14 @@ pnpm seed          # prints the key once, then never again
 Copy it into `.env`:
 
 ```bash
-MCP_AGENT_TOKEN=purse_sk_...   # the MCP server presents this to the API
+MCP_AGENT_TOKEN=pocket_sk_...   # the MCP server presents this to the API
 ```
 
 Only a SHA-256 hash is stored, so a lost key cannot be recovered.
 
 Once sign-in is configured you do not need `pnpm seed` at all: signing in mints
 the organization's first key, and **Settings → API keys** mints and revokes the
-rest. `PURSE_API_KEY` in the dashboard environment is the single-tenant escape
+rest. `POCKET_API_KEY` in the dashboard environment is the single-tenant escape
 hatch — it bypasses sign-in and pins the dashboard to one organization, which
 is right for an offline demo and wrong for anything else.
 
@@ -361,7 +361,7 @@ Already have an organization with data in it? Sign in, then attach your account
 to it:
 
 ```bash
-pnpm --filter @purse/api adopt -- you@example.com org_1234abcd
+pnpm --filter @pocket/api adopt -- you@example.com org_1234abcd
 ```
 
 ---
@@ -369,7 +369,7 @@ pnpm --filter @purse/api adopt -- you@example.com org_1234abcd
 ## Safety notes
 
 - `.env` is gitignored. Keep it that way; the repo has no other secret store.
-- Purse never logs an authorization header, an idempotency key, a cookie, or a
+- Pocket never logs an authorization header, an idempotency key, a cookie, or a
   wallet secret. If you add logging, preserve the redaction list in
   `apps/api/src/server.ts`.
 - `USE_MOCK_ADAPTERS=true` forces every slot to its fake regardless of the keys

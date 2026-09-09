@@ -1,7 +1,7 @@
 """
 An ERC-20 token seen by this subgraph.
 
-Only the fields Purse actually queries are stored. A subgraph that indexes
+Only the fields Pocket actually queries are stored. A subgraph that indexes
 fields nobody reads costs indexing time and buys nothing.
 """
 type Token @entity(immutable: true) {
@@ -14,14 +14,14 @@ type Token @entity(immutable: true) {
 """
 One value transfer.
 
-The field names here are the contract between the subgraph and Purse's
+The field names here are the contract between the subgraph and Pocket's
 analytics adapter. If you rename anything, override the query via
 `GraphOptions.query` in `packages/adapters/src/graph.ts` to match.
 """
 type Transfer @entity(immutable: true) {
   "Transaction hash plus log index, so each log is its own entity."
   id: Bytes!
-  "Transaction hash. Purse compares this against the hash it recorded."
+  "Transaction hash. Pocket compares this against the hash it recorded."
   transaction: Bytes!
   from: Bytes!
   to: Bytes!

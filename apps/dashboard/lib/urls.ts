@@ -13,7 +13,7 @@ const DEFAULT_MCP_URL = 'http://localhost:8081/mcp';
 export interface ServiceUrls {
   /** Streamable-HTTP endpoint an MCP client connects to. */
   mcp: string;
-  /** Base URL of the Purse API. */
+  /** Base URL of the Pocket API. */
   api: string;
   /** The example paid resource, when one is deployed. */
   paidService: string | null;
@@ -29,7 +29,7 @@ export function serviceUrls(): ServiceUrls {
   const paid = process.env.NEXT_PUBLIC_PAID_SERVICE_URL ?? '';
   return {
     mcp: process.env.NEXT_PUBLIC_MCP_URL ?? DEFAULT_MCP_URL,
-    api: trim(process.env.PURSE_API_URL ?? 'http://localhost:8080'),
+    api: trim(process.env.POCKET_API_URL ?? 'http://localhost:8080'),
     paidService: paid === '' ? null : trim(paid),
   };
 }

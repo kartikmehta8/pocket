@@ -6,7 +6,7 @@
  * thresholds are simple multiples rather than a fitted model.
  */
 
-import { decimalsOf, formatAmount, type AnalyticsProvider, type AssetId } from '@purse/core';
+import { decimalsOf, formatAmount, type AnalyticsProvider, type AssetId } from '@pocket/core';
 
 /** One flagged deviation from an agent's normal behaviour. */
 export interface Anomaly {
@@ -63,7 +63,7 @@ export function detectAnomalies(
  * @param address - Agent wallet address to inspect.
  * @param from - Window start.
  * @param to - Window end.
- * @param ledgerTotal - What Purse believes it authorized, in base units.
+ * @param ledgerTotal - What Pocket believes it authorized, in base units.
  * @param asset - Asset to compare.
  * @returns A mismatch anomaly, or `null` when the two agree or the index is
  *   unreachable. An unreachable index is reported as no anomaly rather than a
@@ -87,7 +87,7 @@ export async function reconcile(
     return {
       type: 'ledger_chain_mismatch',
       severity: outbound > ledgerTotal ? 'high' : 'low',
-      description: `On-chain outflow differs from the Purse ledger by ${formatAmount(difference, decimalsOf(asset))} ${asset}.`,
+      description: `On-chain outflow differs from the Pocket ledger by ${formatAmount(difference, decimalsOf(asset))} ${asset}.`,
     };
   } catch {
     return null;

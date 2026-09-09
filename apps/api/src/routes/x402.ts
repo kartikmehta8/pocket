@@ -4,14 +4,14 @@
  * Two calls, deliberately separated. `authorize` runs the policy and budget
  * engines and only then signs, so a refused payment never becomes a payable
  * transaction. `settlement` records what the facilitator actually did, because
- * Purse does not submit the transaction and must be told the outcome rather
+ * Pocket does not submit the transaction and must be told the outcome rather
  * than assume it.
  */
 
 import type { FastifyInstance } from 'fastify';
 import { z } from 'zod';
-import { PurseError, categorySchema } from '@purse/core';
-import { PrivyWalletProvider } from '@purse/adapters';
+import { PocketError, categorySchema } from '@pocket/core';
+import { PrivyWalletProvider } from '@pocket/adapters';
 import type { AppContext } from '../context.js';
 import { decisionToJson, paymentToJson } from '../serialize.js';
 import { authorizeX402Payment } from '../services/x402.js';
@@ -65,14 +65,14 @@ const settlementSchema = z.object({
 export function registerX402Routes(app: FastifyInstance, ctx: AppContext): void {
   app.post('/v1/payments/x402/authorize', async (request) => {
     if (!(ctx.wallet instanceof PrivyWalletProvider)) {
-      throw new PurseError(
+      throw new PocketError(
         'UPSTREAM_UNAVAILABLE',
         'Facilitator-settled payments need a live Privy wallet provider.',
       );
     }
     const key = request.headers['idempotency-key'];
     if (typeof key !== 'string' || key.trim() === '') {
-      throw new PurseError('VALIDATION_FAILED', 'An Idempotency-Key header is required.');
+      throw new PocketError('VALIDATION_FAILED', 'An Idempotency-Key header is required.');
     }
     const body = authorizeSchema.parse(request.body);
 
@@ -105,7 +105,7 @@ export function registerX402Routes(app: FastifyInstance, ctx: AppContext): void 
 
   app.post('/v1/payments/x402/purchase', async (request) => {
     if (!(ctx.wallet instanceof PrivyWalletProvider)) {
-      throw new PurseError(
+      throw new PocketError(
         'UPSTREAM_UNAVAILABLE',
         'Facilitator-settled payments need a live Privy wallet provider.',
       );

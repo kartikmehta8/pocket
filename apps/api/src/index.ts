@@ -2,8 +2,8 @@
  * API entry point.
  */
 
-import { buildAdapters } from '@purse/adapters';
-import { closeDb, getDb } from '@purse/db';
+import { buildAdapters } from '@pocket/adapters';
+import { closeDb, getDb } from '@pocket/db';
 import { loadConfig } from './config.js';
 import { buildServer } from './server.js';
 
@@ -42,10 +42,10 @@ async function main(): Promise<void> {
   }
 
   await app.listen({ port: config.PORT, host: config.HOST });
-  app.log.info({ adapters: adapters.modes }, 'Purse API ready');
+  app.log.info({ adapters: adapters.modes }, 'Pocket API ready');
 }
 
 main().catch((error: unknown) => {
-  process.stderr.write(`Failed to start Purse API: ${String(error)}\n`);
+  process.stderr.write(`Failed to start Pocket API: ${String(error)}\n`);
   process.exit(1);
 });

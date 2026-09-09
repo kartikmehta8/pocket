@@ -4,7 +4,7 @@
  */
 
 import { and, eq, isNull, sql } from 'drizzle-orm';
-import { newApiKey, newId, apiKeyPrefix, type Organization } from '@purse/core';
+import { newApiKey, newId, apiKeyPrefix, type Organization } from '@pocket/core';
 import type { Database } from '../client.js';
 import { hashApiKey } from '../client.js';
 import { apiKeys, organizations, users } from '../schema/index.js';

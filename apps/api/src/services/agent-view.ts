@@ -6,14 +6,14 @@
  * is left today.
  */
 
-import { decimalsOf, formatAmount, isAssetId, remaining, type Agent } from '@purse/core';
+import { decimalsOf, formatAmount, isAssetId, remaining, type Agent } from '@pocket/core';
 import {
   countSpendToday,
   getAgentBundle,
   listAgents,
   sumSpendToday,
   type Database,
-} from '@purse/db';
+} from '@pocket/db';
 
 /** JSON shape of an agent summary, matching API_CONTRACT.md. */
 export interface AgentSummaryJson {

@@ -63,7 +63,7 @@ export function FloatingNav() {
             href="/"
             className="text-text inline-flex items-baseline rounded-md text-[0.9375rem] font-bold tracking-[-0.03em] transition-opacity duration-(--duration-fast) hover:opacity-70"
           >
-            Purse
+            Pocket
             <span aria-hidden className="bg-accent-600 ml-[3px] size-1 self-end rounded-full" />
           </Link>
 

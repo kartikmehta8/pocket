@@ -3,7 +3,7 @@
  */
 
 import { and, desc, eq, isNull } from 'drizzle-orm';
-import { newId, type TaskBudget } from '@purse/core';
+import { newId, type TaskBudget } from '@pocket/core';
 import type { Database, Transaction } from '../client.js';
 import { taskBudgets } from '../schema/index.js';
 

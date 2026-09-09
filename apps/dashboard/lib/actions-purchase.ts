@@ -70,7 +70,7 @@ export async function purchaseAction(
   const result = await purchaseResource({
     agentId,
     url,
-    reason: reason === '' ? 'Purchased from the Purse dashboard' : reason,
+    reason: reason === '' ? 'Purchased from the Pocket dashboard' : reason,
     category: String(form.get('category') ?? 'data'),
     ...(taskBudgetId === '' ? {} : { taskBudgetId }),
   });

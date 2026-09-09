@@ -1,7 +1,7 @@
 /**
  * Bearer authentication.
  *
- * Purse accepts two kinds of credential on the same header, because two very
+ * Pocket accepts two kinds of credential on the same header, because two very
  * different callers need in. An agent runtime presents a long-lived
  * organization API key. A person presents a short-lived token from the
  * identity provider. Which one arrived is recorded on the request, so a route
@@ -12,8 +12,8 @@
  */
 
 import type { FastifyInstance, FastifyRequest } from 'fastify';
-import { PurseError } from '@purse/core';
-import { findOrganizationByApiKey, findSession } from '@purse/db';
+import { PocketError } from '@pocket/core';
+import { findOrganizationByApiKey, findSession } from '@pocket/db';
 import type { AppContext } from './context.js';
 
 /** Routes that may be called without a key. Everything else is protected. */
@@ -25,8 +25,8 @@ const PUBLIC_ROUTES = new Set([
   'POST:/v1/auth/session',
 ]);
 
-/** Prefix that distinguishes a Purse API key from an identity token. */
-const API_KEY_PREFIX = 'purse_sk_';
+/** Prefix that distinguishes a Pocket API key from an identity token. */
+const API_KEY_PREFIX = 'pocket_sk_';
 
 /**
  * Extracts a bearer token.
@@ -48,7 +48,7 @@ export function bearerToken(request: FastifyRequest): string | null {
  * @param ctx - Application context.
  * @param request - Incoming request, mutated with the resolved tenancy.
  * @param token - The presented key.
- * @throws {PurseError} `UNAUTHORIZED` when the key is unknown or revoked.
+ * @throws {PocketError} `UNAUTHORIZED` when the key is unknown or revoked.
  */
 async function authenticateApiKey(
   ctx: AppContext,
@@ -56,7 +56,7 @@ async function authenticateApiKey(
   token: string,
 ): Promise<void> {
   const org = await findOrganizationByApiKey(ctx.db, token);
-  if (org === null) throw new PurseError('UNAUTHORIZED', 'The provided API key is not valid.');
+  if (org === null) throw new PocketError('UNAUTHORIZED', 'The provided API key is not valid.');
   request.orgId = org.id;
   request.principal = 'api-key';
   request.userId = null;
@@ -68,7 +68,7 @@ async function authenticateApiKey(
  * @param ctx - Application context.
  * @param request - Incoming request, mutated with the resolved tenancy.
  * @param token - The presented session token.
- * @throws {PurseError} `UNAUTHORIZED` when the provider will not vouch for the
+ * @throws {PocketError} `UNAUTHORIZED` when the provider will not vouch for the
  *   token, or when it is valid but no organization has been provisioned for
  *   the subject yet. The second case is not an error the browser should retry
  *   blindly: it means `POST /v1/auth/session` has not run.
@@ -81,7 +81,7 @@ async function authenticateSession(
   const identity = await ctx.identity.verify(token);
   const session = await findSession(ctx.db, identity.subject);
   if (session === null) {
-    throw new PurseError('UNAUTHORIZED', 'No organization exists for this account yet.');
+    throw new PocketError('UNAUTHORIZED', 'No organization exists for this account yet.');
   }
   request.orgId = session.org.id;
   request.principal = 'session';
@@ -103,7 +103,7 @@ export function registerAuth(app: FastifyInstance, ctx: AppContext): void {
 
     const token = bearerToken(request);
     if (token === null) {
-      throw new PurseError(
+      throw new PocketError(
         'UNAUTHORIZED',
         'Provide an API key or session token as a bearer token.',
       );
@@ -121,13 +121,13 @@ export function registerAuth(app: FastifyInstance, ctx: AppContext): void {
  * Refuses a request that did not come from a signed-in person.
  *
  * @param request - Authenticated request.
- * @throws {PurseError} `FORBIDDEN` when the caller is a machine.
+ * @throws {PocketError} `FORBIDDEN` when the caller is a machine.
  * @remarks Guards credential and tenancy management. An API key that leaks
  *   should let an attacker spend up to the policy ceiling and no further — it
  *   must not let them mint fresh keys or rename the organization.
  */
 export function requireHuman(request: FastifyRequest): void {
   if (request.principal !== 'session') {
-    throw new PurseError('FORBIDDEN', 'This action requires a signed-in user, not an API key.');
+    throw new PocketError('FORBIDDEN', 'This action requires a signed-in user, not an API key.');
   }
 }

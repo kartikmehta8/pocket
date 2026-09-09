@@ -6,7 +6,7 @@ import { useState } from 'react';
 import { cn } from '@/lib/cn';
 import { CodeBlock } from '@/components/ui/code-block';
 
-/** The runtimes an operator is most likely to point at Purse. */
+/** The runtimes an operator is most likely to point at Pocket. */
 const CLIENTS = ['Hermes', 'Claude Code', 'Raw JSON'] as const;
 
 type Client = (typeof CLIENTS)[number];
@@ -19,12 +19,12 @@ type Client = (typeof CLIENTS)[number];
  * @returns The exact text to run or paste.
  */
 function recipe(client: Client, url: string): { caption: string; code: string } {
-  const config = JSON.stringify({ mcpServers: { purse: { type: 'http', url } } }, null, 2);
+  const config = JSON.stringify({ mcpServers: { pocket: { type: 'http', url } } }, null, 2);
   switch (client) {
     case 'Hermes':
-      return { caption: 'Terminal', code: `hermes mcp add purse --transport http --url ${url}` };
+      return { caption: 'Terminal', code: `hermes mcp add pocket --transport http --url ${url}` };
     case 'Claude Code':
-      return { caption: 'Terminal', code: `claude mcp add --transport http purse ${url}` };
+      return { caption: 'Terminal', code: `claude mcp add --transport http pocket ${url}` };
     case 'Raw JSON':
       return { caption: 'mcp.json', code: config };
   }

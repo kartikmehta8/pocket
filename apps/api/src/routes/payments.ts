@@ -8,7 +8,7 @@
  */
 
 import type { FastifyInstance } from 'fastify';
-import { PurseError, paymentRequestSchema, type PaymentStatus } from '@purse/core';
+import { PocketError, paymentRequestSchema, type PaymentStatus } from '@pocket/core';
 import {
   appendAuditEvent,
   chargeTaskBudget,
@@ -16,13 +16,13 @@ import {
   listPayments,
   recordApproval,
   updatePaymentStatus,
-} from '@purse/db';
+} from '@pocket/db';
 import { z } from 'zod';
 import type { AppContext } from '../context.js';
 import { decisionToJson, paymentToJson } from '../serialize.js';
 import { executePayment, previewPayment } from '../services/payments.js';
 import { settlePayment } from '../services/settlement.js';
-import { getAgentBundle } from '@purse/db';
+import { getAgentBundle } from '@pocket/db';
 
 const approvalSchema = z.object({ note: z.string().max(500).optional() });
 const listQuerySchema = z.object({
@@ -36,13 +36,13 @@ const listQuerySchema = z.object({
  *
  * @param header - Raw header value.
  * @returns The key.
- * @throws {PurseError} `VALIDATION_FAILED` when absent. Requiring it makes
+ * @throws {PocketError} `VALIDATION_FAILED` when absent. Requiring it makes
  *   every execution safely retryable, which matters most when a network
  *   timeout leaves the caller unsure whether money moved.
  */
 function requireIdempotencyKey(header: unknown): string {
   if (typeof header !== 'string' || header.trim() === '') {
-    throw new PurseError('VALIDATION_FAILED', 'An Idempotency-Key header is required.');
+    throw new PocketError('VALIDATION_FAILED', 'An Idempotency-Key header is required.');
   }
   return header.trim();
 }
@@ -96,16 +96,16 @@ export function registerPaymentRoutes(app: FastifyInstance, ctx: AppContext): vo
 
   app.get<{ Params: { id: string } }>('/v1/payments/:id', async (request) => {
     const payment = await getPayment(ctx.db, request.orgId, request.params.id);
-    if (payment === null) throw new PurseError('NOT_FOUND', 'Payment not found.');
+    if (payment === null) throw new PocketError('NOT_FOUND', 'Payment not found.');
     return { payment: paymentToJson(payment, (hash) => ctx.chain.explorerUrl(hash)) };
   });
 
   app.post<{ Params: { id: string } }>('/v1/payments/:id/approve', async (request) => {
     const body = approvalSchema.parse(request.body ?? {});
     const payment = await getPayment(ctx.db, request.orgId, request.params.id);
-    if (payment === null) throw new PurseError('NOT_FOUND', 'Payment not found.');
+    if (payment === null) throw new PocketError('NOT_FOUND', 'Payment not found.');
     if (payment.status !== 'awaiting_approval') {
-      throw new PurseError('CONFLICT', `Payment is ${payment.status} and cannot be approved.`, {
+      throw new PocketError('CONFLICT', `Payment is ${payment.status} and cannot be approved.`, {
         status: payment.status,
       });
     }
@@ -130,7 +130,7 @@ export function registerPaymentRoutes(app: FastifyInstance, ctx: AppContext): vo
     const approved = await updatePaymentStatus(ctx.db, payment.id, { status: 'approved' });
     const bundle = await getAgentBundle(ctx.db, request.orgId, payment.agentId);
     if (bundle?.wallet == null) {
-      throw new PurseError('WALLET_NOT_PROVISIONED', 'Agent has no wallet to pay from.');
+      throw new PocketError('WALLET_NOT_PROVISIONED', 'Agent has no wallet to pay from.');
     }
 
     const settled = await settlePayment(
@@ -150,9 +150,9 @@ export function registerPaymentRoutes(app: FastifyInstance, ctx: AppContext): vo
   app.post<{ Params: { id: string } }>('/v1/payments/:id/reject', async (request) => {
     const body = approvalSchema.parse(request.body ?? {});
     const payment = await getPayment(ctx.db, request.orgId, request.params.id);
-    if (payment === null) throw new PurseError('NOT_FOUND', 'Payment not found.');
+    if (payment === null) throw new PocketError('NOT_FOUND', 'Payment not found.');
     if (payment.status !== 'awaiting_approval') {
-      throw new PurseError('CONFLICT', `Payment is ${payment.status} and cannot be rejected.`, {
+      throw new PocketError('CONFLICT', `Payment is ${payment.status} and cannot be rejected.`, {
         status: payment.status,
       });
     }

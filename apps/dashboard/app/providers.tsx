@@ -4,7 +4,7 @@ import { PrivyProvider } from '@privy-io/react-auth';
 import { TooltipProvider } from '@/components/ui/tooltip';
 import type { ReactNode } from 'react';
 
-/** Privy's hosted login, themed to match the Purse palette. */
+/** Privy's hosted login, themed to match the Pocket palette. */
 const PRIVY_APPEARANCE = {
   theme: 'light' as const,
   accentColor: '#2a78d6' as const,

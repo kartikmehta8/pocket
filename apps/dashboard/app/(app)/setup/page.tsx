@@ -19,7 +19,7 @@ export const metadata: Metadata = { title: 'Connect an agent' };
 /** Live state decides which steps show as done, so nothing is prerendered. */
 export const dynamic = 'force-dynamic';
 
-/** Faucet for the testnet Purse settles on by default. */
+/** Faucet for the testnet Pocket settles on by default. */
 const FAUCET_URL = 'https://portal.hedera.com/faucet';
 
 /**
@@ -63,7 +63,7 @@ export default async function SetupPage() {
         <Step
           index={1}
           title="Register an agent"
-          summary="Purse provisions a Privy-custodied wallet for it. No key ever reaches your server or the model."
+          summary="Pocket provisions a Privy-custodied wallet for it. No key ever reaches your server or the model."
           done={agent !== null}
         >
           {agent === null ? (
@@ -135,7 +135,7 @@ export default async function SetupPage() {
             <ApiKeyMinter existing={keys.length} />
           ) : (
             <p className="text-text-secondary text-sm leading-relaxed">
-              This dashboard is running with <InlineCode>PURSE_API_KEY</InlineCode> set, so it is
+              This dashboard is running with <InlineCode>POCKET_API_KEY</InlineCode> set, so it is
               authenticated as a machine rather than a person. Sign in to manage keys.
             </p>
           )}
@@ -153,7 +153,7 @@ export default async function SetupPage() {
           <div className="border-border bg-ash-50 rounded-md border p-3">
             <p className="text-text text-sm font-medium">Then ask it to buy something</p>
             <p className="text-text-secondary mt-1 text-sm leading-relaxed">
-              Name the agent and the ceiling in the prompt. Purse evaluates the policy before
+              Name the agent and the ceiling in the prompt. Pocket evaluates the policy before
               anything is signed, and a refusal comes back to the agent as a reason it can act on.
             </p>
             <CodeBlock

@@ -1,5 +1,5 @@
 {
-  "name": "@purse/paid-service",
+  "name": "@pocket/paid-service",
   "version": "0.1.0",
   "private": true,
   "type": "module",
@@ -11,8 +11,8 @@
     "test": "vitest run --passWithNoTests"
   },
   "dependencies": {
-    "@purse/adapters": "workspace:*",
-    "@purse/core": "workspace:*",
+    "@pocket/adapters": "workspace:*",
+    "@pocket/core": "workspace:*",
     "@x402/core": "2.25.0",
     "@x402/fastify": "2.25.0",
     "@x402/hedera": "2.25.0",

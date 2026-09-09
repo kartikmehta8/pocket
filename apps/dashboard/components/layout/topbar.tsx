@@ -20,7 +20,7 @@ export async function Topbar() {
   return (
     <header className="border-border bg-canvas/80 sticky top-0 z-30 flex h-14 shrink-0 items-center justify-between gap-3 border-b px-5 backdrop-blur-md sm:px-8">
       <div className="flex min-w-0 items-center gap-2">
-        <span className="text-text truncate text-sm font-medium">{org?.name ?? 'Purse'}</span>
+        <span className="text-text truncate text-sm font-medium">{org?.name ?? 'Pocket'}</span>
         {machine ? (
           <Hint label="This dashboard is authenticated with an organization API key rather than a signed-in account. Sign-in features such as key management are unavailable.">
             <span className="bg-warning-soft text-warning-ink ring-warning-line text-2xs inline-flex items-center gap-1 rounded-full px-2 py-0.5 font-medium ring-1 ring-inset">
@@ -41,7 +41,7 @@ export async function Topbar() {
           </Link>
         </Hint>
         {machine ? null : <SessionSync />}
-        <UserMenu orgName={org?.name ?? 'Purse'} email={email} />
+        <UserMenu orgName={org?.name ?? 'Pocket'} email={email} />
       </div>
     </header>
   );

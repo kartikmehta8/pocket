@@ -42,10 +42,10 @@ function sellerBaseUrl(): string | null {
  * Reads the seller's public catalog.
  *
  * @returns The offered resources, or an explanation of why there are none.
- * @remarks Prices here are quoted by the seller, not by Purse. They are shown
+ * @remarks Prices here are quoted by the seller, not by Pocket. They are shown
  * before a purchase so a person sees the same number the policy engine will,
  * and the request is never cached: a stale price on this page would be a
- * quote Purse cannot honour.
+ * quote Pocket cannot honour.
  */
 export async function getCatalog(): Promise<Catalog> {
   const baseUrl = sellerBaseUrl();

@@ -22,12 +22,12 @@ const HOME = '/';
  *
  * @param request Incoming request.
  * @returns A redirect, or a pass-through.
- * @remarks Skipped entirely when `PURSE_API_KEY` is set, which is how the
+ * @remarks Skipped entirely when `POCKET_API_KEY` is set, which is how the
  *   single-tenant local setup runs without an identity provider.
  */
 export function middleware(request: NextRequest): NextResponse {
   const { pathname } = request.nextUrl;
-  const signedIn = request.cookies.has(SESSION_COOKIE) || Boolean(process.env.PURSE_API_KEY);
+  const signedIn = request.cookies.has(SESSION_COOKIE) || Boolean(process.env.POCKET_API_KEY);
 
   // Someone who is already signed in has no use for the pitch.
   if (pathname === HOME) {

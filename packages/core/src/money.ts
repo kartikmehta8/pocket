@@ -7,7 +7,7 @@
  * boundaries.
  */
 
-import { PurseError } from './errors.js';
+import { PocketError } from './errors.js';
 
 /** A signed amount in an asset's smallest indivisible unit. */
 export type BaseUnits = bigint;
@@ -22,18 +22,18 @@ const DECIMAL_PATTERN = /^\d+(\.\d+)?$/;
  *   notation, signs, whitespace and empty strings are rejected.
  * @param decimals - Number of decimal places the asset supports.
  * @returns The amount in base units.
- * @throws {PurseError} `VALIDATION_FAILED` when the literal is malformed or
+ * @throws {PocketError} `VALIDATION_FAILED` when the literal is malformed or
  *   carries more precision than the asset can represent.
  */
 export function parseAmount(value: string, decimals: number): BaseUnits {
   if (!DECIMAL_PATTERN.test(value)) {
-    throw new PurseError('VALIDATION_FAILED', 'Amount must be an unsigned decimal string.', {
+    throw new PocketError('VALIDATION_FAILED', 'Amount must be an unsigned decimal string.', {
       value,
     });
   }
   const [whole = '0', fraction = ''] = value.split('.');
   if (fraction.length > decimals) {
-    throw new PurseError(
+    throw new PocketError(
       'VALIDATION_FAILED',
       `Amount carries more than ${decimals} decimal places.`,
       { value, decimals },

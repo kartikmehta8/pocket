@@ -42,7 +42,7 @@ describe('session bootstrap', () => {
 
     expect(status).toBe(201);
     expect(body['provisioned']).toBe(true);
-    expect(body['apiKey']).toMatch(/^purse_sk_/);
+    expect(body['apiKey']).toMatch(/^pocket_sk_/);
     expect((body['org'] as { name: string }).name).toBe('Northwind');
   });
 

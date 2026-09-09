@@ -13,7 +13,7 @@ export interface OnboardingBannerProps {
 /** One line per outstanding step, resolved from live state. */
 function nextStep(props: OnboardingBannerProps): { icon: typeof Bot; text: string } | null {
   if (!props.hasAgent) {
-    return { icon: Bot, text: 'Register your first agent. Purse provisions its wallet.' };
+    return { icon: Bot, text: 'Register your first agent. Pocket provisions its wallet.' };
   }
   if (!props.hasPolicy) {
     return {

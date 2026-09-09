@@ -1,13 +1,13 @@
 /**
  * Assembles the facts the decision engines need.
  *
- * The engines in `@purse/core` are pure. This module is the only place that
+ * The engines in `@pocket/core` are pure. This module is the only place that
  * knows how to load their inputs, which keeps the rules themselves free of
  * database concerns and exhaustively testable.
  */
 
 import {
-  PurseError,
+  PocketError,
   authorizePayment,
   decimalsOf,
   isAssetId,
@@ -21,7 +21,7 @@ import {
   type Budget,
   type TaskBudget,
   type Wallet,
-} from '@purse/core';
+} from '@pocket/core';
 import {
   getAgentBundle,
   getTaskBudget,
@@ -29,7 +29,7 @@ import {
   sumSpendToday,
   type Database,
   type Transaction,
-} from '@purse/db';
+} from '@pocket/db';
 
 /** Everything loaded from storage in order to decide on one payment. */
 export interface AuthorizationContext {
@@ -88,7 +88,7 @@ export function toEvaluablePolicy(
  * @param orgId - Tenant scope.
  * @param request - The parsed payment request.
  * @returns The assembled context.
- * @throws {PurseError} `NOT_FOUND` when the agent is not in this organization,
+ * @throws {PocketError} `NOT_FOUND` when the agent is not in this organization,
  *   or `VALIDATION_FAILED` when the amount exceeds the asset's precision.
  */
 export async function loadAuthorizationContext(
@@ -99,7 +99,7 @@ export async function loadAuthorizationContext(
 ): Promise<AuthorizationContext> {
   const bundle = await getAgentBundle(db, orgId, request.agentId);
   if (bundle === null) {
-    throw new PurseError('NOT_FOUND', 'Agent not found in this organization.', {
+    throw new PocketError('NOT_FOUND', 'Agent not found in this organization.', {
       agentId: request.agentId,
     });
   }
@@ -111,12 +111,12 @@ export async function loadAuthorizationContext(
       ? null
       : await getTaskBudget(tx, orgId, request.taskBudgetId);
   if (request.taskBudgetId !== undefined && taskBudget === null) {
-    throw new PurseError('NOT_FOUND', 'Task budget not found.', {
+    throw new PocketError('NOT_FOUND', 'Task budget not found.', {
       taskBudgetId: request.taskBudgetId,
     });
   }
   if (taskBudget !== null && taskBudget.agentId !== request.agentId) {
-    throw new PurseError('FORBIDDEN', 'Task budget belongs to a different agent.', {
+    throw new PocketError('FORBIDDEN', 'Task budget belongs to a different agent.', {
       taskBudgetId: taskBudget.id,
     });
   }

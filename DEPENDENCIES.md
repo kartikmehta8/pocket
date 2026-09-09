@@ -30,7 +30,7 @@ system talks to the ports in `packages/core/src/ports.ts`.
 | `@x402/fastify` | `apps/paid-service/package.json`                                   |
 
 The buyer needs no x402 package: it reads the `payment-required` header,
-delegates the decision and signing to the Purse API, and presents the result.
+delegates the decision and signing to the Pocket API, and presents the result.
 
 ## Privy
 

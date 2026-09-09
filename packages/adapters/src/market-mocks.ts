@@ -6,7 +6,7 @@
  * offline behaviour is to refuse to price and let the policy engine deny.
  */
 
-import type { AssetId, MarketDataProvider, PriceResult } from '@purse/core';
+import type { AssetId, MarketDataProvider, PriceResult } from '@pocket/core';
 
 /**
  * Pricing that reads no market.

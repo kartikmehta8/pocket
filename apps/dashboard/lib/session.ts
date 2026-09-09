@@ -10,7 +10,7 @@ import { cookies } from 'next/headers';
  * SDK; this one exists so server components and server actions can call the
  * API as the signed-in person.
  */
-export const SESSION_COOKIE = 'purse_session';
+export const SESSION_COOKIE = 'pocket_session';
 
 /**
  * Cookie attributes shared by the routes that set and clear the session.

@@ -69,7 +69,7 @@ export function BuyForm({
         <Field
           htmlFor={urlId}
           label="Resource URL"
-          hint="The seller states its price in the 402 response. Purse evaluates that price before signing anything."
+          hint="The seller states its price in the 402 response. Pocket evaluates that price before signing anything."
         >
           <Input
             id={urlId}

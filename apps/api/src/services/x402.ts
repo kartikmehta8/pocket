@@ -1,24 +1,24 @@
 /**
  * x402 authorization.
  *
- * This is where Purse's guarantee lives in the facilitator-settled flow. The
+ * This is where Pocket's guarantee lives in the facilitator-settled flow. The
  * policy and budget engines run **before** anything is signed, so an agent
- * cannot produce a payable transaction for a payment Purse would refuse. Only
+ * cannot produce a payable transaction for a payment Pocket would refuse. Only
  * after an allow does the Privy-custodied wallet sign, and even then the
  * signature is a partially-signed transaction the facilitator must co-sign and
- * submit. Purse never broadcasts and never holds a key.
+ * submit. Pocket never broadcasts and never holds a key.
  */
 
-import { assetForTokenId, createPrivyHederaSigner, PrivyWalletProvider } from '@purse/adapters';
+import { assetForTokenId, createPrivyHederaSigner, PrivyWalletProvider } from '@pocket/adapters';
 import {
-  PurseError,
+  PocketError,
   newId,
   type MarketDataProvider,
   type AuthorizationDecision,
   type ChainId,
   type Payment,
   type PaymentRequest,
-} from '@purse/core';
+} from '@pocket/core';
 import {
   appendAuditEvent,
   chargeTaskBudget,
@@ -26,7 +26,7 @@ import {
   insertPayment,
   lockAgent,
   type Database,
-} from '@purse/db';
+} from '@pocket/db';
 import { decisionToJson } from '../serialize.js';
 import { decide, loadAuthorizationContext } from './authorization.js';
 import { buildX402Request } from './x402-request.js';
@@ -59,8 +59,8 @@ export interface X402Authorization {
  * @param idempotencyKey - Caller-supplied key; a replay returns the original.
  * @param input - Agent, the seller's requirements, and the spending context.
  * @returns The recorded payment, the decision, and the signed payload when allowed.
- * @throws {PurseError} `VALIDATION_FAILED` when the seller's asset is not one
- *   Purse is configured for, or `WALLET_NOT_PROVISIONED` when the agent has no wallet.
+ * @throws {PocketError} `VALIDATION_FAILED` when the seller's asset is not one
+ *   Pocket is configured for, or `WALLET_NOT_PROVISIONED` when the agent has no wallet.
  */
 export async function authorizeX402Payment(
   deps: X402Deps,
@@ -84,9 +84,9 @@ export async function authorizeX402Payment(
 ): Promise<X402Authorization> {
   const asset = assetForTokenId(deps.chain, input.requirements.asset);
   if (asset === null) {
-    throw new PurseError(
+    throw new PocketError(
       'VALIDATION_FAILED',
-      'The seller asked to be paid in an asset Purse is not configured for.',
+      'The seller asked to be paid in an asset Pocket is not configured for.',
       { asset: input.requirements.asset },
     );
   }
@@ -171,7 +171,7 @@ export async function authorizeX402Payment(
     return { payment, decision, paymentPayload: null, replayed: false };
   }
   if (wallet === null) {
-    throw new PurseError('WALLET_NOT_PROVISIONED', 'Agent has no wallet to pay from.');
+    throw new PocketError('WALLET_NOT_PROVISIONED', 'Agent has no wallet to pay from.');
   }
 
   const signer = await createPrivyHederaSigner({

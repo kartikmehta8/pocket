@@ -1,4 +1,4 @@
-# Deploying Purse
+# Deploying Pocket
 
 Four processes and one database. The dashboard can go on any Node host or a
 platform that runs Next.js; the API, the MCP server and the example paid
@@ -26,7 +26,7 @@ server holds one organization API key.
 Any Postgres 15 or newer. Create the schema from a machine that can reach it:
 
 ```bash
-DATABASE_URL=postgres://user:pass@host:5432/purse pnpm db:push
+DATABASE_URL=postgres://user:pass@host:5432/pocket pnpm db:push
 ```
 
 Run this once per deployment and again after any release that changes the
@@ -38,27 +38,27 @@ migrate itself while requests are in flight.
 One image, selected by build argument:
 
 ```bash
-docker build --build-arg APP=api          -t purse-api .
-docker build --build-arg APP=mcp          -t purse-mcp .
-docker build --build-arg APP=paid-service -t purse-paid .
+docker build --build-arg APP=api          -t pocket-api .
+docker build --build-arg APP=mcp          -t pocket-mcp .
+docker build --build-arg APP=paid-service -t pocket-paid .
 ```
 
 Run the API with the full environment from `.env.example`:
 
 ```bash
-docker run -d --name purse-api -p 8080:8080 \
-  -e DATABASE_URL=postgres://user:pass@host:5432/purse \
-  -e CORS_ORIGINS=https://purse.example.com \
+docker run -d --name pocket-api -p 8080:8080 \
+  -e DATABASE_URL=postgres://user:pass@host:5432/pocket \
+  -e CORS_ORIGINS=https://pocket.example.com \
   -e PRIVY_APP_ID=... -e PRIVY_APP_SECRET=... \
   -e HEDERA_RPC_URL=https://testnet.hashio.io/api \
-  purse-api
+  pocket-api
 ```
 
 `CORS_ORIGINS` must list the dashboard's public origin, comma-separated for
 more than one. It is not a wildcard, and it is what stops another site driving
 the API with a browser session it did not earn.
 
-The MCP server needs `PURSE_API_URL` and `MCP_AGENT_TOKEN` — the organization
+The MCP server needs `POCKET_API_URL` and `MCP_AGENT_TOKEN` — the organization
 API key it presents. Mint that key from **Settings → API keys** in the
 dashboard, not by hand.
 
@@ -68,18 +68,18 @@ dashboard, not by hand.
 arguments rather than runtime environment. Everything else is read at runtime.
 
 ```bash
-docker build -f apps/dashboard/Dockerfile -t purse-dashboard \
+docker build -f apps/dashboard/Dockerfile -t pocket-dashboard \
   --build-arg NEXT_PUBLIC_PRIVY_APP_ID=your_app_id \
   --build-arg NEXT_PUBLIC_MCP_URL=https://mcp.example.com/mcp \
   --build-arg NEXT_PUBLIC_PAID_SERVICE_URL=https://paid.example.com \
   .
 
 docker run -d -p 3000:3000 \
-  -e PURSE_API_URL=https://api.example.com \
-  purse-dashboard
+  -e POCKET_API_URL=https://api.example.com \
+  pocket-dashboard
 ```
 
-**Leave `PURSE_API_KEY` unset.** Setting it puts the dashboard into
+**Leave `POCKET_API_KEY` unset.** Setting it puts the dashboard into
 single-tenant mode: sign-in is bypassed and every visitor sees the same
 organization. That is only ever right for a local demo.
 
@@ -109,7 +109,7 @@ If you already have an organization with data in it — from `pnpm seed`, or fro
 an earlier deployment — sign in first, then attach your account to it:
 
 ```bash
-pnpm --filter @purse/api adopt -- you@example.com org_1234abcd
+pnpm --filter @pocket/api adopt -- you@example.com org_1234abcd
 ```
 
 ## 6. Health

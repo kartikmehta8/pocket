@@ -25,7 +25,7 @@ describe('authentication', () => {
     const response = await h.app.inject({
       method: 'GET',
       url: '/v1/agents',
-      headers: { authorization: 'Bearer purse_sk_not_a_real_key' },
+      headers: { authorization: 'Bearer pocket_sk_not_a_real_key' },
     });
     expect(response.statusCode).toBe(401);
   });
@@ -163,7 +163,7 @@ describe('credential handling', () => {
       payload: { name: 'One Time Key Org' },
     });
     const body = created.json();
-    expect(body.apiKey).toMatch(/^purse_sk_/);
+    expect(body.apiKey).toMatch(/^pocket_sk_/);
 
     const me = await h.app.inject({
       method: 'GET',

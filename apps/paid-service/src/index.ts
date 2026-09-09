@@ -2,7 +2,7 @@
  * The x402-gated seller.
  *
  * A standalone service that sells real data for real money. It knows nothing
- * about Purse and holds no relationship with the buyer: it states a price, and
+ * about Pocket and holds no relationship with the buyer: it states a price, and
  * a facilitator verifies and settles the payment before the resource is
  * served. That independence is what makes the demo a purchase rather than a
  * simulation.
@@ -17,7 +17,7 @@ import { paymentMiddleware } from '@x402/fastify';
 import { HTTPFacilitatorClient, x402ResourceServer } from '@x402/core/server';
 import type { RoutesConfig } from '@x402/core/server';
 import { ExactHederaScheme } from '@x402/hedera/exact/server';
-import { resolveHederaAccount } from '@purse/adapters';
+import { resolveHederaAccount } from '@pocket/adapters';
 import { SourceCache } from './cache.js';
 import { catalogStages, toBaseUnits } from './catalog.js';
 import { loadSellerConfig } from './config.js';

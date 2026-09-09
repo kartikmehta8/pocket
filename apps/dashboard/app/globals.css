@@ -1,7 +1,7 @@
 @import 'tailwindcss';
 
 /*
- * Purse design system — light mode only, defined once.
+ * Pocket design system — light mode only, defined once.
  * Ramps: `sand` (warm neutral) and `accent` (blue). Semantics: success /
  * warning / danger / info. Chart series slots come from a CVD-validated
  * eight-hue order; only the first three are ever seated at once.
@@ -249,7 +249,7 @@
 }
 
 /** Entrance for anything that mounts on top of the page: tooltips, menus, popovers. */
-@keyframes purse-overlay-pop {
+@keyframes pocket-overlay-pop {
   from {
     opacity: 0;
     transform: scale(0.96) translateY(2px);
@@ -262,7 +262,7 @@
 
 @utility overlay-pop {
   transform-origin: var(--radix-tooltip-content-transform-origin, center);
-  animation: purse-overlay-pop var(--duration-fast) var(--ease-brand);
+  animation: pocket-overlay-pop var(--duration-fast) var(--ease-brand);
 }
 
 /**
@@ -280,7 +280,7 @@
 }
 
 /** Slow horizontal sheen used while a value is still loading. */
-@keyframes purse-shimmer {
+@keyframes pocket-shimmer {
   from {
     background-position: 200% 0;
   }
@@ -297,7 +297,7 @@
     var(--color-ash-100) 80%
   );
   background-size: 200% 100%;
-  animation: purse-shimmer 1.6s linear infinite;
+  animation: pocket-shimmer 1.6s linear infinite;
 }
 
 @media (prefers-reduced-motion: reduce) {

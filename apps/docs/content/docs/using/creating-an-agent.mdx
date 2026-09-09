@@ -3,7 +3,7 @@ title: Creating an agent
 description: Give an agent a wallet, then connect the agent you already run.
 ---
 
-An agent is whatever you already use to do the work. Purse gives it a wallet
+An agent is whatever you already use to do the work. Pocket gives it a wallet
 and a set of limits.
 
 ## Create it
@@ -37,7 +37,7 @@ you use.
 <Tab value="Hermes">
 
 ```bash
-hermes mcp add purse --transport http --url https://your-mcp-url/mcp
+hermes mcp add pocket --transport http --url https://your-mcp-url/mcp
 ```
 
 </Tab>
@@ -45,7 +45,7 @@ hermes mcp add purse --transport http --url https://your-mcp-url/mcp
 <Tab value="Claude Code">
 
 ```bash
-claude mcp add --transport http purse https://your-mcp-url/mcp
+claude mcp add --transport http pocket https://your-mcp-url/mcp
 ```
 
 </Tab>
@@ -57,7 +57,7 @@ Any MCP client takes the same endpoint:
 ```json
 {
   "mcpServers": {
-    "purse": { "type": "http", "url": "https://your-mcp-url/mcp" }
+    "pocket": { "type": "http", "url": "https://your-mcp-url/mcp" }
   }
 }
 ```
@@ -76,7 +76,7 @@ There is no key in any of these, on purpose.
     { label: 'Language model', note: 'no credential at all' },
     { label: 'Your agent', note: 'asks to buy' },
     { label: 'Your server', note: 'holds the key', decides: true },
-    { label: 'Purse', note: 'checks and pays' },
+    { label: 'Pocket', note: 'checks and pays' },
   ]}
 />
 
@@ -89,16 +89,16 @@ An agent that cannot read it cannot leak it.
 Eight tools reach your agent. One can spend, and the other seven exist so it
 does not have to guess.
 
-| Tool                       | What it does                             | Spends |
-| -------------------------- | ---------------------------------------- | ------ |
-| `purse_pay_for_resource`   | Buys something and returns the content   | Yes    |
-| `purse_preview_payment`    | Asks whether a purchase would be allowed | No     |
-| `purse_create_task_budget` | Opens a ring-fenced amount for one job   | No     |
-| `purse_list_agents`        | Lists agents with budgets and spend      | No     |
-| `purse_get_agent`          | One agent, with its limits and balance   | No     |
-| `purse_spend_summary`      | Spend by category and seller             | No     |
-| `purse_list_payments`      | Recent purchases, refusals included      | No     |
-| `purse_audit_trail`        | The full record                          | No     |
+| Tool                        | What it does                             | Spends |
+| --------------------------- | ---------------------------------------- | ------ |
+| `pocket_pay_for_resource`   | Buys something and returns the content   | Yes    |
+| `pocket_preview_payment`    | Asks whether a purchase would be allowed | No     |
+| `pocket_create_task_budget` | Opens a ring-fenced amount for one job   | No     |
+| `pocket_list_agents`        | Lists agents with budgets and spend      | No     |
+| `pocket_get_agent`          | One agent, with its limits and balance   | No     |
+| `pocket_spend_summary`      | Spend by category and seller             | No     |
+| `pocket_list_payments`      | Recent purchases, refusals included      | No     |
+| `pocket_audit_trail`        | The full record                          | No     |
 
 ## Pausing and revoking
 

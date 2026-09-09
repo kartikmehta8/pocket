@@ -24,7 +24,7 @@ const mono = Space_Mono({
 
 /** Document metadata for every route. */
 export const metadata: Metadata = {
-  title: { default: `Purse: ${TAGLINE}`, template: '%s · Purse' },
+  title: { default: `Pocket: ${TAGLINE}`, template: '%s · Pocket' },
   description: DESCRIPTION,
 };
 

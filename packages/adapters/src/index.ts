@@ -1,7 +1,7 @@
 /**
  * Adapter selection.
  *
- * Purse decides once, at startup, whether each vendor is live or mocked, based
+ * Pocket decides once, at startup, whether each vendor is live or mocked, based
  * only on whether its credentials are present. There is no runtime toggle: a
  * flag that could silently downgrade a money path to a fake one is a hazard,
  * not a feature.
@@ -14,7 +14,7 @@ import type {
   IdentityVerifier,
   MarketDataProvider,
   WalletProvider,
-} from '@purse/core';
+} from '@pocket/core';
 import { GraphAnalyticsProvider } from './graph.js';
 import { GraphMarketDataProvider } from './graph-market.js';
 import { HederaChainProvider } from './hedera.js';

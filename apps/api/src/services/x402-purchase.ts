@@ -2,7 +2,7 @@
  * The autonomous purchase flow.
  *
  * This is the whole product in one function. A buyer asks for a resource, the
- * seller answers with an x402 payment requirement, Purse decides whether that
+ * seller answers with an x402 payment requirement, Pocket decides whether that
  * money may be spent, and only if it may does the wallet sign. The signed
  * payload goes back to the seller, whose facilitator verifies and settles it.
  *
@@ -12,9 +12,9 @@
  * and leave the same evidence.
  */
 
-import type { ChainProvider, MarketDataProvider, PaymentRequest } from '@purse/core';
-import type { PrivyWalletProvider } from '@purse/adapters';
-import type { Database } from '@purse/db';
+import type { ChainProvider, MarketDataProvider, PaymentRequest } from '@pocket/core';
+import type { PrivyWalletProvider } from '@pocket/adapters';
+import type { Database } from '@pocket/db';
 import { decisionToJson, paymentToJson, type PaymentJson } from '../serialize.js';
 import { payForResource, requestResource } from './x402-http.js';
 import { parseResourceUrl } from './resource-url.js';
@@ -66,7 +66,7 @@ export type PurchaseOutcome =
   | { status: 'failed'; message: string; code: string; payment?: PaymentJson };
 
 /**
- * Fetches a resource, paying for it through Purse if the seller demands it.
+ * Fetches a resource, paying for it through Pocket if the seller demands it.
  *
  * @param deps - Database, wallet, market data and deployment policy.
  * @param orgId - Tenant scope.
@@ -74,7 +74,7 @@ export type PurchaseOutcome =
  * @returns Served free, paid and served, blocked by policy, or failed. A block
  *   is a normal outcome carrying the decision, so the caller can choose a
  *   cheaper provider rather than retrying blindly.
- * @throws {PurseError} Only for a malformed or refused URL, which is a caller
+ * @throws {PocketError} Only for a malformed or refused URL, which is a caller
  *   error rather than an outcome of the purchase.
  */
 export async function purchaseResource(
@@ -145,7 +145,7 @@ export async function purchaseResource(
   const explorer = (hash: string): string => deps.chain.explorerUrl(hash) ?? '';
   const payment = paymentToJson(authorized.payment, explorer);
 
-  // Purse refused, or held it for a human. Either way nothing was signed, so
+  // Pocket refused, or held it for a human. Either way nothing was signed, so
   // there is no payload to present and the seller is never contacted again.
   if (authorized.paymentPayload === null) {
     return {

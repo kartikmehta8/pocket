@@ -47,13 +47,13 @@ importers:
       '@fastify/rate-limit':
         specifier: ^10.2.1
         version: 10.3.0
-      '@purse/adapters':
+      '@pocket/adapters':
         specifier: workspace:*
         version: link:../../packages/adapters
-      '@purse/core':
+      '@pocket/core':
         specifier: workspace:*
         version: link:../../packages/core
-      '@purse/db':
+      '@pocket/db':
         specifier: workspace:*
         version: link:../../packages/db
       fastify:
@@ -233,7 +233,7 @@ importers:
       '@modelcontextprotocol/sdk':
         specifier: ^1.12.0
         version: 1.30.0(zod@3.25.76)
-      '@purse/core':
+      '@pocket/core':
         specifier: workspace:*
         version: link:../../packages/core
       express:
@@ -261,10 +261,10 @@ importers:
 
   apps/paid-service:
     dependencies:
-      '@purse/adapters':
+      '@pocket/adapters':
         specifier: workspace:*
         version: link:../../packages/adapters
-      '@purse/core':
+      '@pocket/core':
         specifier: workspace:*
         version: link:../../packages/core
       '@x402/core':
@@ -307,7 +307,7 @@ importers:
       '@privy-io/server-auth':
         specifier: ^1.21.0
         version: 1.32.5(bufferutil@4.1.0)(ethers@6.17.0(bufferutil@4.1.0)(utf-8-validate@6.0.6))(typescript@5.9.3)(utf-8-validate@6.0.6)(viem@2.56.3(bufferutil@4.1.0)(typescript@5.9.3)(utf-8-validate@6.0.6)(zod@3.25.76))
-      '@purse/core':
+      '@pocket/core':
         specifier: workspace:*
         version: link:../core
       '@x402/core':
@@ -348,7 +348,7 @@ importers:
 
   packages/db:
     dependencies:
-      '@purse/core':
+      '@pocket/core':
         specifier: workspace:*
         version: link:../core
       drizzle-orm:

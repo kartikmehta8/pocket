@@ -24,7 +24,7 @@ export default async function AgentsPage() {
       <PageHeader
         eyebrow="Fleet"
         title="Agents"
-        description="Every autonomous agent holding a Purse wallet, with today's spend against its daily budget."
+        description="Every autonomous agent holding a Pocket wallet, with today's spend against its daily budget."
         actions={<AgentCreateDialog />}
       />
       {!result.ok ? (

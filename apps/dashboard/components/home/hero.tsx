@@ -42,7 +42,7 @@ const ATTEMPTS = [
  * Landing hero.
  *
  * The headline names the agent the visitor already runs, cycling through the
- * runtimes Purse supports, so the offer reads as being about their setup rather
+ * runtimes Pocket supports, so the offer reads as being about their setup rather
  * than about ours. The card beside it ends on a refusal: anyone can show an
  * agent buying something, and the reason to trust one with money is that it can
  * be stopped.
@@ -155,7 +155,7 @@ export function Hero() {
             transition={{ duration: DURATION.slow, ease: EASE, delay: 1.5 }}
             className="text-text-muted mt-3 text-xs leading-relaxed"
           >
-            The last one never reached a signature. Purse decided before the wallet was asked.
+            The last one never reached a signature. Pocket decided before the wallet was asked.
           </motion.p>
         </motion.div>
       </div>

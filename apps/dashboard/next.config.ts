@@ -1,6 +1,6 @@
 import type { NextConfig } from 'next';
 
-/** Next.js configuration for the Purse dashboard. */
+/** Next.js configuration for the Pocket dashboard. */
 const nextConfig: NextConfig = {
   reactStrictMode: true,
   typedRoutes: false,

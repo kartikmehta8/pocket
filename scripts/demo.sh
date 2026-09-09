@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Runs the Purse demo end to end against a already-running stack.
+# Runs the Pocket demo end to end against a already-running stack.
 #
 #   ./run-dev.sh          # in another terminal
 #   ./scripts/demo.sh
@@ -12,9 +12,9 @@ set -euo pipefail
 cd "$(dirname "$0")/.."
 set -a; . ./.env; set +a
 
-API=${PURSE_API_URL:-http://localhost:8080}
+API=${POCKET_API_URL:-http://localhost:8080}
 SELLER=${SELLER_URL:-http://localhost:8402}
-KEY=${PURSE_API_KEY:?Run "pnpm seed" and put the key in .env first}
+KEY=${POCKET_API_KEY:?Run "pnpm seed" and put the key in .env first}
 
 auth=(-H "authorization: Bearer $KEY")
 json=(-H 'content-type: application/json')
@@ -68,7 +68,7 @@ echo
 
 buy() {
   echo "--- $1 ---"
-  ./scripts/mcp-call.sh purse_pay_for_resource \
+  ./scripts/mcp-call.sh pocket_pay_for_resource \
     "{\"agentId\":\"$AGENT\",\"url\":\"$SELLER$1\",\"reason\":\"$2\",\"category\":\"$3\",\"taskBudgetId\":\"$TASK\"}" \
     | python3 scripts/format-purchase.py
   echo
@@ -80,4 +80,4 @@ buy /v1/research/eth-brief   "Morning ETH ecosystem briefing"       research
 buy /v1/research/deep-dive   "Full ecosystem deep dive"             research
 
 echo "--- spend summary ---"
-./scripts/mcp-call.sh purse_spend_summary '{"days":7}' | python3 scripts/format-summary.py
+./scripts/mcp-call.sh pocket_spend_summary '{"days":7}' | python3 scripts/format-summary.py

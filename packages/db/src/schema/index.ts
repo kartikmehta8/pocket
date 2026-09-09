@@ -1,4 +1,4 @@
-/** Every table in the Purse database, re-exported as one schema object. */
+/** Every table in the Pocket database, re-exported as one schema object. */
 
 export * from './columns.js';
 export * from './finance.js';

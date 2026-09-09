@@ -1,17 +1,17 @@
 {
-  "name": "purse-subgraph",
+  "name": "pocket-subgraph",
   "version": "0.1.0",
   "private": true,
-  "description": "Indexes ERC-20 transfers on Hedera for Purse's spend reconciliation.",
+  "description": "Indexes ERC-20 transfers on Hedera for Pocket's spend reconciliation.",
   "scripts": {
     "node:up": "docker compose up -d",
     "node:down": "docker compose down",
     "node:reset": "docker compose down -v",
     "codegen": "graph codegen",
     "build": "graph build",
-    "create-local": "graph create --node http://localhost:8020/ purse/transfers",
-    "remove-local": "graph remove --node http://localhost:8020/ purse/transfers",
-    "deploy-local": "graph deploy --node http://localhost:8020/ --ipfs http://localhost:5001 purse/transfers --version-label v0.0.1"
+    "create-local": "graph create --node http://localhost:8020/ pocket/transfers",
+    "remove-local": "graph remove --node http://localhost:8020/ pocket/transfers",
+    "deploy-local": "graph deploy --node http://localhost:8020/ --ipfs http://localhost:5001 pocket/transfers --version-label v0.0.1"
   },
   "devDependencies": {
     "@graphprotocol/graph-cli": "^0.97.1",

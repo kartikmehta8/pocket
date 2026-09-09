@@ -10,7 +10,7 @@ import { Preview } from '@/components/home/preview';
 import { X402Banner } from '@/components/home/x402-banner';
 
 export const metadata: Metadata = {
-  title: `Purse: ${TAGLINE}`,
+  title: `Pocket: ${TAGLINE}`,
   description: DESCRIPTION,
 };
 

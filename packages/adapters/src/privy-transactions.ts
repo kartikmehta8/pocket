@@ -7,7 +7,7 @@
  */
 
 import { Interface } from 'ethers';
-import { PurseError, type AssociateTokenInput, type SendPaymentInput } from '@purse/core';
+import { PocketError, type AssociateTokenInput, type SendPaymentInput } from '@pocket/core';
 import { chainConfig, ERC20_ABI, IHRC719_ASSOCIATE, tokenAddress } from './chains.js';
 
 const erc20 = new Interface([...ERC20_ABI]);
@@ -26,7 +26,7 @@ export interface PrivyTransaction {
  *
  * @param input - Recipient, amount in base units, asset and chain.
  * @returns The transaction to sign.
- * @throws {PurseError} `VALIDATION_FAILED` when a token asset has no
+ * @throws {PocketError} `VALIDATION_FAILED` when a token asset has no
  *   configured contract address, rather than guessing one.
  * @remarks A native transfer carries value directly. A token transfer carries
  *   zero value and ERC-20 `transfer` calldata. Amounts are hex-encoded because
@@ -37,7 +37,7 @@ export function buildTransferTransaction(input: SendPaymentInput): PrivyTransact
   const token = tokenAddress(input.chain, input.asset);
 
   if (token === null && input.asset !== config.nativeAsset) {
-    throw new PurseError(
+    throw new PocketError(
       'VALIDATION_FAILED',
       `No contract address configured for ${input.asset}.`,
       {
@@ -69,7 +69,7 @@ export function buildTransferTransaction(input: SendPaymentInput): PrivyTransact
  * @param input - Wallet, asset and chain.
  * @returns The transaction to sign, or `null` when the asset is the chain's
  *   native currency and association does not apply.
- * @throws {PurseError} `VALIDATION_FAILED` when the token has no configured
+ * @throws {PocketError} `VALIDATION_FAILED` when the token has no configured
  *   contract address.
  * @remarks Calls `associate()` on the token's own address, which Hedera routes
  *   to the token service under HIP-719. The gas limit is explicit because the
@@ -81,7 +81,7 @@ export function buildAssociateTransaction(input: AssociateTokenInput): PrivyTran
 
   const token = tokenAddress(input.chain, input.asset);
   if (token === null) {
-    throw new PurseError(
+    throw new PocketError(
       'VALIDATION_FAILED',
       `No contract address configured for ${input.asset}.`,
       {

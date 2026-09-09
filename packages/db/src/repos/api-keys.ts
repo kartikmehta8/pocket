@@ -9,7 +9,7 @@
  */
 
 import { and, asc, eq, isNull } from 'drizzle-orm';
-import { apiKeyPrefix, newApiKey, newId } from '@purse/core';
+import { apiKeyPrefix, newApiKey, newId } from '@pocket/core';
 import type { Database } from '../client.js';
 import { hashApiKey } from '../client.js';
 import { apiKeys } from '../schema/index.js';

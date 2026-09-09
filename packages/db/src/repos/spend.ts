@@ -8,7 +8,7 @@
  */
 
 import { and, eq, gte, inArray, sql } from 'drizzle-orm';
-import type { PaymentStatus } from '@purse/core';
+import type { PaymentStatus } from '@pocket/core';
 import type { Database, Transaction } from '../client.js';
 import { payments } from '../schema/index.js';
 

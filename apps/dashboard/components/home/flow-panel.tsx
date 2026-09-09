@@ -13,7 +13,7 @@ const STAGES = [
     logo: null,
   },
   {
-    title: 'Purse checks your limits',
+    title: 'Pocket checks your limits',
     body: 'Daily budget, job budget, single-payment cap, and whether this seller is one you allow.',
     logo: null,
     gate: true,
@@ -40,7 +40,7 @@ const STAGES = [
  *
  * Named vendors rather than hand-waving: someone handing money to software is
  * entitled to know whose custody it passes through. None of these projects has
- * reviewed or endorsed Purse.
+ * reviewed or endorsed Pocket.
  */
 export function FlowPanel() {
   const reduced = useReducedMotion();

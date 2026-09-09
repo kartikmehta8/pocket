@@ -2,18 +2,18 @@
  * The Graph analytics adapter.
  *
  * Queries a subgraph for the transfers involving an agent wallet, which lets
- * Purse answer "what actually settled on chain" independently of its own
+ * Pocket answer "what actually settled on chain" independently of its own
  * ledger. Reconciling the two is what turns a discrepancy into a visible
  * anomaly instead of an invisible one.
  */
 
 import {
-  PurseError,
+  PocketError,
   isAssetId,
   type AnalyticsProvider,
   type IndexedTransfer,
   type TransferQuery,
-} from '@purse/core';
+} from '@pocket/core';
 
 /** Options for {@link GraphAnalyticsProvider}. */
 export interface GraphOptions {
@@ -36,7 +36,7 @@ export interface GraphOptions {
  * with "Filter must by an object", so the conditions have to be distributed.
  */
 const DEFAULT_QUERY = `
-  query PurseTransfers($address: Bytes!, $since: BigInt!, $until: BigInt!, $limit: Int!) {
+  query PocketTransfers($address: Bytes!, $since: BigInt!, $until: BigInt!, $limit: Int!) {
     transfers(
       first: $limit
       orderBy: timestamp
@@ -96,7 +96,7 @@ export class GraphAnalyticsProvider implements AnalyticsProvider {
    *
    * @param query - Address and window. `limit` defaults to 100.
    * @returns Transfers newest first, with amounts in base units.
-   * @throws {PurseError} `UPSTREAM_UNAVAILABLE` when the gateway errors, times
+   * @throws {PocketError} `UPSTREAM_UNAVAILABLE` when the gateway errors, times
    *   out, or returns GraphQL errors.
    */
   public async getTransfers(query: TransferQuery): Promise<IndexedTransfer[]> {
@@ -124,12 +124,12 @@ export class GraphAnalyticsProvider implements AnalyticsProvider {
         signal: AbortSignal.timeout(this.#options.timeoutMs),
       });
       if (!response.ok) {
-        throw new PurseError('UPSTREAM_UNAVAILABLE', `The Graph returned ${response.status}.`);
+        throw new PocketError('UPSTREAM_UNAVAILABLE', `The Graph returned ${response.status}.`);
       }
       payload = await response.json();
     } catch (cause) {
-      if (PurseError.is(cause)) throw cause;
-      throw new PurseError('UPSTREAM_UNAVAILABLE', 'Could not reach The Graph.', undefined, cause);
+      if (PocketError.is(cause)) throw cause;
+      throw new PocketError('UPSTREAM_UNAVAILABLE', 'Could not reach The Graph.', undefined, cause);
     }
 
     return this.#parse(payload);
@@ -141,22 +141,22 @@ export class GraphAnalyticsProvider implements AnalyticsProvider {
    * @param payload - Untrusted response body.
    * @returns Well-formed transfers. Malformed rows are dropped rather than
    *   coerced, because a guessed amount is worse than a missing one.
-   * @throws {PurseError} `UPSTREAM_UNAVAILABLE` when the response carries
+   * @throws {PocketError} `UPSTREAM_UNAVAILABLE` when the response carries
    *   GraphQL errors or has no `transfers` array.
    */
   #parse(payload: unknown): IndexedTransfer[] {
     if (typeof payload !== 'object' || payload === null) {
-      throw new PurseError('UPSTREAM_UNAVAILABLE', 'The Graph returned a non-object response.');
+      throw new PocketError('UPSTREAM_UNAVAILABLE', 'The Graph returned a non-object response.');
     }
     const record = payload as { data?: { transfers?: unknown }; errors?: unknown };
     if (Array.isArray(record.errors) && record.errors.length > 0) {
-      throw new PurseError('UPSTREAM_UNAVAILABLE', 'The Graph returned query errors.', {
+      throw new PocketError('UPSTREAM_UNAVAILABLE', 'The Graph returned query errors.', {
         count: String(record.errors.length),
       });
     }
     const rows = record.data?.transfers;
     if (!Array.isArray(rows)) {
-      throw new PurseError('UPSTREAM_UNAVAILABLE', 'The Graph response had no transfers array.');
+      throw new PocketError('UPSTREAM_UNAVAILABLE', 'The Graph response had no transfers array.');
     }
 
     const transfers: IndexedTransfer[] = [];

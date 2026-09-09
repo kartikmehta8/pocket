@@ -1,7 +1,7 @@
-# Purse HTTP API contract
+# Pocket HTTP API contract
 
 Base URL: `http://localhost:8080`. All routes under `/v1`.
-Auth: `Authorization: Bearer purse_sk_...` (organization API key) on every route
+Auth: `Authorization: Bearer pocket_sk_...` (organization API key) on every route
 except `POST /v1/orgs` and `GET /v1/health`.
 
 **Money is always a decimal string** (`"0.08"`), never a number, and always
@@ -14,7 +14,7 @@ requires a bearer token. Two kinds are accepted on the same header:
 
 | Token         | Who presents it                       | `principal` |
 | ------------- | ------------------------------------- | ----------- |
-| `purse_sk_…`  | An agent runtime or the MCP server    | `api-key`   |
+| `pocket_sk_…` | An agent runtime or the MCP server    | `api-key`   |
 | Anything else | A signed-in person, via the dashboard | `session`   |
 
 An identity token is verified with the configured provider and resolved to the
@@ -180,7 +180,7 @@ interface AuditEvent {
 
 ### `POST /v1/payments/x402/purchase`
 
-Fetches a URL, and if it answers `402` with terms Purse can settle, runs the
+Fetches a URL, and if it answers `402` with terms Pocket can settle, runs the
 whole exchange: policy decision, signature, presentation, settlement. The
 caller never holds a signed payload, so it cannot route around the policy
 engine even if it could reach the seller itself.

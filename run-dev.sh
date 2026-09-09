@@ -13,15 +13,15 @@ for port in "${PORT:-8080}" "${PAID_SERVICE_PORT:-8402}" "${MCP_PORT:-8081}"; do
 done
 
 mkdir -p .logs
-pnpm --filter @purse/api          exec tsx src/index.ts > .logs/api.log   2>&1 &
-pnpm --filter @purse/paid-service exec tsx src/index.ts > .logs/paid.log  2>&1 &
-pnpm --filter @purse/mcp          exec tsx src/index.ts > .logs/mcp.log   2>&1 &
+pnpm --filter @pocket/api          exec tsx src/index.ts > .logs/api.log   2>&1 &
+pnpm --filter @pocket/paid-service exec tsx src/index.ts > .logs/paid.log  2>&1 &
+pnpm --filter @pocket/mcp          exec tsx src/index.ts > .logs/mcp.log   2>&1 &
 
 until curl -sf "http://localhost:${PORT:-8080}/v1/health"        >/dev/null \
    && curl -sf "http://localhost:${PAID_SERVICE_PORT:-8402}/health" >/dev/null \
    && curl -sf "http://localhost:${MCP_PORT:-8081}/health"       >/dev/null; do sleep 1; done
 
-echo "Purse is up:"
+echo "Pocket is up:"
 echo "  API           http://localhost:${PORT:-8080}"
 echo "  MCP           http://localhost:${MCP_PORT:-8081}/mcp"
 echo "  Paid service  http://localhost:${PAID_SERVICE_PORT:-8402}"

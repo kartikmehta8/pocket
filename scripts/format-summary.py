@@ -1,4 +1,4 @@
-"""Render a `purse_spend_summary` result as one line."""
+"""Render a `pocket_spend_summary` result as one line."""
 
 import json
 import sys

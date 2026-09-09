@@ -29,7 +29,7 @@ jobs:
       - name: Install
         run: pnpm install --frozen-lockfile
 
-      # Purse runs with no vendor keys: every adapter falls back to a
+      # Pocket runs with no vendor keys: every adapter falls back to a
       # deterministic in-memory implementation. The examples are all-blank, so
       # this gives the build its defaults without putting a secret in CI.
       - name: Seed configuration
@@ -38,7 +38,7 @@ jobs:
           cp apps/dashboard/.env.example apps/dashboard/.env.local
 
       # The workspace packages compile to dist/, which is not committed. Lint,
-      # typecheck and the tests all resolve @purse/core from there, so a fresh
+      # typecheck and the tests all resolve @pocket/core from there, so a fresh
       # clone has to build them before any of those can run.
       - name: Build packages
         run: pnpm build:packages

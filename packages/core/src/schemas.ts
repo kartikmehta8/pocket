@@ -3,7 +3,7 @@
  *
  * Anything arriving from HTTP, MCP, or a vendor SDK is `unknown` until it has
  * passed through a schema in this module. Money is accepted only as a decimal
- * string, never as a JSON number, so precision cannot be lost before Purse
+ * string, never as a JSON number, so precision cannot be lost before Pocket
  * ever sees the value.
  */
 

@@ -10,7 +10,7 @@
  */
 
 import { and, desc, eq, sql } from 'drizzle-orm';
-import { PurseError, type Payment, type PaymentStatus } from '@purse/core';
+import { PocketError, type Payment, type PaymentStatus } from '@pocket/core';
 import type { Database, Transaction } from '../client.js';
 import { agents, payments, taskBudgets } from '../schema/index.js';
 
@@ -55,7 +55,7 @@ export async function findByIdempotencyKey(
  *
  * @param existing - The payment stored under this idempotency key.
  * @param incoming - The financially significant fields of the new request.
- * @throws {PurseError} `IDEMPOTENCY_KEY_REUSED` when the key is reused for
+ * @throws {PocketError} `IDEMPOTENCY_KEY_REUSED` when the key is reused for
  *   different money. Returning the original payment in that case would silently
  *   swallow a real second payment the caller intended to make.
  */
@@ -70,7 +70,7 @@ export function assertSameRequest(
     existing.chain === incoming.chain &&
     existing.recipient.toLowerCase() === incoming.recipient.toLowerCase();
   if (!same) {
-    throw new PurseError(
+    throw new PocketError(
       'IDEMPOTENCY_KEY_REUSED',
       'This idempotency key was already used for a different payment.',
       { paymentId: existing.id },
@@ -123,7 +123,7 @@ export async function updatePaymentStatus(
   patch: { status: PaymentStatus; txHash?: string | null; settledAt?: Date | null },
 ): Promise<Payment> {
   const [row] = await db.update(payments).set(patch).where(eq(payments.id, paymentId)).returning();
-  if (row === undefined) throw new PurseError('NOT_FOUND', 'Payment not found.');
+  if (row === undefined) throw new PocketError('NOT_FOUND', 'Payment not found.');
   return row as Payment;
 }
 

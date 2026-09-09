@@ -1,7 +1,7 @@
 /**
  * Ledger-side spend aggregation.
  *
- * These queries answer "what did Purse authorize". The Graph adapter answers
+ * These queries answer "what did Pocket authorize". The Graph adapter answers
  * "what actually settled on chain". The analytics service reconciles the two,
  * which is what makes a discrepancy visible rather than invisible.
  */

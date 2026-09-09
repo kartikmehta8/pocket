@@ -21,7 +21,7 @@ const PROOF = [
   {
     icon: Landmark,
     title: 'Custody stays with Privy',
-    body: 'Keys never reach the model, the database, or a log line. Purse authorises; Privy signs.',
+    body: 'Keys never reach the model, the database, or a log line. Pocket authorises; Privy signs.',
   },
   {
     icon: GaugeCircle,
@@ -84,7 +84,7 @@ export default function LoginPage() {
             <Wordmark href="/" />
           </div>
           <h2 className="text-text mt-8 text-2xl font-semibold tracking-tight lg:mt-0">
-            Sign in to Purse
+            Sign in to Pocket
           </h2>
           <p className="text-text-secondary mt-1.5 text-sm leading-relaxed">
             First time here? Signing in creates your organization and its first API key.

@@ -2,7 +2,7 @@
 #
 # The Graph's hosted service and decentralized network do not support Hedera,
 # so self-hosting is the only way to run a real subgraph against it. Ports are
-# offset from the defaults where they would collide with Purse's own Postgres.
+# offset from the defaults where they would collide with Pocket's own Postgres.
 services:
   graph-node:
     image: graphprotocol/graph-node:v0.36.1

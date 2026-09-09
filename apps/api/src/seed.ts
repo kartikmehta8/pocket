@@ -7,8 +7,8 @@
  * budget that the cheap resource fits inside and the expensive one does not.
  */
 
-import { buildAdapters } from '@purse/adapters';
-import { decimalsOf, parseAmount } from '@purse/core';
+import { buildAdapters } from '@pocket/adapters';
+import { decimalsOf, parseAmount } from '@pocket/core';
 import {
   attachWallet,
   appendAuditEvent,
@@ -19,7 +19,7 @@ import {
   getDb,
   upsertBudget,
   upsertPolicy,
-} from '@purse/db';
+} from '@pocket/db';
 import { loadConfig } from './config.js';
 
 /** The address the demo seller asks to be paid at. */
@@ -39,7 +39,7 @@ async function seed(): Promise<void> {
   const chain = config.CHAIN;
   const decimals = decimalsOf('USDC');
 
-  const { org, apiKey } = await createOrganization(db, 'Purse Demo Organization');
+  const { org, apiKey } = await createOrganization(db, 'Pocket Demo Organization');
   const agent = await createAgent(db, {
     orgId: org.id,
     name: 'Hermes',
@@ -97,7 +97,7 @@ async function seed(): Promise<void> {
   process.stdout.write(
     [
       '',
-      'Purse demo seeded.',
+      'Pocket demo seeded.',
       '',
       `  Organization   ${org.id}`,
       `  Agent          ${agent.id}  (${agent.name})`,
@@ -108,7 +108,7 @@ async function seed(): Promise<void> {
       '  API key (shown once, copy it now):',
       `  ${apiKey}`,
       '',
-      '  Put it in .env as MCP_AGENT_TOKEN and PURSE_API_KEY.',
+      '  Put it in .env as MCP_AGENT_TOKEN and POCKET_API_KEY.',
       '',
     ].join('\n'),
   );

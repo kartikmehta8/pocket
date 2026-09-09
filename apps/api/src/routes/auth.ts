@@ -1,15 +1,15 @@
 /**
  * Dashboard sign-in.
  *
- * One route, and it is the only place in Purse where a tenant can be created
+ * One route, and it is the only place in Pocket where a tenant can be created
  * without an operator already holding a credential. It runs before the auth
  * hook has resolved an organization, so it verifies the identity token itself
  * rather than trusting anything on the request.
  */
 
 import type { FastifyInstance } from 'fastify';
-import { createSessionSchema, PurseError } from '@purse/core';
-import { appendAuditEvent, resolveSession } from '@purse/db';
+import { createSessionSchema, PocketError } from '@pocket/core';
+import { appendAuditEvent, resolveSession } from '@pocket/db';
 import { bearerToken } from '../auth.js';
 import type { AppContext } from '../context.js';
 
@@ -41,7 +41,7 @@ export function registerAuthRoutes(app: FastifyInstance, ctx: AppContext): void 
   app.post('/v1/auth/session', async (request, reply) => {
     const token = bearerToken(request);
     if (token === null) {
-      throw new PurseError('UNAUTHORIZED', 'Provide the identity token as a bearer token.');
+      throw new PocketError('UNAUTHORIZED', 'Provide the identity token as a bearer token.');
     }
     const body = createSessionSchema.parse(request.body ?? {});
     const identity = await ctx.identity.verify(token);
