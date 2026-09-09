@@ -1,9 +1,8 @@
 /**
  * Typed HTTP client for the Pocket API.
  *
- * The MCP server holds an organization API key and is the only component that
- * presents it. Agents talk to MCP tools; they never see the credential, and
- * they cannot call the API directly with it.
+ * One client is built per MCP request from the key that request carried, so
+ * a key is never shared between callers and none is held between requests.
  */
 
 /** Error carrying the API's stable error code. */

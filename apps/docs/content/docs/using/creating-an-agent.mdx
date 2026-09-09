@@ -37,7 +37,8 @@ you use.
 <Tab value="Hermes">
 
 ```bash
-hermes mcp add pocket --transport http --url https://your-mcp-url/mcp
+hermes mcp add pocket --transport http --url https://your-mcp-url/mcp \
+  --header "Authorization: Bearer pocket_sk_..."
 ```
 
 </Tab>
@@ -45,19 +46,24 @@ hermes mcp add pocket --transport http --url https://your-mcp-url/mcp
 <Tab value="Claude Code">
 
 ```bash
-claude mcp add --transport http pocket https://your-mcp-url/mcp
+claude mcp add --transport http pocket https://your-mcp-url/mcp \
+  --header "Authorization: Bearer pocket_sk_..."
 ```
 
 </Tab>
 
 <Tab value="Other agents">
 
-Any MCP client takes the same endpoint:
+Any MCP client takes the same endpoint and the same header:
 
 ```json
 {
   "mcpServers": {
-    "pocket": { "type": "http", "url": "https://your-mcp-url/mcp" }
+    "pocket": {
+      "type": "http",
+      "url": "https://your-mcp-url/mcp",
+      "headers": { "Authorization": "Bearer pocket_sk_..." }
+    }
   }
 }
 ```
@@ -66,23 +72,27 @@ Any MCP client takes the same endpoint:
 
 </Tabs>
 
-There is no key in any of these, on purpose.
+The key is the one you minted in the dashboard. Mint a separate key per runtime
+so you can revoke one without disturbing the others.
 
-## Your agent never holds the key
+## The model never holds the key
 
 <Flow
-  caption="The key stays on your server; the agent only ever asks for a purchase"
+  caption="The key sits in your runtime's config; the model only ever asks for a purchase"
   nodes={[
     { label: 'Language model', note: 'no credential at all' },
     { label: 'Your agent', note: 'asks to buy' },
-    { label: 'Your server', note: 'holds the key', decides: true },
+    { label: 'Your runtime', note: 'sends the key', decides: true },
     { label: 'Pocket', note: 'checks and pays' },
   ]}
 />
 
-The key lives in your own server's environment. It is never passed to your
-agent, never returned in a result, and never written into the model's context.
-An agent that cannot read it cannot leak it.
+The key lives in your runtime's configuration and travels as a transport
+header. It is never passed to the model, never returned in a tool result, and
+never written into the context. A model that cannot read it cannot leak it.
+
+Pocket's MCP server stores no key of its own, so the endpoint reaches only the
+organization whose key the caller already holds.
 
 ## What it can do once connected
 

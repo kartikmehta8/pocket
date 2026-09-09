@@ -108,7 +108,7 @@ async function seed(): Promise<void> {
       '  API key (shown once, copy it now):',
       `  ${apiKey}`,
       '',
-      '  Put it in .env as MCP_AGENT_TOKEN and POCKET_API_KEY.',
+      '  Present it to the API and the MCP server as a bearer token.',
       '',
     ].join('\n'),
   );

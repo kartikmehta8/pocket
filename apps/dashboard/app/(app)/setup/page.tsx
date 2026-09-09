@@ -127,8 +127,8 @@ export default async function SetupPage() {
 
         <Step
           index={4}
-          title="Create an API key for the MCP server"
-          summary="The MCP server presents this key. Your agent never sees it, so it cannot appear in a completion."
+          title="Create an API key for your agent runtime"
+          summary="Your agent runtime presents this key to the MCP server. It rides in a transport header, so the model never sees it and cannot leak it in a completion."
           done={keys.length > 0}
         >
           {keysResult.ok ? (

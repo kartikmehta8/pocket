@@ -83,11 +83,13 @@ This is the only command in the whole setup. Open **Connect agent** in the
 dashboard and copy the line for whichever agent you use.
 
 ```bash
-hermes mcp add pocket --transport http --url https://your-mcp-url/mcp
+hermes mcp add pocket --transport http --url https://your-mcp-url/mcp \
+  --header "Authorization: Bearer pocket_sk_..."
 ```
 
-The same screen has the versions for Claude Code and for any other MCP client.
-There is no key in the command, on purpose.
+The same screen has the versions for Claude Code and for any other MCP client,
+with your key already filled in. The key travels as a transport header, so the
+model never sees it.
 
 </Step>
 

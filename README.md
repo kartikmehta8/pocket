@@ -27,9 +27,9 @@ pnpm seed                      # prints an API key ONCE - copy it into .env
 pnpm dev:dashboard             # http://localhost:3000
 ```
 
-`pnpm seed` prints an organization API key. Paste it into `.env` as
-`MCP_AGENT_TOKEN`, then restart. Only its hash is stored, so it cannot be
-recovered later.
+`pnpm seed` prints an organization API key. Keep it: it is what you present to
+the API, and to the MCP server in an `Authorization: Bearer` header. Only its
+hash is stored, so it cannot be recovered later.
 
 ### Signing in
 

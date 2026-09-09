@@ -2,8 +2,12 @@
  * Remote MCP server.
  *
  * Speaks Streamable HTTP so an agent runtime can attach over the network. Each
- * request gets its own server and transport instance, which keeps sessions
+ * request gets its own server, transport and API client, which keeps callers
  * isolated from one another.
+ *
+ * The credential travels with the request. This server holds no key of its
+ * own, so an unauthenticated caller can reach nothing: whoever connects
+ * presents their own organization key and sees only that organization.
  */
 
 import express from 'express';
@@ -28,18 +32,24 @@ function envOr(name: string, fallback: string): string {
   return value === undefined || value.trim() === '' ? fallback : value;
 }
 
-const port = Number(envOr('MCP_PORT', '8081'));
-const baseUrl = envOr('POCKET_API_URL', 'http://localhost:8080');
-const apiKey = envOr('MCP_AGENT_TOKEN', '');
-
-if (apiKey === '') {
-  process.stderr.write(
-    'MCP_AGENT_TOKEN is not set. Create an organization with POST /v1/orgs and put its apiKey in .env.\n',
-  );
-  process.exit(1);
+/**
+ * Extracts the organization key from an `Authorization` header.
+ *
+ * @param header - Raw header value, if the caller sent one.
+ * @returns The bearer token, or `null` when the header is absent or malformed.
+ * @remarks The scheme is matched case-insensitively because HTTP does not
+ *   promise a spelling, and clients differ.
+ */
+function bearerToken(header: string | undefined): string | null {
+  if (header === undefined) return null;
+  const match = /^bearer\s+(.+)$/i.exec(header.trim());
+  const token = match?.[1]?.trim();
+  return token === undefined || token === '' ? null : token;
 }
 
-const client = new PocketClient({ baseUrl, apiKey });
+const port = Number(envOr('MCP_PORT', '8081'));
+const baseUrl = envOr('POCKET_API_URL', 'http://localhost:8080');
+
 const app = express();
 // Behind a reverse proxy the socket address is the proxy's, so without this
 // every agent looks like it came from the same client.
@@ -47,20 +57,40 @@ app.set('trust proxy', true);
 app.use(express.json({ limit: '1mb' }));
 
 app.get('/health', (_request, response) => {
-  response.json({ ok: true, api: baseUrl, transport: 'streamable-http' });
+  response.json({ ok: true, api: baseUrl, transport: 'streamable-http', auth: 'bearer' });
 });
 
 /**
  * Handles one MCP request.
  *
- * @remarks A fresh {@link McpServer} and transport per request means no state
- * leaks between callers. The cost is per-request setup, which is negligible
- * next to the network calls each tool makes.
+ * @remarks A fresh {@link McpServer}, transport and {@link PocketClient} per
+ * request means no state and no credential leaks between callers. The cost is
+ * per-request setup, which is negligible next to the network calls each tool
+ * makes.
  */
 app.post('/mcp', (request, response) => {
   void (async () => {
+    const apiKey = bearerToken(request.get('authorization'));
+    if (apiKey === null) {
+      // 401 with the challenge, so a client that can prompt for a credential
+      // knows what to ask for instead of reporting an opaque failure.
+      response
+        .status(401)
+        .set('WWW-Authenticate', 'Bearer realm="pocket"')
+        .json({
+          jsonrpc: '2.0',
+          error: {
+            code: -32001,
+            message:
+              'Missing credential. Connect with an Authorization: Bearer <pocket_sk_...> header, using an API key minted in the Pocket dashboard.',
+          },
+          id: null,
+        });
+      return;
+    }
+
     const server = new McpServer({ name: 'pocket', version: '0.1.0' });
-    registerTools(server, client);
+    registerTools(server, new PocketClient({ baseUrl, apiKey }));
 
     const transport = new StreamableHTTPServerTransport({ sessionIdGenerator: undefined });
     response.on('close', () => {

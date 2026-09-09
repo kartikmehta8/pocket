@@ -58,8 +58,10 @@ docker run -d --name pocket-api -p 8080:8080 \
 more than one. It is not a wildcard, and it is what stops another site driving
 the API with a browser session it did not earn.
 
-The MCP server needs `POCKET_API_URL` and `MCP_AGENT_TOKEN` — the organization
-API key it presents. Mint that key from **Settings → API keys** in the
+The MCP server needs only `POCKET_API_URL`. It stores no credential: each
+caller presents its own organization key in an `Authorization: Bearer` header,
+so the hosted endpoint cannot be used to reach an organization the caller does
+not already hold a key for. Mint keys from **Settings → API keys** in the
 dashboard, not by hand.
 
 ## 3. Dashboard

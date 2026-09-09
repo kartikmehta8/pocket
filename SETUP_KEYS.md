@@ -343,13 +343,12 @@ call.
 pnpm seed          # prints the key once, then never again
 ```
 
-Copy it into `.env`:
-
-```bash
-MCP_AGENT_TOKEN=pocket_sk_...   # the MCP server presents this to the API
-```
-
+Keep it: it is what you present to the MCP server, and to the API directly.
 Only a SHA-256 hash is stored, so a lost key cannot be recovered.
+
+The MCP server holds no key of its own. Every caller sends its own in an
+`Authorization: Bearer` header, which is what keeps the hosted endpoint from
+being an open door onto somebody else's agents.
 
 Once sign-in is configured you do not need `pnpm seed` at all: signing in mints
 the organization's first key, and **Settings → API keys** mints and revokes the

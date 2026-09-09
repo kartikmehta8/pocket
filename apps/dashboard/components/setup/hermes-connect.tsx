@@ -1,47 +1,77 @@
 'use client';
 
 import * as ToggleGroup from '@radix-ui/react-toggle-group';
-import { useState } from 'react';
+import { useId, useState } from 'react';
 
 import { cn } from '@/lib/cn';
 import { CodeBlock } from '@/components/ui/code-block';
+import { Field, Input } from '@/components/ui/field';
 
 /** The runtimes an operator is most likely to point at Pocket. */
 const CLIENTS = ['Hermes', 'Claude Code', 'Raw JSON'] as const;
 
 type Client = (typeof CLIENTS)[number];
 
+/** Stand-in shown until a key is pasted, so the shape of one is obvious. */
+const KEY_PLACEHOLDER = 'pocket_sk_...';
+
 /**
  * Renders the connection recipe for one client.
  *
  * @param client Which runtime.
  * @param url The MCP endpoint.
+ * @param apiKey The organization key the runtime will present.
  * @returns The exact text to run or paste.
  */
-function recipe(client: Client, url: string): { caption: string; code: string } {
-  const config = JSON.stringify({ mcpServers: { pocket: { type: 'http', url } } }, null, 2);
+function recipe(client: Client, url: string, apiKey: string): { caption: string; code: string } {
+  const authorization = `Bearer ${apiKey}`;
   switch (client) {
     case 'Hermes':
-      return { caption: 'Terminal', code: `hermes mcp add pocket --transport http --url ${url}` };
+      return {
+        caption: 'Terminal',
+        code: `hermes mcp add pocket --transport http --url ${url} \\\n  --header "Authorization: ${authorization}"`,
+      };
     case 'Claude Code':
-      return { caption: 'Terminal', code: `claude mcp add --transport http pocket ${url}` };
+      return {
+        caption: 'Terminal',
+        code: `claude mcp add --transport http pocket ${url} \\\n  --header "Authorization: ${authorization}"`,
+      };
     case 'Raw JSON':
-      return { caption: 'mcp.json', code: config };
+      return {
+        caption: 'mcp.json',
+        code: JSON.stringify(
+          {
+            mcpServers: {
+              pocket: { type: 'http', url, headers: { Authorization: authorization } },
+            },
+          },
+          null,
+          2,
+        ),
+      };
   }
 }
 
 /**
  * Connection recipes for the MCP server, one tab per runtime.
  *
- * No API key appears in any of them. The MCP server holds the organization
- * credential and never passes it to the model, which is the whole point: an
- * agent that cannot read the key cannot leak it in a completion.
+ * The runtime presents the organization key on every call; the MCP server
+ * stores none of its own, so the hosted endpoint cannot reach an organization
+ * whose key the caller does not already hold. The key travels in a transport
+ * header rather than in the conversation, so the model still never sees it and
+ * cannot leak it in a completion.
  *
  * @param url The MCP endpoint this organization should connect to.
  */
 export function HermesConnect({ url }: { url: string }) {
-  const [client, setClient] = useState<Client>('Hermes');
-  const { caption, code } = recipe(client, url);
+  const [client, setClient] = useState<Client>('Claude Code');
+  const [apiKey, setApiKey] = useState('');
+  const keyId = useId();
+  const { caption, code } = recipe(
+    client,
+    url,
+    apiKey.trim() === '' ? KEY_PLACEHOLDER : apiKey.trim(),
+  );
 
   return (
     <div className="flex flex-col gap-3">
@@ -69,6 +99,22 @@ export function HermesConnect({ url }: { url: string }) {
           </ToggleGroup.Item>
         ))}
       </ToggleGroup.Root>
+
+      <Field
+        htmlFor={keyId}
+        label="Your API key"
+        hint="Paste the key from the step above to fill it into the command. It is only used here, in your browser."
+      >
+        <Input
+          id={keyId}
+          value={apiKey}
+          onChange={(event) => setApiKey(event.target.value)}
+          placeholder={KEY_PLACEHOLDER}
+          spellCheck={false}
+          autoComplete="off"
+          className="font-mono"
+        />
+      </Field>
 
       <CodeBlock code={code} label={`${client} MCP configuration`} caption={caption} />
     </div>
