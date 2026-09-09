@@ -1,0 +1,107 @@
+---
+title: Buying with x402
+description: How your agent pays for things, and why it can buy from anyone rather than a catalogue we curate.
+---
+
+x402 is an open way for a web service to say "this costs money" and be paid for
+it in the same request. Your agent asks for something, the seller answers with a
+price instead of the data, your agent pays, and the data comes back.
+
+Purse handles all of it. You do not need to understand the protocol to use it.
+
+## Why it matters to you
+
+**You are not locked into a marketplace.** Purse does not run a catalogue and
+there is nothing to get listed in. Any API priced this way can take your agent's
+money, whether we have heard of it or not.
+
+**It is per call, not per seat.** Your agent pays for the work it actually does,
+rather than a monthly licence sitting idle between jobs.
+
+**No account setup with each seller.** No signup, no API key to rotate, no
+invoice to reconcile. The payment is the request.
+
+## What a purchase looks like
+
+<Sequence
+  caption="Four exchanges, all handled for you"
+  steps={[
+    { from: 'Your agent', to: 'Seller', action: 'asks for the data' },
+    { from: 'Seller', to: 'Your agent', action: 'answers with a price' },
+    { from: 'Purse', action: 'checks your limits and pays', decides: true },
+    { from: 'Seller', to: 'Your agent', action: 'returns the data' },
+  ]}
+/>
+
+## Trying it from the dashboard
+
+Open **Marketplace**. It lists paid feeds with live prices and how fresh each
+one is. Pick an agent, press buy, and the response appears inline.
+
+There is also a box for any other paid URL, so you can point it at a seller that
+is not on the list.
+
+A purchase you make here goes through exactly the same limits an agent's does.
+The only difference recorded is that a person asked.
+
+| Feed              | Price | Data from                      |
+| ----------------- | ----- | ------------------------------ |
+| Token prices      | 0.01  | CoinGecko                      |
+| Ethereum fees     | 0.02  | A public Ethereum node         |
+| Chain rankings    | 0.05  | DefiLlama                      |
+| Stablecoin supply | 0.08  | DefiLlama                      |
+| Market brief      | 0.08  | All three, combined            |
+| Full report       | 0.75  | The brief plus the full tables |
+
+These are live feeds, not sample responses.
+
+## Letting your agent do it
+
+Once connected, your agent buys on its own. Give it a job that needs paid data:
+
+```text
+Get current token prices from the market data feed using agent
+agent_1a2b3c, then tell me which asset moved most in the last 24 hours.
+```
+
+Behind the scenes it calls one tool, `purse_pay_for_resource`, and Purse does
+the rest.
+
+## Buying from your own code
+
+If you are calling Purse directly rather than through an agent, one request does
+the whole thing:
+
+```bash
+POST /v1/payments/x402/purchase
+Authorization: Bearer purse_sk_...
+
+{
+  "agentId": "agent_1a2b3c",
+  "url": "https://seller.example.com/v1/data",
+  "reason": "Prices for the portfolio view"
+}
+```
+
+It answers with one of four outcomes, and a refusal is a normal `200` rather
+than an error:
+
+| Outcome   | Means                           | Also returns                 |
+| --------- | ------------------------------- | ---------------------------- |
+| `paid`    | Bought and delivered            | The data and the receipt     |
+| `free`    | The seller charged nothing      | The data                     |
+| `blocked` | Refused or held. Nothing signed | The reason and what was left |
+| `failed`  | Reachable but did not complete  | A message and a code         |
+
+Amounts are always decimal strings beside their asset, never numbers. A JSON
+number gets turned back into a float by every client, and a ledger cannot afford
+that.
+
+```json
+{ "amount": "0.08", "asset": "USDC" }
+```
+
+## Where the money actually goes
+
+Settlement happens on Hedera, and the network fee is paid for your agent rather
+than by it. See [Hedera](/docs/stack/hedera).

@@ -1,0 +1,88 @@
+---
+title: Concepts
+description: The seven words the rest of this documentation uses, and what each one means.
+---
+
+Purse has a small vocabulary. Learn these seven and nothing else in the docs
+needs explaining.
+
+## Agent
+
+A thing that spends. Usually a coding agent you already run, connected to Purse
+so it can pay for what it needs.
+
+Each agent has its own wallet, its own budget, and its own rules. Two agents in
+the same organization cannot touch each other's money.
+
+## Wallet
+
+Where an agent's money sits. Created automatically when you create the agent.
+
+You never handle a private key, and neither does your agent. Signing happens
+elsewhere, only when Purse says a purchase is allowed.
+
+## Budget
+
+How much an agent may spend, and how often.
+
+There are two kinds. The **daily budget** is standing, and resets each midnight.
+A **task budget** is a smaller amount ring-fenced for one job, and it sits
+alongside the daily one rather than replacing it.
+
+A purchase has to fit both.
+
+## Policy
+
+The rules about _what_ an agent may buy, as opposed to _how much_.
+
+Which sellers it may pay, which kinds of spend are allowed, the most any single
+purchase may cost, and the amount above which you want to approve it yourself.
+
+<Callout type="info">
+An agent with no budget and no policy cannot spend anything. That is the
+starting state, not something you forgot to configure.
+
+</Callout>
+
+## Payment
+
+One attempt to buy something. Note the word attempt: a refused purchase is a
+payment too, and it is kept.
+
+Each one ends in one of these states:
+
+| State             | Means                                 |
+| ----------------- | ------------------------------------- |
+| Settled           | Paid, and the data came back          |
+| Awaiting approval | Held for you. Nothing has been signed |
+| Blocked           | Refused by one of your rules          |
+| Failed            | Allowed, but did not go through       |
+
+## Seller
+
+Whoever your agent is buying from. A weather API, a market data feed, another
+agent.
+
+Purse is not a marketplace. Any seller that prices itself in the open x402
+standard can take your agent's money, whether we have heard of them or not. See
+[buying with x402](/docs/using/x402).
+
+## Audit trail
+
+The record of everything that happened: every purchase, every refusal, every
+change you made to a limit.
+
+It is written at the moment each thing happens and is never edited afterwards.
+See [the audit trail](/docs/using/audit).
+
+## How they fit together
+
+<Flow
+  caption="An organization holds agents; each agent has a wallet, a budget and a policy"
+  nodes={[
+    { label: 'Your organization', note: 'you and your team' },
+    { label: 'Agent', note: 'one wallet each' },
+    { label: 'Budget and policy', note: 'what it may spend', decides: true },
+    { label: 'Payments', note: 'every attempt, kept' },
+  ]}
+/>

@@ -1,0 +1,140 @@
+@import 'tailwindcss';
+@import 'fumadocs-ui/css/neutral.css';
+@import 'fumadocs-ui/css/preset.css';
+
+/*
+ * Soft Pop, ported from the product site.
+ *
+ * Three things define the look and everything here honours all three: a warm
+ * off-white canvas, true-black hairlines around anything that is a surface or a
+ * control, and generous 1rem radii. Shadows are almost absent on purpose. The
+ * border does the separating, which is what keeps it crisp rather than
+ * soft-focus.
+ */
+@theme {
+  --font-sans: var(--font-dm-sans), ui-sans-serif, system-ui, -apple-system, sans-serif;
+  --font-mono: var(--font-space-mono), ui-monospace, SFMono-Regular, Menlo, monospace;
+
+  --color-fd-background: #f7f9f3;
+  --color-fd-foreground: #000000;
+  --color-fd-muted: #f0f0f0;
+  --color-fd-muted-foreground: #6b6b6b;
+  --color-fd-popover: #ffffff;
+  --color-fd-popover-foreground: #000000;
+  --color-fd-card: #ffffff;
+  --color-fd-card-foreground: #000000;
+  /* True black, and deliberately so: the hairline is the whole signature. */
+  --color-fd-border: #000000;
+  --color-fd-primary: #4f46e5;
+  --color-fd-primary-foreground: #ffffff;
+  --color-fd-secondary: #f0f0f0;
+  --color-fd-secondary-foreground: #000000;
+  --color-fd-accent: #eef2ff;
+  --color-fd-accent-foreground: #312e81;
+  --color-fd-ring: #a5b4fc;
+  --color-fd-overlay: rgb(0 0 0 / 0.3);
+
+  --radius-sm: 0.5rem;
+  --radius-md: 0.75rem;
+  --radius-lg: 1rem;
+  --radius-xl: 1.25rem;
+
+  /* Motion, mirrored from the product site. */
+  --ease-brand: cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+@layer base {
+  html {
+    /*
+     * No `scrollbar-gutter` here. The bars are hidden below, so reserving
+     * space for one would leave a dead strip down the right of every page.
+     */
+    -webkit-font-smoothing: antialiased;
+  }
+
+  body {
+    font-family: var(--font-sans);
+    /* Contextual alternates only. A ligature inside an address is a hazard. */
+    font-feature-settings: 'calt' 1;
+  }
+
+  h1,
+  h2,
+  h3 {
+    letter-spacing: -0.02em;
+  }
+
+  code,
+  kbd,
+  pre,
+  samp {
+    font-family: var(--font-mono);
+  }
+
+  /*
+   * A financial table is read down its columns, so digits have to line up.
+   */
+  table {
+    font-variant-numeric: tabular-nums;
+  }
+}
+
+/*
+ * Internal rules get the hairline at low alpha. A solid black line under every
+ * table row is unreadable, and the border colour above is solid black.
+ */
+@layer components {
+  #nd-docs-layout table th,
+  #nd-docs-layout table td {
+    border-color: rgb(0 0 0 / 0.12);
+  }
+
+  /*
+   * Nothing on this site shows a scrollbar. Everything still scrolls by wheel,
+   * trackpad, touch and keyboard; only the bar itself is hidden, because a
+   * permanent gutter beside a short navigation tree or a code block reads as
+   * clutter rather than as an affordance.
+   */
+  html,
+  body,
+  * {
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+  }
+
+  ::-webkit-scrollbar {
+    width: 0;
+    height: 0;
+    display: none;
+  }
+
+  /*
+   * Callouts arrive with a medium shadow and a wider radius than anything else
+   * on the site uses, which makes them read as pasted in from another design.
+   * Selected on the custom property they set inline, because that is the only
+   * stable handle the component exposes.
+   */
+  #nd-docs-layout [style*='--callout-color'] {
+    border-radius: var(--radius-lg);
+    box-shadow: none;
+    /*
+     * The component reserves a narrow left inset for its accent bar. With the
+     * bar gone the inset is just a lopsided edge, so the padding is evened up.
+     */
+    padding-inline-start: 0.75rem;
+  }
+
+  /*
+   * The accent bar down the left of a callout. The icon already carries the
+   * tone, and against a black hairline the bar reads as a stray line rather
+   * than as emphasis.
+   */
+  #nd-docs-layout [style*='--callout-color'] > [role='none'] {
+    display: none;
+  }
+}
+
+html > body[data-scroll-locked] {
+  margin-right: 0px !important;
+  --removed-body-scroll-bar-size: 0px !important;
+}

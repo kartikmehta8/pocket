@@ -1,0 +1,37 @@
+---
+title: Overview
+description: Three services do the parts Purse deliberately does not, and each one is relied on for exactly one thing.
+---
+
+Purse decides and keeps the record. It does not hold keys, move money, or run an
+indexer. Three services do those.
+
+<Flow
+  caption="Purse decides; three services custody, settle and record"
+  nodes={[
+    { label: 'Privy', note: 'holds the keys' },
+    { label: 'Purse', note: 'decides', decides: true },
+    { label: 'Hedera', note: 'moves the money' },
+    { label: 'The Graph', note: 'keeps the record' },
+  ]}
+/>
+
+## What each one is for
+
+| Service   | Does                                      | Purse never           |
+| --------- | ----------------------------------------- | --------------------- |
+| Privy     | Holds every wallet and signs when told to | Sees a private key    |
+| Hedera    | Settles the payment in stablecoin         | Submits a transaction |
+| The Graph | Records transfers and prices them         | Runs its own indexer  |
+
+## What removing one would cost
+
+| Without   | What stops working                                                 |
+| --------- | ------------------------------------------------------------------ |
+| Privy     | Nothing can sign. Purse holds no keys and has no way to get one.   |
+| Hedera    | Nothing settles. Decisions still happen, but no money moves.       |
+| The Graph | Dollar limits refuse rather than guess. Token limits keep working. |
+
+The third row is worth reading twice. Losing the price feed does not quietly
+degrade into estimating. It refuses, because a limit set in dollars means
+dollars matter.

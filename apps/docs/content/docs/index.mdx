@@ -1,0 +1,76 @@
+---
+title: What is Purse
+description: Give each agent its own wallet and a hard cap it cannot raise.
+---
+
+Your agents need to buy things. Search results, market data, compute, other
+agents' output. Most of that is sold per call, and none of it will take an
+invoice from a language model.
+
+So you have a choice. Hand your agent a card and hope, or give it an account
+that cannot be talked into anything.
+
+**Purse is the second option.** Your agent gets its own wallet, its own budget,
+and limits it cannot argue its way past. It buys what it needs. You get a
+receipt for every attempt, including the ones you refused.
+
+## What you can do with it
+
+<Cards>
+  <Card title="Create an agent" href="/docs/using/creating-an-agent">
+    Give it a wallet in about ten seconds. It starts unable to spend anything.
+  </Card>
+  <Card title="Set its budget" href="/docs/using/budgets">
+    How much a day, how much per purchase, and who it may pay.
+  </Card>
+  <Card title="Let it buy things" href="/docs/using/x402">
+    Any seller that prices itself openly, not a catalogue we curate.
+  </Card>
+  <Card title="See everything it did" href="/docs/using/audit">
+    Every purchase and every refusal, with the reason attached.
+  </Card>
+
+</Cards>
+
+## The idea in one line
+
+<Flow
+  caption="Your agent asks, Purse checks your limits, and only then does a wallet sign"
+  nodes={[
+    { label: 'Your agent', note: 'asks to buy something' },
+    { label: 'Purse', note: 'checks your limits', decides: true },
+    { label: 'Wallet', note: 'signs, only if allowed' },
+    { label: 'Your agent', note: 'gets what it asked for' },
+  ]}
+/>
+
+The order matters. Purse decides **before** anything is signed, so a refused
+purchase has no signature attached to it. There is nothing sitting around that a
+clever prompt could talk an agent into using.
+
+## Three things worth knowing
+
+**Nothing is allowed until you allow it.** A new agent cannot spend a cent.
+Every permission is one you granted, on purpose.
+
+**Refusals are kept, not dropped.** When Purse stops a purchase it records what
+was asked for, what stopped it, and how much room was left. Weeks later you can
+still answer "why did my agent stop?".
+
+**Your agent never holds a key.** It asks Purse to pay. It cannot sign for
+itself, so a leaked prompt cannot spend anything.
+
+## Works with what you already run
+
+Hermes, Claude Code, Codex, or anything else that speaks MCP. One command
+connects it, and there is no key in that command.
+
+<Cards>
+  <Card title="Quickstart" href="/docs/quickstart">
+    Sign in and watch an agent buy something.
+  </Card>
+  <Card title="Concepts" href="/docs/concepts">
+    The handful of words the rest of the docs use.
+  </Card>
+
+</Cards>

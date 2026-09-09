@@ -1,0 +1,71 @@
+---
+title: How it works
+description: What happens between your agent wanting something and having it.
+---
+
+Your agent asks for something. It gets a price instead. Purse checks that price
+against your limits, and only then does a wallet sign for it.
+
+The whole exchange takes a couple of seconds and needs nothing from you.
+
+## Step by step
+
+<Sequence
+  caption="The decision sits between the price and the signature"
+  steps={[
+    { from: 'Your agent', to: 'Purse', action: 'asks to buy something' },
+    { from: 'Purse', to: 'Seller', action: 'requests it' },
+    { from: 'Seller', to: 'Purse', action: 'answers with a price instead' },
+    {
+      from: 'Purse',
+      action: 'checks every limit you set',
+      decides: true,
+      note: 'If any limit fails, it stops here and the refusal is recorded.',
+    },
+    { from: 'Purse', to: 'Wallet', action: 'asks for a signature, only if allowed' },
+    { from: 'Purse', to: 'Seller', action: 'presents the signed payment' },
+    { from: 'Seller', to: 'Purse', action: 'takes payment and returns the data' },
+    { from: 'Purse', to: 'Your agent', action: 'hands over what it asked for' },
+  ]}
+/>
+
+## Why the order matters
+
+Purse decides **before** anything is signed.
+
+A refused purchase has no signature attached to it, because one was never
+created. There is no signed payment sitting around that a clever prompt could
+talk your agent into using.
+
+## When a purchase is refused
+
+Your agent is not just told no. It is told what stopped it, and how much room it
+had left.
+
+```text
+Refused      Full market report
+Amount       0.75 USDC
+Rule         per-job budget
+Left         0.03 of 0.50
+```
+
+A good agent reads that and picks something cheaper, instead of retrying the
+same request until your patience runs out.
+
+## When you want the final say
+
+Set an approval threshold and anything above it waits for you. You approve or
+reject it from the payments screen.
+
+<Callout type="info">
+Waiting for approval is not a soft yes. A held purchase has no signature, and
+the wallet is never asked for one until you release it.
+
+</Callout>
+
+## What your agent can never do
+
+- Read your API key
+- Change its own budget or rules
+- Pay for something Purse refused
+- Sign anything itself

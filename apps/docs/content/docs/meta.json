@@ -1,0 +1,19 @@
+{
+  "title": "Documentation",
+  "pages": [
+    "index",
+    "quickstart",
+    "concepts",
+    "how-it-works",
+    "---Using Purse---",
+    "using/creating-an-agent",
+    "using/budgets",
+    "using/x402",
+    "using/audit",
+    "---Built on---",
+    "stack/index",
+    "stack/hedera",
+    "stack/privy",
+    "stack/the-graph"
+  ]
+}

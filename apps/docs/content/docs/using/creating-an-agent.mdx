@@ -1,0 +1,118 @@
+---
+title: Creating an agent
+description: Give an agent a wallet, then connect the agent you already run.
+---
+
+An agent is whatever you already use to do the work. Purse gives it a wallet
+and a set of limits.
+
+## Create it
+
+Go to **Agents** and choose **New agent**. Give it a name, and optionally a line
+about what it does.
+
+A wallet is created at the same time, and the address appears on the agent's
+page.
+
+<Callout type="info">
+Your new agent cannot spend anything yet. It stays that way until you give it a
+budget, which is the next page.
+
+</Callout>
+
+## Fund the wallet
+
+Copy the address from the agent's page and send it some stablecoin. The
+**Connect agent** screen links to a faucet if you are on testnet.
+
+The wallet is already set up to hold the token, so there is nothing else to do.
+The balance appears once the transfer confirms.
+
+## Connect the agent you run
+
+Open **Connect agent** in the dashboard and copy the line for whichever agent
+you use.
+
+<Tabs items={['Hermes', 'Claude Code', 'Other agents']}>
+<Tab value="Hermes">
+
+```bash
+hermes mcp add purse --transport http --url https://your-mcp-url/mcp
+```
+
+</Tab>
+
+<Tab value="Claude Code">
+
+```bash
+claude mcp add --transport http purse https://your-mcp-url/mcp
+```
+
+</Tab>
+
+<Tab value="Other agents">
+
+Any MCP client takes the same endpoint:
+
+```json
+{
+  "mcpServers": {
+    "purse": { "type": "http", "url": "https://your-mcp-url/mcp" }
+  }
+}
+```
+
+</Tab>
+
+</Tabs>
+
+There is no key in any of these, on purpose.
+
+## Your agent never holds the key
+
+<Flow
+  caption="The key stays on your server; the agent only ever asks for a purchase"
+  nodes={[
+    { label: 'Language model', note: 'no credential at all' },
+    { label: 'Your agent', note: 'asks to buy' },
+    { label: 'Your server', note: 'holds the key', decides: true },
+    { label: 'Purse', note: 'checks and pays' },
+  ]}
+/>
+
+The key lives in your own server's environment. It is never passed to your
+agent, never returned in a result, and never written into the model's context.
+An agent that cannot read it cannot leak it.
+
+## What it can do once connected
+
+Eight tools reach your agent. One can spend, and the other seven exist so it
+does not have to guess.
+
+| Tool                       | What it does                             | Spends |
+| -------------------------- | ---------------------------------------- | ------ |
+| `purse_pay_for_resource`   | Buys something and returns the content   | Yes    |
+| `purse_preview_payment`    | Asks whether a purchase would be allowed | No     |
+| `purse_create_task_budget` | Opens a ring-fenced amount for one job   | No     |
+| `purse_list_agents`        | Lists agents with budgets and spend      | No     |
+| `purse_get_agent`          | One agent, with its limits and balance   | No     |
+| `purse_spend_summary`      | Spend by category and seller             | No     |
+| `purse_list_payments`      | Recent purchases, refusals included      | No     |
+| `purse_audit_trail`        | The full record                          | No     |
+
+## Pausing and revoking
+
+On the agent's page you can **pause** it, which refuses everything until you
+resume, or **revoke** it, which is permanent. A revoked agent keeps its history
+and can never spend again.
+
+## Getting good behaviour
+
+Three things make an agent predictable:
+
+- **Name the agent in your prompt.** Otherwise it guesses, and it may guess wrong.
+- **State a ceiling.** It cannot exceed its real limits either way, but a stated number gives it something to plan against.
+- **Say what to do when refused.** "Tell me what you can afford instead" turns a dead end into a useful answer.
+
+The **Capabilities** screen has prompts already filled in with your own agent's
+details, ready to copy.

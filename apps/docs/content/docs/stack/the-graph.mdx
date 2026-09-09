@@ -1,0 +1,58 @@
+---
+title: The Graph
+description: Where the record is kept. Spend history you can verify, and pricing that refuses to guess.
+---
+
+The Graph does two things here. It records settled payments so your spend
+history can be checked against the chain rather than trusted from our database,
+and it prices purchases in dollars when you set a dollar limit.
+
+## Two price sources, deliberately
+
+A single price source is a single thing to manipulate. If your agent's ceiling
+is set in dollars, then whoever controls the price controls the ceiling.
+
+So Purse asks two independent sources and requires them to agree.
+
+<Flow
+  caption="Two independent sources are compared; disagreement means no price at all"
+  nodes={[
+    { label: 'Source one', note: 'price lookup' },
+    { label: 'Source two', note: 'pool-derived price' },
+    { label: 'Compare', note: 'agree within tolerance?', decides: true },
+    { label: 'Result', note: 'a price, or nothing' },
+  ]}
+/>
+
+## It refuses rather than guesses
+
+When the two disagree beyond tolerance, or either is unavailable, there is no
+price. Purse does not fall back to one source and does not use a stale figure.
+
+Your dollar limit then refuses the purchase.
+
+<Callout type="warn">
+This is deliberate. Setting a limit in dollars means dollars matter. Ignoring
+the limit because a price feed was down would be the wrong reading, and guessing
+would be worse.
+
+</Callout>
+
+Limits set in tokens keep working throughout. Only the dollar rule is affected.
+
+## Spend history you can check
+
+Your payments screen reads from an index of settled transfers, so the totals can
+be verified against what actually happened on the chain rather than only against
+our own records. If the two ever diverge, that is a fact worth surfacing rather
+than papering over.
+
+The spend summary tells you which source answered:
+
+```json
+{ "periodSpend": "15.27", "currency": "USDC", "source": "the-graph" }
+```
+
+When the index is unreachable it falls back to reading our database directly and
+reports `source: "ledger"`. Same numbers, weaker guarantee, and it says which
+you got.

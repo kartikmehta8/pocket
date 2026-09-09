@@ -1,0 +1,99 @@
+---
+title: Setting up a budget
+description: Five limits, all off by default, and what each one stops.
+---
+
+Nothing is allowed until you allow it. A new agent cannot spend anything, and
+that is the starting state rather than a step you missed.
+
+All five limits are checked before any money moves. Every one has to pass.
+
+<Flow
+  caption="Every purchase is checked against all five before a wallet is asked to sign"
+  nodes={[
+    { label: 'Per day', note: 'total across the day' },
+    { label: 'Per job', note: 'ring-fenced amount' },
+    { label: 'Per purchase', note: 'largest single buy' },
+    { label: 'Who it may pay', note: 'sellers you allow' },
+    { label: 'Ask me first', note: 'above your threshold' },
+  ]}
+/>
+
+## How much a day
+
+On the agent's page, the **Budget** panel. This is the ceiling across everything
+the agent buys in a day, and it resets each midnight.
+
+Purchases still in flight already count against it, so two requests arriving at
+once cannot both slip through on the same remaining balance.
+
+Start small. You can change it whenever you like, and it takes effect on the
+next purchase.
+
+## How much per job
+
+A separate, ring-fenced amount for one piece of work, opened from the **Task
+budgets** panel or by the agent itself.
+
+It sits alongside the daily limit rather than replacing it, so a purchase has to
+fit both.
+
+This is what stops a stuck agent burning a whole day on one task. It loops
+inside its envelope, runs out, and stops.
+
+## How much at once
+
+Also in the **Budget** panel. The most any single purchase may cost.
+
+You can set this in tokens, or in dollars.
+
+<Callout type="warn">
+If you set a dollar limit and live pricing is unavailable, Purse refuses the
+purchase rather than guessing. Setting a limit in dollars means dollars matter,
+and quietly ignoring it because a price feed was down would be the wrong reading
+of that.
+
+</Callout>
+
+## Who it may pay
+
+In the **Policy** panel. Keep a list of sellers you trust. For anyone not on it,
+you choose what happens:
+
+| Setting      | What happens                                     |
+| ------------ | ------------------------------------------------ |
+| Block        | Refused outright                                 |
+| Ask me first | Held until you approve it                        |
+| Allow        | Goes through, still subject to every other limit |
+
+The same panel controls which kinds of spend are allowed, so you can let an
+agent buy data but not compute.
+
+## When to ask you
+
+The approval threshold, also in the **Policy** panel. Above an amount you pick,
+a person has to release the purchase.
+
+The agent waits, and nothing is signed while it does. You approve or reject from
+the payments screen.
+
+## Testing a limit before you rely on it
+
+The agent's page has a **Preview** panel. Describe a purchase and it runs the
+real decision against your real limits, showing you the answer without recording
+anything or spending a cent.
+
+Worth using after any change you are unsure about.
+
+## When something is refused
+
+Open the row on **Payments**. It names the rule that stopped it and how much
+room was left:
+
+```text
+Refused      Full market report
+Amount       0.75 USDC
+Seller       market-data.example.com
+Rule         per-job budget
+Left         0.03 of 0.50
+```

@@ -1,0 +1,156 @@
+---
+title: Quickstart
+description: From signing in to watching your agent buy something, without touching a terminal until the last step.
+---
+
+Everything here happens on the dashboard. The only command you will run is the
+one that connects your agent, at step six.
+
+<Steps>
+<Step>
+### Sign in
+
+Open the dashboard and sign in with email, Google, GitHub, or a wallet you
+already have.
+
+The first time you do this, two things are created for you: your organization,
+and its first API key. The key is shown once on the screen that follows. Copy it
+somewhere safe, because only a hash of it is stored and it cannot be shown
+again.
+
+</Step>
+
+<Step>
+### Create an agent
+
+Go to **Agents** and choose **New agent**. Give it a name, and optionally a line
+about what it does.
+
+A wallet is created for it at the same time. You will see the address on the
+agent's page.
+
+<Callout type="info">
+Your new agent cannot spend anything yet. That is the starting state, not a step
+you have missed. It stays that way until you give it a budget in step four.
+
+</Callout>
+
+</Step>
+
+<Step>
+### Fund the wallet
+
+Copy the wallet address from the agent's page and send it some test USDC.
+
+The **Connect agent** screen links to a faucet for this. The wallet is already
+set up to hold the token, so nothing else is needed. The balance appears on the
+agent's page once the transfer confirms.
+
+</Step>
+
+<Step>
+### Set your limits
+
+Still on the agent's page, fill in two panels.
+
+**Budget** sets how much it can spend in a day, and the most any single purchase
+can cost. Start small. You can change both at any time.
+
+**Policy** sets which sellers it may pay, which kinds of spend are allowed, and
+the amount above which you want to approve a purchase yourself.
+
+If you are not sure what to pick, [what you control](/docs/controls) walks
+through each one and what it stops.
+
+</Step>
+
+<Step>
+### Create a key for your agent
+
+Go to **Settings**, then **API keys**, and create one. Name it after whatever
+will use it, so you can revoke that one thing later.
+
+It is shown once. Copy it now.
+
+This key goes into your own server's environment. Your agent never sees it.
+
+</Step>
+
+<Step>
+### Connect your agent
+
+This is the only command in the whole setup. Open **Connect agent** in the
+dashboard and copy the line for whichever agent you use.
+
+```bash
+hermes mcp add purse --transport http --url https://your-mcp-url/mcp
+```
+
+The same screen has the versions for Claude Code and for any other MCP client.
+There is no key in the command, on purpose.
+
+</Step>
+
+<Step>
+### Ask it to buy something
+
+Give your agent a job that needs paid data. The **Capabilities** screen has
+prompts already filled in with your own agent's details, so you can copy one
+straight across.
+
+```text
+Get current token prices from the market data feed using agent
+agent_1a2b3c, then tell me which asset moved most in the last 24 hours.
+```
+
+</Step>
+
+<Step>
+### Watch it happen
+
+Open **Payments**. The purchase appears with its amount, the seller, and a link
+to the transaction.
+
+Then try asking for something you know is over budget. It appears too, marked
+refused, with the rule that stopped it and how much room was left.
+
+</Step>
+
+</Steps>
+
+## Try it without an agent first
+
+If you would rather see a purchase before connecting anything, open
+**Marketplace**. It lists paid data feeds with live prices. Pick an agent, press
+buy, and the response appears inline.
+
+A purchase you make there goes through exactly the same limits an agent's does.
+The only difference recorded is that a person asked.
+
+| Feed              | Price | Data from                      |
+| ----------------- | ----- | ------------------------------ |
+| Token prices      | 0.01  | CoinGecko                      |
+| Ethereum fees     | 0.02  | A public Ethereum node         |
+| Chain rankings    | 0.05  | DefiLlama                      |
+| Stablecoin supply | 0.08  | DefiLlama                      |
+| Market brief      | 0.08  | All three, combined            |
+| Full report       | 0.75  | The brief plus the full tables |
+
+These are live feeds, not sample responses. Buying one fetches current data.
+
+## If something does not work
+
+**The agent says it has no budget.** Step four is not finished. Both the budget
+and the policy panel need saving.
+
+**Every purchase is held for approval.** Your policy is set to ask you about
+sellers it does not know. Add the seller to your trusted list, or change the
+setting on the agent's page.
+
+**The purchase was refused and you expected it to pass.** Open the row on
+**Payments**. It names the rule that stopped it and how much room was left.
+
+## Next
+
+- [How it works](/docs/how-it-works) for what happens between the request and the receipt.
+- [Using the dashboard](/docs/dashboard) for every screen and what it does.
