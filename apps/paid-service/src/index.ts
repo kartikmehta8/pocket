@@ -24,7 +24,9 @@ import { loadSellerConfig } from './config.js';
 import type { DataSource } from './sources/types.js';
 
 const config = loadSellerConfig();
-const app = Fastify({ logger: { level: config.LOG_LEVEL } });
+// Behind a reverse proxy the socket address is the proxy's, so without this
+// every request looks like it came from the same client.
+const app = Fastify({ logger: { level: config.LOG_LEVEL }, trustProxy: true });
 
 const cache = new SourceCache((source, error) => {
   app.log.warn({ source, error: String(error) }, 'Upstream refresh failed');

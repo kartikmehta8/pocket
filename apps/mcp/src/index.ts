@@ -41,6 +41,9 @@ if (apiKey === '') {
 
 const client = new PocketClient({ baseUrl, apiKey });
 const app = express();
+// Behind a reverse proxy the socket address is the proxy's, so without this
+// every agent looks like it came from the same client.
+app.set('trust proxy', true);
 app.use(express.json({ limit: '1mb' }));
 
 app.get('/health', (_request, response) => {
