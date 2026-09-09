@@ -9,7 +9,8 @@
   },
   "scripts": {
     "prepare": "git config core.hooksPath .githooks",
-    "build": "pnpm -r --filter './packages/*' build && pnpm -r --filter './apps/*' build",
+    "build:packages": "pnpm -r --filter './packages/*' build",
+    "build": "pnpm build:packages && pnpm -r --filter './apps/*' build",
     "dev": "pnpm -r --parallel --filter './apps/*' dev",
     "dev:api": "pnpm --filter @purse/api dev",
     "dev:mcp": "pnpm --filter @purse/mcp dev",
@@ -23,7 +24,7 @@
     "db:push": "pnpm --filter @purse/db push",
     "db:studio": "pnpm --filter @purse/db studio",
     "seed": "pnpm --filter @purse/api seed",
-    "verify": "pnpm format:check && pnpm lint && pnpm typecheck && pnpm test && pnpm build"
+    "verify": "pnpm build:packages && pnpm format:check && pnpm lint && pnpm typecheck && pnpm test && pnpm build"
   },
   "devDependencies": {
     "@eslint/js": "^9.17.0",

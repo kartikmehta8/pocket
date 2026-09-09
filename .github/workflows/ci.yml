@@ -37,6 +37,12 @@ jobs:
           cp .env.example .env
           cp apps/dashboard/.env.example apps/dashboard/.env.local
 
+      # The workspace packages compile to dist/, which is not committed. Lint,
+      # typecheck and the tests all resolve @purse/core from there, so a fresh
+      # clone has to build them before any of those can run.
+      - name: Build packages
+        run: pnpm build:packages
+
       - name: Format
         run: pnpm format:check
 
