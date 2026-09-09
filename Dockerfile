@@ -36,10 +36,24 @@ COPY apps/paid-service apps/paid-service
 RUN pnpm -r --filter './packages/*' build \
  && pnpm -r --filter './apps/*' --filter '!@pocket/dashboard' build
 
-# Drop dev dependencies from the tree that ships.
-RUN pnpm prune --prod --ignore-scripts
+# --- migrations -------------------------------------------------------------
+# Schema changes are applied by a one-off container before the serving images
+# roll, never by a service on boot: two API replicas starting together would
+# otherwise race each other through the same migration.
+#
+# It forks off `build` rather than the runtime image so that it carries
+# drizzle-kit, which is a dev dependency and has no business in a server.
+FROM build AS migrate
+WORKDIR /app
+CMD ["pnpm", "--filter", "@pocket/db", "push", "--force"]
 
 # --- runtime ----------------------------------------------------------------
+# `pnpm prune --prod` is deliberately not used here. It removes the links to the
+# workspace packages along with the dev dependencies, and the server then dies
+# on its first import of @pocket/adapters. The image carries the dev tree as a
+# result; shrinking it wants `pnpm deploy`, which is a change worth making on
+# its own rather than smuggling into a release.
+
 FROM node:22-alpine AS runtime
 ARG APP=api
 ENV NODE_ENV=production APP=${APP}
