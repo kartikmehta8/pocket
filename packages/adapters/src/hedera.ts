@@ -16,6 +16,20 @@ import {
 } from '@pocket/core';
 import { chainConfig, ERC20_ABI, IHRC719_IS_ASSOCIATED, tokenAddress } from './chains.js';
 
+/**
+ * Renders a transaction identifier the way explorers expect it.
+ *
+ * @param txHash - An EVM hash, or a Hedera transaction id in either form.
+ * @returns An EVM hash unchanged, or the id with its `@` and fractional
+ *   separator replaced by dashes.
+ */
+export function toExplorerId(txHash: string): string {
+  if (txHash.startsWith('0x')) return txHash;
+  const [payer, stamp] = txHash.split('@');
+  if (stamp === undefined) return txHash;
+  return `${payer}-${stamp.replace('.', '-')}`;
+}
+
 /** Chain provider backed by a Hedera JSON-RPC relay. */
 export class HederaChainProvider implements ChainProvider {
   public readonly chain: ChainId;
@@ -150,11 +164,16 @@ export class HederaChainProvider implements ChainProvider {
   /**
    * Builds a HashScan link for a transaction.
    *
-   * @param txHash - Transaction hash.
+   * @param txHash - An EVM transaction hash, or a Hedera transaction id in
+   *   either form.
    * @returns A URL an operator or a judge can open.
+   * @remarks A facilitator reports its transaction id the way the SDK prints
+   *   it, `0.0.123@1700000000.000000000`. Explorers and the mirror node both
+   *   use the dashed form, so the id is normalised here rather than left to
+   *   whoever clicks the link.
    */
   public explorerUrl(txHash: string): string {
-    return `${chainConfig(this.chain).explorerBase}/${txHash}`;
+    return `${chainConfig(this.chain).explorerBase}/${toExplorerId(txHash)}`;
   }
 
   /** Formats base units for human-readable logs. Never used for arithmetic. */
