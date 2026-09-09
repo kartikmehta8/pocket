@@ -1,6 +1,6 @@
 # Production backend stack for Pocket on a single host behind Nginx Proxy Manager.
 #
-#   docker compose -f docker-compose.prod.yml --env-file .env build
+#   docker compose -f docker-compose.prod.yml --env-file .env pull
 #   docker compose -f docker-compose.prod.yml --env-file .env run --rm pocket-migrate
 #   docker compose -f docker-compose.prod.yml --env-file .env up -d --wait
 #
@@ -31,9 +31,10 @@
 # Schema changes are applied by the `pocket-migrate` profile as a one-off
 # container before the serving images roll, never by a service on boot.
 #
-# Images come from the registry, because the host keeps no checkout: the deploy
-# workflow pushes a tag and the host pulls it. The build contexts are kept so
-# the same file can build the stack on a machine that does have the source.
+# Images come from the registry and nothing here is ever built. The host keeps
+# no checkout, so a build section would make compose reach for a Dockerfile
+# that is not there the moment a tag misses locally. Building is the deploy
+# workflow's job; this file only pulls and runs.
 name: pocket
 
 x-node-service: &node-service
@@ -80,10 +81,6 @@ services:
     restart: 'no'
     networks: [pocket_internal]
     image: ${REGISTRY}/pocket-migrate:${IMAGE_TAG:-latest}
-    build:
-      context: .
-      dockerfile: Dockerfile
-      target: migrate
     depends_on:
       pocket-postgres:
         condition: service_healthy
@@ -96,11 +93,6 @@ services:
   pocket-api:
     <<: *node-service
     image: ${REGISTRY}/pocket-api:${IMAGE_TAG:-latest}
-    build:
-      context: .
-      dockerfile: Dockerfile
-      args:
-        APP: api
     container_name: pocket-api
     networks: [pocket_internal, nginx_proxy_net]
     depends_on:
@@ -124,11 +116,6 @@ services:
   pocket-mcp:
     <<: *node-service
     image: ${REGISTRY}/pocket-mcp:${IMAGE_TAG:-latest}
-    build:
-      context: .
-      dockerfile: Dockerfile
-      args:
-        APP: mcp
     container_name: pocket-mcp
     networks: [pocket_internal, nginx_proxy_net]
     depends_on:
@@ -155,11 +142,6 @@ services:
   pocket-paid:
     <<: *node-service
     image: ${REGISTRY}/pocket-paid-service:${IMAGE_TAG:-latest}
-    build:
-      context: .
-      dockerfile: Dockerfile
-      args:
-        APP: paid-service
     container_name: pocket-paid
     networks: [nginx_proxy_net]
     healthcheck:
