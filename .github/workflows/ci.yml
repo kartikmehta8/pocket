@@ -1,0 +1,80 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  verify:
+    name: Format, lint, typecheck, test, build
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    steps:
+      - uses: actions/checkout@v4
+
+      # Version comes from the "packageManager" field in package.json.
+      - uses: pnpm/action-setup@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - name: Install
+        run: pnpm install --frozen-lockfile
+
+      # Purse runs with no vendor keys: every adapter falls back to a
+      # deterministic in-memory implementation. The examples are all-blank, so
+      # this gives the build its defaults without putting a secret in CI.
+      - name: Seed configuration
+        run: |
+          cp .env.example .env
+          cp apps/dashboard/.env.example apps/dashboard/.env.local
+
+      - name: Format
+        run: pnpm format:check
+
+      - name: Lint
+        run: pnpm lint
+
+      - name: Typecheck
+        run: pnpm typecheck
+
+      - name: Test
+        run: pnpm test
+
+      - name: Build
+        run: pnpm build
+
+  commits:
+    name: Commit messages
+    runs-on: ubuntu-latest
+    if: github.event_name == 'pull_request'
+    timeout-minutes: 5
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      # The same hook the pre-commit path installs, run against every commit
+      # the pull request adds.
+      - name: Check subjects
+        run: |
+          base=${{ github.event.pull_request.base.sha }}
+          head=${{ github.event.pull_request.head.sha }}
+          status=0
+          for sha in $(git rev-list "$base".."$head"); do
+            git log -1 --format=%B "$sha" > /tmp/msg
+            if ! .githooks/commit-msg /tmp/msg; then
+              echo "  in commit $(git log -1 --format='%h %s' "$sha")"
+              status=1
+            fi
+          done
+          exit $status
