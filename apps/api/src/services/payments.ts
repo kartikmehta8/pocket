@@ -130,7 +130,9 @@ export async function executePayment(
         orgId,
         agentId: request.agentId,
         taskBudgetId: request.taskBudgetId ?? null,
-        idempotencyKey,
+        // Same rule as the x402 path: an attempt that reserved nothing holds
+        // no key, so raising the limit that blocked it lets a retry through.
+        idempotencyKey: status === 'blocked' ? null : idempotencyKey,
         amount: context.amount,
         asset: request.asset,
         chain: request.chain,

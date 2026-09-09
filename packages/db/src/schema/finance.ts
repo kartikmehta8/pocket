@@ -86,7 +86,8 @@ export const policies = pgTable(
  * @remarks Blocked attempts are rows too. "Why was my agent stopped?" is an
  * auditable question, and discarding the evidence would make it unanswerable.
  * The unique index on `(org_id, idempotency_key)` is what makes execution
- * idempotent: a replayed request collides instead of paying twice.
+ * idempotent: a replayed request collides instead of paying twice. Only an
+ * attempt that reserved something carries a key; see the column.
  */
 export const payments = pgTable(
   'payments',
@@ -99,7 +100,13 @@ export const payments = pgTable(
       .notNull()
       .references(() => agents.id, { onDelete: 'cascade' }),
     taskBudgetId: text('task_budget_id').references(() => taskBudgets.id, { onDelete: 'set null' }),
-    idempotencyKey: text('idempotency_key').notNull(),
+    /**
+     * Null on a blocked attempt. Nothing was charged, so there is nothing to
+     * protect from happening twice, and holding the key would stop the agent
+     * ever retrying once the limit that blocked it is raised. Postgres allows
+     * many nulls under a unique index, so blocked rows never collide.
+     */
+    idempotencyKey: text('idempotency_key'),
     amount: baseUnits('amount').notNull(),
     asset: text('asset').notNull(),
     chain: text('chain').notNull(),

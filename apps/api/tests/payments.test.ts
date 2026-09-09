@@ -190,3 +190,53 @@ describe('payment execution', () => {
     expect(blocked.json().payment.status).toBe('blocked');
   });
 });
+
+describe('a blocked attempt does not hold the idempotency key', () => {
+  it('lets the same key through once the reason for the block is gone', async () => {
+    const agentId = await createFundedAgent(h);
+    const shared = key();
+
+    // Blocked: the recipient is a stranger, so nothing is charged.
+    const refused = await h.app.inject({
+      method: 'POST',
+      url: '/v1/payments',
+      headers: { ...h.auth, ...shared },
+      payload: paymentBody(agentId, { recipient: STRANGER }),
+    });
+    expect(refused.json().payment['status']).toBe('blocked');
+    expect(refused.json().payment['idempotencyKey'] ?? null).toBeNull();
+
+    // The operator fixes what blocked it. The retry must be able to proceed:
+    // holding the key would strand the agent behind a limit no longer set.
+    const allowed = await h.app.inject({
+      method: 'POST',
+      url: '/v1/payments',
+      headers: { ...h.auth, ...shared },
+      payload: paymentBody(agentId),
+    });
+    expect(allowed.json().payment['status']).toBe('settled');
+    expect(allowed.json().payment['id']).not.toBe(refused.json().payment['id']);
+  });
+
+  it('still refuses to pay twice under one key when the first attempt paid', async () => {
+    const agentId = await createFundedAgent(h);
+    const shared = key();
+    const before = h.wallet.sent.length;
+
+    const first = await h.app.inject({
+      method: 'POST',
+      url: '/v1/payments',
+      headers: { ...h.auth, ...shared },
+      payload: paymentBody(agentId),
+    });
+    const second = await h.app.inject({
+      method: 'POST',
+      url: '/v1/payments',
+      headers: { ...h.auth, ...shared },
+      payload: paymentBody(agentId),
+    });
+
+    expect(first.json().payment['id']).toBe(second.json().payment['id']);
+    expect(h.wallet.sent.length).toBe(before + 1);
+  });
+});

@@ -123,7 +123,7 @@ export async function authorizeX402Payment(
       orgId,
       agentId: request.agentId,
       taskBudgetId: request.taskBudgetId ?? null,
-      idempotencyKey,
+      idempotencyKey: status === 'blocked' ? null : idempotencyKey,
       amount: context.amount,
       asset,
       chain: deps.chain,

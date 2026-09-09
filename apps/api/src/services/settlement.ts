@@ -118,7 +118,9 @@ export async function settlePayment(
       amount: payment.amount,
       asset: payment.asset as AssetId,
       chain: payment.chain as ChainId,
-      idempotencyKey: payment.idempotencyKey,
+      // Only a blocked payment has no key, and a blocked payment never
+      // reaches settlement. Its own id is a stable fallback either way.
+      idempotencyKey: payment.idempotencyKey ?? payment.id,
     });
     txHash = submitted.txHash;
   } catch (cause) {

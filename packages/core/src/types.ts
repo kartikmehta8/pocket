@@ -109,7 +109,7 @@ export interface Payment {
   orgId: string;
   agentId: string;
   taskBudgetId: string | null;
-  idempotencyKey: string;
+  idempotencyKey: string | null;
   amount: bigint;
   asset: string;
   chain: string;
