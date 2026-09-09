@@ -78,7 +78,12 @@ export async function POST(request: Request): Promise<NextResponse> {
   }
 
   const store = await cookies();
-  store.set(SESSION_COOKIE, token, sessionCookieOptions(request.url.startsWith('https://')));
+  // Behind a proxy the inbound hop can be plain HTTP even though the browser
+  // is on HTTPS, so the forwarded protocol decides too. Getting this wrong
+  // writes the session token into a cookie that is not marked `Secure`.
+  const secure =
+    request.url.startsWith('https://') || request.headers.get('x-forwarded-proto') === 'https';
+  store.set(SESSION_COOKIE, token, sessionCookieOptions(secure));
   return NextResponse.json(payload);
 }
 
