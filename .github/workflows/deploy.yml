@@ -1,0 +1,257 @@
+name: Deploy
+
+# Deploys the backend — the API, the MCP server, the x402 seller, and the
+# migration runner — to the single host. The dashboard and the docs site are not
+# part of this pipeline: Vercel deploys both from the same repository, and they
+# reach this stack over the public internet like any other client.
+#
+# Runs only after CI has gone green on main. `push` would deploy commits whose
+# lint, typecheck and test jobs are still running or have already failed, so the
+# trigger is CI's completion rather than the push itself.
+on:
+  workflow_run:
+    workflows: [CI]
+    types: [completed]
+    branches: [main]
+  workflow_dispatch:
+    inputs:
+      ref:
+        description: Commit, branch, or tag to deploy
+        required: false
+        default: main
+
+permissions:
+  contents: read
+  packages: write
+
+# One deploy at a time, and never cancel one midway: an interrupted run can
+# leave migrations applied with the old images still serving.
+concurrency:
+  group: deploy-production
+  cancel-in-progress: false
+
+env:
+  REGISTRY: ghcr.io
+
+jobs:
+  images:
+    name: Build and push ${{ matrix.service }}
+    # A CI run that failed, was cancelled, or came from a pull request must not
+    # reach the registry. workflow_dispatch carries no workflow_run payload.
+    if: >-
+      github.event_name == 'workflow_dispatch' ||
+      github.event.workflow_run.conclusion == 'success'
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    strategy:
+      fail-fast: true
+      # One Dockerfile serves all four. The three servers differ only by which
+      # workspace package they start, and the migration runner is a stage that
+      # forks off the build before the server image is assembled.
+      #
+      # All four are rebuilt on every release rather than filtered by path.
+      # Every one of them depends on packages/core, packages/db and
+      # packages/adapters, so almost any change rebuilds almost everything, and
+      # a filter that gets it wrong ships a stale image against a new schema.
+      # The layer cache makes an unchanged service cheap anyway.
+      matrix:
+        include:
+          - service: api
+            target: runtime
+            app: api
+          - service: mcp
+            target: runtime
+            app: mcp
+          - service: paid-service
+            target: runtime
+            app: paid-service
+          - service: migrate
+            target: migrate
+            app: api
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          # workflow_run checks out the default branch by default, which may
+          # already be ahead of the commit CI actually validated.
+          ref: >-
+            ${{ github.event_name == 'workflow_dispatch'
+                && inputs.ref
+                || github.event.workflow_run.head_sha }}
+
+      - uses: docker/setup-buildx-action@v3
+
+      - name: Log in to the container registry
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      # GHCR rejects uppercase paths, and account names may contain capitals.
+      - name: Resolve the image name
+        id: image
+        run: |
+          owner="$(echo "${{ github.repository_owner }}" | tr '[:upper:]' '[:lower:]')"
+          echo "name=${{ env.REGISTRY }}/${owner}/pocket-${{ matrix.service }}" >> "$GITHUB_OUTPUT"
+
+      - name: Resolve the release tag
+        id: release
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            echo "sha=$(git rev-parse HEAD)" >> "$GITHUB_OUTPUT"
+          else
+            echo "sha=${{ github.event.workflow_run.head_sha }}" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Build and push
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: Dockerfile
+          target: ${{ matrix.target }}
+          build-args: |
+            APP=${{ matrix.app }}
+          push: true
+          # The commit tag is what the deploy pins to, so a rollback is a tag
+          # change rather than a rebuild. `latest` is a convenience pointer only.
+          tags: |
+            ${{ steps.image.outputs.name }}:${{ steps.release.outputs.sha }}
+            ${{ steps.image.outputs.name }}:latest
+          cache-from: type=gha,scope=pocket-${{ matrix.service }}
+          cache-to: type=gha,mode=max,scope=pocket-${{ matrix.service }}
+          provenance: false
+
+  deploy:
+    name: Release to the host
+    needs: images
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    environment: production
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: >-
+            ${{ github.event_name == 'workflow_dispatch'
+                && inputs.ref
+                || github.event.workflow_run.head_sha }}
+
+      - name: Resolve the release tag
+        id: release
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            echo "sha=$(git rev-parse HEAD)" >> "$GITHUB_OUTPUT"
+          else
+            echo "sha=${{ github.event.workflow_run.head_sha }}" >> "$GITHUB_OUTPUT"
+          fi
+
+      # A pinned host key rather than StrictHostKeyChecking=no: without it the
+      # first connection of every run trusts whatever answers on that address.
+      - name: Configure SSH
+        run: |
+          install -d -m 700 ~/.ssh
+          printf '%s\n' "${{ secrets.DEPLOY_SSH_KEY }}" > ~/.ssh/id_deploy
+          chmod 600 ~/.ssh/id_deploy
+          printf '%s\n' "${{ secrets.DEPLOY_SSH_KNOWN_HOSTS }}" > ~/.ssh/known_hosts
+          chmod 600 ~/.ssh/known_hosts
+
+      # The host holds no repository checkout, so the compose file is shipped
+      # each run and the deployed topology always matches the released commit.
+      # It lands as docker-compose.yml so bare `docker compose` commands work in
+      # that directory. The host's own .env is never touched.
+      - name: Ship the compose file
+        env:
+          PORT: ${{ secrets.DEPLOY_SSH_PORT || 22 }}
+        run: |
+          scp -i ~/.ssh/id_deploy -P "$PORT" docker-compose.prod.yml \
+            "${{ secrets.DEPLOY_USER }}@${{ secrets.DEPLOY_HOST }}:${{ secrets.DEPLOY_PATH }}/docker-compose.yml"
+
+      # The script is written to a file on the host and then run from that file,
+      # rather than piped into `bash -s`. With the script on stdin, any command
+      # that reads stdin eats the rest of it: `docker compose run` attaches
+      # stdin by default, so it would swallow everything after the migration and
+      # the deploy would "succeed" having never started a container.
+      - name: Send the release script
+        env:
+          PORT: ${{ secrets.DEPLOY_SSH_PORT || 22 }}
+        run: |
+          ssh -i ~/.ssh/id_deploy -p "$PORT" \
+            "${{ secrets.DEPLOY_USER }}@${{ secrets.DEPLOY_HOST }}" \
+            'umask 077; cat > /tmp/pocket-release.sh' <<REMOTE
+          cd "${{ secrets.DEPLOY_PATH }}"
+
+          owner="\$(echo "${{ github.repository_owner }}" | tr '[:upper:]' '[:lower:]')"
+          export REGISTRY="ghcr.io/\${owner}"
+          export IMAGE_TAG="${{ steps.release.outputs.sha }}"
+
+          # A private docker config for this deploy only. The host is shared
+          # with other stacks running as the same user, so logging in and out
+          # against the default ~/.docker/config.json would mutate — and on
+          # logout, revoke — credentials that are not ours.
+          export DOCKER_CONFIG="\$(mktemp -d)"
+          # Carries a registry token, so both remove themselves however this exits.
+          trap 'rm -rf "\$DOCKER_CONFIG"; rm -f /tmp/pocket-release.sh' EXIT
+
+          # A workflow-scoped token, so the host never stores a long-lived
+          # registry credential. It expires when this run ends.
+          echo "${{ secrets.GITHUB_TOKEN }}" \
+            | docker login ghcr.io -u "${{ github.actor }}" --password-stdin
+
+          compose() {
+            docker compose -f docker-compose.yml --env-file .env "\$@"
+          }
+
+          # Record what is currently serving, so a failed rollout has something
+          # concrete to roll back to.
+          echo "Previously deployed: \$(cat .deployed-tag 2>/dev/null || echo none)"
+
+          compose pull
+
+          # Out of band and before the new images serve. This means the OLD code
+          # briefly runs against the NEW schema, so a migration has to stay
+          # backward compatible for one release.
+          # -T and </dev/null: this container must never hold stdin open.
+          compose --profile migrate run --rm -T pocket-migrate < /dev/null
+
+          # --remove-orphans is scoped to this compose project (name: pocket),
+          # so it cannot touch the other stacks sharing this host.
+          compose up -d --wait --wait-timeout 240 --remove-orphans
+
+          echo "${{ steps.release.outputs.sha }}" > .deployed-tag
+
+          # Dangling images only — never -a, which would evict images the
+          # host's other stacks still depend on.
+          docker image prune -f
+          REMOTE
+
+      # Runs the script from the file, with a free stdin. A missing
+      # .deployed-tag afterwards means the script did not reach its end.
+      - name: Migrate, then roll the images
+        env:
+          PORT: ${{ secrets.DEPLOY_SSH_PORT || 22 }}
+        run: |
+          ssh -i ~/.ssh/id_deploy -p "$PORT" \
+            "${{ secrets.DEPLOY_USER }}@${{ secrets.DEPLOY_HOST }}" \
+            'bash -euo pipefail /tmp/pocket-release.sh'
+
+      # Asks the API which adapters it resolved, not merely whether it answers.
+      # A stack that boots with every vendor on its in-memory fake is up and
+      # useless, and that is the failure worth catching from here.
+      - name: Confirm the release actually landed
+        env:
+          PORT: ${{ secrets.DEPLOY_SSH_PORT || 22 }}
+        run: |
+          ssh -i ~/.ssh/id_deploy -p "$PORT" \
+            "${{ secrets.DEPLOY_USER }}@${{ secrets.DEPLOY_HOST }}" \
+            "cd '${{ secrets.DEPLOY_PATH }}' && \
+             test \"\$(cat .deployed-tag)\" = '${{ steps.release.outputs.sha }}' && \
+             docker compose -f docker-compose.yml --env-file .env exec -T pocket-api \
+               node -e \"fetch('http://127.0.0.1:8080/v1/health').then(r=>r.json()).then(d=>{console.log(JSON.stringify(d.adapters));process.exit(d.ok?0:1)})\""
+
+      - name: Report the rollout
+        if: always()
+        env:
+          PORT: ${{ secrets.DEPLOY_SSH_PORT || 22 }}
+        run: |
+          ssh -i ~/.ssh/id_deploy -p "$PORT" \
+            "${{ secrets.DEPLOY_USER }}@${{ secrets.DEPLOY_HOST }}" \
+            "cd '${{ secrets.DEPLOY_PATH }}' && docker compose -f docker-compose.yml --env-file .env ps"
