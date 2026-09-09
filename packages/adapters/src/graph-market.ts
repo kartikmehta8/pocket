@@ -36,17 +36,34 @@ export interface GraphMarketOptions {
   network: string;
   /** Contract address of the asset on that network, per asset ticker. */
   contracts: Readonly<Partial<Record<AssetId, string>>>;
+  /**
+   * DEX pool whose quote asset is a dollar, per asset ticker.
+   *
+   * The Token API prices pools, not tokens, so pricing an asset in dollars
+   * means naming the pool that trades it against one. For a stablecoin that
+   * pool is also where a depeg becomes visible first.
+   */
+  pools: Readonly<Partial<Record<AssetId, string>>>;
   /** How far the two sources may diverge, in basis points. */
   toleranceBps: number;
   timeoutMs?: number;
 }
 
-/** GraphQL query for a token's USD price on a conventional DEX subgraph. */
+/**
+ * A token's price on a conventional DEX subgraph.
+ *
+ * These schemas quote a token against the chain's native asset rather than
+ * against a dollar, so the bundle's own ETH price is what converts one to the
+ * other. Both come from the same block, so the two cannot drift apart.
+ */
 const PRICE_QUERY = `
   query PurseTokenPrice($id: ID!) {
     token(id: $id) {
       symbol
-      derivedUSD
+      derivedETH
+    }
+    bundle(id: "1") {
+      ethPriceUSD
     }
   }
 `;
@@ -87,8 +104,9 @@ export class GraphMarketDataProvider implements MarketDataProvider {
       });
     }
 
+    const pool = this.#options.pools[asset];
     const [tokenApi, subgraph] = await Promise.all([
-      this.#fromTokenApi(contract).catch(() => null),
+      pool === undefined ? null : this.#fromTokenApi(pool).catch(() => null),
       this.#fromSubgraph(contract).catch(() => null),
     ]);
 
@@ -125,10 +143,14 @@ export class GraphMarketDataProvider implements MarketDataProvider {
    * @param contract - Token contract address on the configured network.
    * @returns A quote, or `null` when the response carried no usable price.
    */
-  async #fromTokenApi(contract: string): Promise<PriceQuote | null> {
-    const url = new URL('/v1/evm/tokens', this.#options.tokenApiUrl);
+  async #fromTokenApi(pool: string): Promise<PriceQuote | null> {
+    const url = new URL('/v1/evm/pools/ohlc', this.#options.tokenApiUrl);
     url.searchParams.set('network', this.#options.network);
-    url.searchParams.set('contract', contract);
+    // Addresses must be lowercase. A checksummed one is answered with a 500,
+    // which is indistinguishable from the service being down.
+    url.searchParams.set('pool', pool.toLowerCase());
+    url.searchParams.set('interval', '1h');
+    url.searchParams.set('limit', '1');
 
     const response = await fetch(url, {
       headers: { authorization: `Bearer ${this.#options.tokenApiJwt}` },
@@ -137,8 +159,7 @@ export class GraphMarketDataProvider implements MarketDataProvider {
     if (!response.ok) return null;
 
     const body = (await response.json()) as { data?: Array<Record<string, unknown>> };
-    const price = body.data?.[0]?.['price_usd'];
-    const usd = typeof price === 'number' ? price : Number(price);
+    const usd = Number(body.data?.[0]?.['close']);
     if (!Number.isFinite(usd) || usd <= 0) return null;
     return { usdCentsPerUnit: Math.round(usd * 100), source: 'token-api' };
   }
@@ -162,11 +183,17 @@ export class GraphMarketDataProvider implements MarketDataProvider {
     if (!response.ok) return null;
 
     const body = (await response.json()) as {
-      data?: { token?: { derivedUSD?: unknown } | null };
+      data?: {
+        token?: { derivedETH?: unknown } | null;
+        bundle?: { ethPriceUSD?: unknown } | null;
+      };
       errors?: unknown[];
     };
     if (Array.isArray(body.errors) && body.errors.length > 0) return null;
-    const usd = Number(body.data?.token?.derivedUSD);
+    const perEth = Number(body.data?.token?.derivedETH);
+    const ethUsd = Number(body.data?.bundle?.ethPriceUSD);
+    if (!Number.isFinite(perEth) || !Number.isFinite(ethUsd)) return null;
+    const usd = perEth * ethUsd;
     if (!Number.isFinite(usd) || usd <= 0) return null;
     return { usdCentsPerUnit: Math.round(usd * 100), source: 'gateway-subgraph' };
   }

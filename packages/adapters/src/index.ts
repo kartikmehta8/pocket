@@ -85,6 +85,8 @@ export interface AdapterEnv {
   GRAPH_PRICE_TOLERANCE_BPS?: string | undefined;
   GRAPH_PRICE_USDC_CONTRACT?: string | undefined;
   GRAPH_PRICE_HBAR_CONTRACT?: string | undefined;
+  GRAPH_PRICE_USDC_POOL?: string | undefined;
+  GRAPH_PRICE_HBAR_POOL?: string | undefined;
   CHAIN?: string | undefined;
   USE_MOCK_ADAPTERS?: string | undefined;
 }
@@ -139,7 +141,7 @@ export function buildAdapters(env: AdapterEnv = process.env): Adapters {
     present(env.GRAPH_API_KEY);
   const market: MarketDataProvider = marketLive
     ? new GraphMarketDataProvider({
-        tokenApiUrl: env.GRAPH_TOKEN_API_URL ?? 'https://token-api.thegraph.com',
+        tokenApiUrl: env.GRAPH_TOKEN_API_URL ?? 'https://api.pinax.network',
         tokenApiJwt: env.GRAPH_TOKEN_API_JWT as string,
         subgraphUrl: env.GRAPH_PRICE_SUBGRAPH_URL as string,
         subgraphApiKey: env.GRAPH_API_KEY as string,
@@ -152,6 +154,10 @@ export function buildAdapters(env: AdapterEnv = process.env): Adapters {
           ...(present(env.GRAPH_PRICE_HBAR_CONTRACT)
             ? { HBAR: env.GRAPH_PRICE_HBAR_CONTRACT }
             : {}),
+        },
+        pools: {
+          ...(present(env.GRAPH_PRICE_USDC_POOL) ? { USDC: env.GRAPH_PRICE_USDC_POOL } : {}),
+          ...(present(env.GRAPH_PRICE_HBAR_POOL) ? { HBAR: env.GRAPH_PRICE_HBAR_POOL } : {}),
         },
       })
     : new UnpricedMarketDataProvider();
