@@ -11,6 +11,14 @@ import { PageHeader } from '@/components/ui/page-header';
 import { Stagger, StaggerItem } from '@/components/ui/reveal';
 import { BuyForm } from '@/components/marketplace/buy-form';
 
+/**
+ * A purchase waits on a 402 handshake, a wallet signature and settlement on
+ * Hedera, which together run five to nine seconds. Serverless platforms cut a
+ * request off well before that by default, and the payment would settle on
+ * chain with the buyer told it failed.
+ */
+export const maxDuration = 60;
+
 export const metadata: Metadata = { title: 'Marketplace' };
 
 /** Prices and freshness are live; nothing here is prerendered. */
