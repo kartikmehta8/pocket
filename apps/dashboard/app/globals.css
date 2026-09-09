@@ -1,0 +1,312 @@
+@import 'tailwindcss';
+
+/*
+ * Purse design system — light mode only, defined once.
+ * Ramps: `sand` (warm neutral) and `accent` (blue). Semantics: success /
+ * warning / danger / info. Chart series slots come from a CVD-validated
+ * eight-hue order; only the first three are ever seated at once.
+ */
+@theme {
+  /*
+   * Soft Pop.
+   *
+   * Three things define the look and every component honours all three: a warm
+   * off-white canvas, true-black hairlines around anything that is a surface or
+   * a control, and generous 1rem radii. Shadows are almost absent on purpose —
+   * the border does the separating, which is what keeps it crisp rather than
+   * soft-focus.
+   *
+   * DM Sans for the interface, Space Mono for anything the reader might copy.
+   * Both are loaded by `next/font` in `app/layout.tsx`, which supplies the two
+   * custom properties below and a metric-matched fallback, so no text reflows
+   * once the webfont arrives.
+   */
+  --font-sans: var(--font-dm-sans), ui-sans-serif, system-ui, -apple-system, sans-serif;
+  --font-mono: var(--font-space-mono), ui-monospace, SFMono-Regular, Menlo, monospace;
+
+  /* Neutral ramp, tinted a touch warm so it sits on the canvas rather than on white. */
+  --color-ash-0: #ffffff;
+  --color-ash-25: #fbfcf8;
+  --color-ash-50: #f7f9f3;
+  --color-ash-100: #f0f0f0;
+  --color-ash-150: #e8e8e6;
+  --color-ash-200: #dedede;
+  --color-ash-300: #bdbdbd;
+  --color-ash-400: #8a8a8a;
+  --color-ash-500: #737373;
+  --color-ash-600: #525252;
+  --color-ash-700: #333333;
+  --color-ash-800: #1f1f1f;
+  --color-ash-900: #0a0a0a;
+  --color-ash-950: #000000;
+
+  /* Indigo. The primary action, the active navigation item, and chart series one. */
+  --color-accent-50: #eef2ff;
+  --color-accent-100: #e0e7ff;
+  --color-accent-200: #c7d2fe;
+  --color-accent-300: #a5b4fc;
+  --color-accent-400: #818cf8;
+  --color-accent-500: #6366f1;
+  --color-accent-600: #4f46e5;
+  --color-accent-700: #4338ca;
+  --color-accent-800: #3730a3;
+  --color-accent-900: #312e81;
+
+  /* Primary action. */
+  --color-primary: #4f46e5;
+  --color-primary-hover: #4338ca;
+  --color-primary-active: #3730a3;
+
+  /* Teal. The second voice — used sparingly, and never for a status. */
+  --color-secondary: #14b8a6;
+  --color-secondary-soft: #ccfbf1;
+  --color-secondary-ink: #0f766e;
+
+  /* Amber. Reserved for highlights on the marketing page and the warning tone. */
+  --color-highlight: #f59e0b;
+  --color-highlight-soft: #fef3c7;
+
+  /* Surfaces & ink */
+  --color-canvas: #f7f9f3;
+  --color-surface: #ffffff;
+  --color-surface-sunken: #fbfcf8;
+  /*
+   * True black, and deliberately so: the hairline around every card, input and
+   * button is the whole signature of this theme.
+   */
+  --color-border: #000000;
+  --color-border-strong: #000000;
+  /*
+   * Rules *inside* a surface — table rows, card footers, list separators. A
+   * financial table with a solid black line under every row is unreadable, so
+   * internal structure gets the same colour at low alpha instead.
+   */
+  --color-divider: rgb(0 0 0 / 0.12);
+  --color-text: #000000;
+  --color-text-secondary: #333333;
+  --color-text-muted: #6b6b6b;
+
+  /* Semantic status — fixed, never reused as a chart series */
+  --color-success: #22c55e;
+  --color-success-ink: #15803d;
+  --color-success-soft: #f0fdf4;
+  --color-success-line: #86efac;
+  --color-warning: #f59e0b;
+  --color-warning-ink: #b45309;
+  --color-warning-soft: #fffbeb;
+  --color-warning-line: #fcd34d;
+  --color-danger: #ef4444;
+  --color-danger-ink: #b91c1c;
+  --color-danger-soft: #fef2f2;
+  --color-danger-line: #fca5a5;
+  --color-info: #4f46e5;
+  --color-info-ink: #4338ca;
+  --color-info-soft: #eef2ff;
+  --color-info-line: #c7d2fe;
+
+  /* Chart chrome */
+  --color-grid: #e8e8e6;
+  --color-axis: #bdbdbd;
+
+  /* Chart series slots (validated: adjacent CVD dE 9.1, normal-vision dE 19.6) */
+  --color-series-1: #4f46e5;
+  --color-series-2: #14b8a6;
+  --color-series-3: #f59e0b;
+  --color-series-4: #ec4899;
+  --color-series-5: #22c55e;
+  --color-series-6: #8b5cf6;
+  --color-series-7: #ef4444;
+  --color-series-8: #0ea5e9;
+
+  /* Type scale */
+  --text-2xs: 0.6875rem;
+  --text-2xs--line-height: 1rem;
+  --text-xs: 0.75rem;
+  --text-xs--line-height: 1.125rem;
+  --text-sm: 0.8125rem;
+  --text-sm--line-height: 1.25rem;
+  --text-base: 0.875rem;
+  --text-base--line-height: 1.375rem;
+  --text-md: 1rem;
+  --text-md--line-height: 1.5rem;
+  --text-lg: 1.125rem;
+  --text-lg--line-height: 1.625rem;
+  --text-xl: 1.375rem;
+  --text-xl--line-height: 1.875rem;
+  --text-2xl: 1.75rem;
+  --text-2xl--line-height: 2.125rem;
+  --text-3xl: 2.25rem;
+  --text-3xl--line-height: 2.5rem;
+  --text-hero: 3.25rem;
+  --text-hero--line-height: 3.375rem;
+
+  /* Spacing scale (4px base) plus three named rhythm steps */
+  --spacing: 0.25rem;
+  --spacing-card: 1.25rem;
+  --spacing-gutter: 2rem;
+  --spacing-section: 2rem;
+
+  /* Radius scale, built off a 1rem base the way the theme defines it. */
+  --radius-sm: 0.5rem;
+  --radius-md: 0.75rem;
+  --radius-lg: 1rem;
+  --radius-xl: 1.25rem;
+
+  /*
+   * Elevation. Nearly flat by design — the black hairline is what separates a
+   * surface from the canvas, so a shadow only has to hint at lift.
+   */
+  --shadow-e1: 0 1px 2px -1px rgb(26 26 26 / 0.05);
+  --shadow-e2: 0 2px 4px -1px rgb(26 26 26 / 0.05);
+  --shadow-e3: 0 8px 10px -1px rgb(26 26 26 / 0.05);
+  /* The one exception: a lifted card offsets its own black border. */
+  --shadow-pop: 3px 3px 0 0 #000000;
+  --shadow-pop-sm: 2px 2px 0 0 #000000;
+
+  /* Motion — one easing curve, three durations. Mirrored in lib/motion.ts. */
+  --ease-brand: cubic-bezier(0.22, 1, 0.36, 1);
+  --duration-fast: 130ms;
+  --duration-base: 200ms;
+  --duration-slow: 340ms;
+}
+
+@layer base {
+  html {
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+    /* Anchors on the homepage glide. The reduced-motion block below undoes it. */
+    scroll-behavior: smooth;
+  }
+
+  body {
+    background-color: var(--color-canvas);
+    color: var(--color-text);
+    font-family: var(--font-sans);
+    font-size: var(--text-base);
+    /*
+     * `cv11` gives Inter the single-storey `a` and straight-tailed `l` that
+     * keep dense numeric tables legible; `ss03` squares off the round quotes.
+     * Contextual alternates only otherwise — a ligature inside an address is
+     * a transcription hazard.
+     */
+    /* Contextual alternates only. A ligature inside an address is a hazard. */
+    font-feature-settings: 'calt' 1;
+  }
+
+  h1,
+  h2,
+  h3 {
+    letter-spacing: -0.02em;
+  }
+
+  code,
+  kbd,
+  pre,
+  samp {
+    font-family: var(--font-mono);
+  }
+
+  *,
+  ::before,
+  ::after {
+    border-color: var(--color-border);
+  }
+
+  :focus-visible {
+    outline: 2px solid var(--color-accent-300);
+    outline-offset: 2px;
+  }
+
+  ::selection {
+    background-color: var(--color-accent-100);
+  }
+
+  /*
+   * Tabular figures everywhere by default. Every number on this dashboard sits
+   * in a column beside another number, and proportional digits make those
+   * columns ragged.
+   */
+  table,
+  time,
+  [data-figures] {
+    font-variant-numeric: tabular-nums;
+  }
+}
+
+/** Uppercase micro-label used for stat tiles, table heads and section eyebrows. */
+@utility eyebrow {
+  font-size: var(--text-2xs);
+  font-weight: 600;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+  color: var(--color-text-muted);
+}
+
+/** Numeric alignment for money columns and axis ticks. */
+@utility figures {
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: 'tnum' 1;
+}
+
+/** Entrance for anything that mounts on top of the page: tooltips, menus, popovers. */
+@keyframes purse-overlay-pop {
+  from {
+    opacity: 0;
+    transform: scale(0.96) translateY(2px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@utility overlay-pop {
+  transform-origin: var(--radix-tooltip-content-transform-origin, center);
+  animation: purse-overlay-pop var(--duration-fast) var(--ease-brand);
+}
+
+/**
+ * Fine dot lattice for the landing hero.
+ *
+ * A flat texture rather than a blurred gradient: the theme is built on crisp
+ * hairlines and solid fills, and a soft-focus wash behind them reads as
+ * decoration bolted on afterwards.
+ */
+@utility dot-grid {
+  background-image: radial-gradient(circle at 1px 1px, rgb(0 0 0 / 0.07) 1px, transparent 0);
+  background-size: 22px 22px;
+  /* Fades to nothing before it reaches the content below. */
+  mask-image: linear-gradient(to bottom, black 0%, black 45%, transparent 92%);
+}
+
+/** Slow horizontal sheen used while a value is still loading. */
+@keyframes purse-shimmer {
+  from {
+    background-position: 200% 0;
+  }
+  to {
+    background-position: -200% 0;
+  }
+}
+
+@utility shimmer {
+  background-image: linear-gradient(
+    90deg,
+    var(--color-ash-100) 0%,
+    var(--color-ash-50) 40%,
+    var(--color-ash-100) 80%
+  );
+  background-size: 200% 100%;
+  animation: purse-shimmer 1.6s linear infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  ::before,
+  ::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
