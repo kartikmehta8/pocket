@@ -1,0 +1,172 @@
+# Production backend stack for Pocket on a single host behind Nginx Proxy Manager.
+#
+#   docker compose -f docker-compose.prod.yml --env-file .env.production build
+#   docker compose -f docker-compose.prod.yml --env-file .env.production run --rm pocket-migrate
+#   docker compose -f docker-compose.prod.yml --env-file .env.production up -d --wait
+#
+# The dashboard and the docs site are not here. Both are deployed to Vercel and
+# reach this stack as ordinary internet clients, so this host serves the API,
+# the MCP server, the x402 seller, and their database.
+#
+# Two networks, and the split is the security boundary:
+#
+#   nginx_proxy_net  external, shared with Nginx Proxy Manager and every other
+#                    stack on this host. Only the three services that answer
+#                    public traffic join it, because NPM can only resolve
+#                    containers on a network it is itself on.
+#   pocket_internal  private to this stack. Postgres lives here and nowhere
+#                    else, so no other project's containers can open a
+#                    connection to it.
+#
+# pocket_internal is deliberately NOT `internal: true`. Every service needs
+# egress: Privy to sign, the Hedera mirror node and the facilitator to settle,
+# The Graph to price, and the seller's own upstream feeds.
+#
+# Nothing here publishes a port. The host exposes only what NPM binds.
+#
+# Service names are DNS names, and nginx_proxy_net is shared host-wide, so they
+# are prefixed: a service called `api` would claim that name for every stack on
+# the network and collide with the next project that wants it.
+#
+# Schema changes are applied by the `pocket-migrate` profile as a one-off
+# container before the serving images roll, never by a service on boot.
+name: pocket
+
+x-node-service: &node-service
+  restart: unless-stopped
+  init: true
+  stop_grace_period: 30s
+  env_file: .env.production
+  build:
+    context: .
+    dockerfile: Dockerfile
+
+services:
+  pocket-postgres:
+    image: postgres:17-alpine
+    container_name: pocket-postgres
+    restart: unless-stopped
+    networks: [pocket_internal]
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
+    volumes:
+      - pocket_pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}']
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Run once, before the serving images roll:
+  #   docker compose ... run --rm pocket-migrate
+  pocket-migrate:
+    profiles: ['migrate']
+    container_name: pocket-migrate
+    restart: 'no'
+    networks: [pocket_internal]
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: migrate
+    depends_on:
+      pocket-postgres:
+        condition: service_healthy
+    environment:
+      DATABASE_URL: ${DATABASE_URL}
+
+  # Reachable by NPM, and able to reach Postgres. It holds every vendor secret
+  # and authenticates and rate-limits every route, which is what earns it the
+  # public surface.
+  pocket-api:
+    <<: *node-service
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        APP: api
+    container_name: pocket-api
+    networks: [pocket_internal, nginx_proxy_net]
+    depends_on:
+      pocket-postgres:
+        condition: service_healthy
+    healthcheck:
+      test:
+        [
+          'CMD',
+          'node',
+          '-e',
+          "fetch('http://localhost:8080/v1/health').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))",
+        ]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
+
+  # Agent runtimes connect here over the internet, so it is on the proxy
+  # network. It reaches the API by container name, never over the public one.
+  pocket-mcp:
+    <<: *node-service
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        APP: mcp
+    container_name: pocket-mcp
+    networks: [pocket_internal, nginx_proxy_net]
+    depends_on:
+      pocket-api:
+        condition: service_healthy
+    environment:
+      POCKET_API_URL: http://pocket-api:8080
+    healthcheck:
+      test:
+        [
+          'CMD',
+          'node',
+          '-e',
+          "fetch('http://localhost:8081/health').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))",
+        ]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
+
+  # The x402 seller. Public because a buying agent has to reach it, and because
+  # the Hedera track asks for a hosted x402 service. It talks to nothing in this
+  # stack: it takes payment through the facilitator and serves its own feeds.
+  pocket-paid:
+    <<: *node-service
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        APP: paid-service
+    container_name: pocket-paid
+    networks: [nginx_proxy_net]
+    healthcheck:
+      test:
+        [
+          'CMD',
+          'node',
+          '-e',
+          "fetch('http://localhost:8402/health').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))",
+        ]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
+
+networks:
+  # Created by this stack, private to it.
+  pocket_internal:
+    name: pocket_internal
+  # Created out of band and shared with Nginx Proxy Manager and every other
+  # stack on this host. Compose must not create it.
+  nginx_proxy_net:
+    external: true
+
+volumes:
+  pocket_pgdata:
+    name: pocket_pgdata
