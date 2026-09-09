@@ -1,0 +1,39 @@
+#!/bin/sh
+#
+# Conventional Commits, so the history reads as a changelog.
+#
+#   <type>(<optional scope>): <subject>
+#
+# Merges, reverts and fixups pass through untouched: their shape is git's to
+# decide, not ours.
+
+set -e
+
+message=$(head -n 1 "$1")
+
+case "$message" in
+  "Merge "*|"Revert "*|"fixup!"*|"squash!"*) exit 0 ;;
+esac
+
+pattern='^(feat|fix|docs|style|refactor|perf|test|build|ci|chore|revert)(\([a-z0-9-]+\))?!?: .{1,72}$'
+
+if ! printf '%s' "$message" | grep -Eq "$pattern"; then
+  cat >&2 <<'USAGE'
+
+commit-msg: the subject line does not match Conventional Commits.
+
+  <type>(<scope>): <subject>
+
+  type    feat fix docs style refactor perf test build ci chore revert
+  scope   optional, lowercase, e.g. (api) (core) (dashboard)
+  subject imperative mood, no trailing period, 72 characters or fewer
+
+  feat(core): deny a payment when no budget covers it
+  fix(api): release the reservation when settlement fails
+  docs: explain the x402 handshake
+
+commit aborted. Use --no-verify to bypass.
+
+USAGE
+  exit 1
+fi

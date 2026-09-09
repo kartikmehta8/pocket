@@ -1,0 +1,38 @@
+#!/bin/sh
+#
+# Format, lint and test before a commit is written.
+#
+# The whole workspace is checked rather than only the staged files: all three
+# steps together take about nine seconds, and filtering by path would have to
+# know that the dashboard and the docs site each lint under their own config.
+#
+# Typecheck and build are deliberately absent. They are the slow half of
+# `pnpm verify` and CI runs them on every push.
+#
+# Skip once with `git commit --no-verify`.
+
+set -e
+
+if ! command -v pnpm >/dev/null 2>&1; then
+  echo "pre-commit: pnpm is not on PATH, skipping checks." >&2
+  echo "pre-commit: run 'pnpm verify' by hand before pushing." >&2
+  exit 0
+fi
+
+fail() {
+  echo >&2
+  echo "pre-commit: $1" >&2
+  echo "pre-commit: commit aborted. Use --no-verify to bypass." >&2
+  exit 1
+}
+
+echo "pre-commit: checking formatting"
+pnpm format:check >/dev/null 2>&1 || fail "formatting is off. Run 'pnpm format' and stage the result."
+
+echo "pre-commit: linting"
+pnpm lint || fail "lint failed."
+
+echo "pre-commit: testing"
+pnpm test >/dev/null 2>&1 || fail "tests failed. Run 'pnpm test' to see which."
+
+echo "pre-commit: ok"
