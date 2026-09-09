@@ -3,18 +3,7 @@
 import { revalidatePath } from 'next/cache';
 
 import { createAgent, createApiKey, renameOrg, revokeApiKey } from './api';
-import type { ActionState } from './action-state';
-
-/** Result of minting a key: the plaintext travels back exactly once. */
-export interface SecretState extends ActionState {
-  /** The new key, shown once and never fetchable again. Empty until minted. */
-  secret: string;
-  /** Monotonic counter, so minting twice still re-animates the reveal. */
-  revision: number;
-}
-
-/** Starting state for the key-minting form. */
-export const IDLE_SECRET: SecretState = { status: 'idle', message: '', secret: '', revision: 0 };
+import type { ActionState, SecretState } from './action-state';
 
 /**
  * Rename the organization.

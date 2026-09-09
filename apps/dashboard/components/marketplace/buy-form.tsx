@@ -3,7 +3,8 @@
 import { ShoppingCart } from 'lucide-react';
 import { useActionState, useId } from 'react';
 
-import { IDLE_PURCHASE, purchaseAction } from '@/lib/actions-purchase';
+import { purchaseAction } from '@/lib/actions-purchase';
+import { IDLE_PURCHASE } from '@/lib/action-state';
 import type { AgentSummary } from '@/lib/types';
 import { Button } from '@/components/ui/button';
 import { Field, Input, NativeSelect } from '@/components/ui/field';

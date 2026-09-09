@@ -4,7 +4,8 @@ import { KeyRound, TriangleAlert } from 'lucide-react';
 import { AnimatePresence, motion, useReducedMotion } from 'motion/react';
 import { useActionState, useId } from 'react';
 
-import { createApiKeyAction, IDLE_SECRET } from '@/lib/actions-account';
+import { createApiKeyAction } from '@/lib/actions-account';
+import { IDLE_SECRET } from '@/lib/action-state';
 import { DURATION, EASE } from '@/lib/motion';
 import { ActionFeedback } from '@/components/ui/action-feedback';
 import { Button } from '@/components/ui/button';

@@ -3,24 +3,8 @@
 import { revalidatePath } from 'next/cache';
 
 import { purchaseResource } from './api';
+import type { PurchaseState } from './action-state';
 import type { PurchaseOutcome } from './types';
-
-/** Inline state for the buy control, carrying whatever the purchase returned. */
-export interface PurchaseState {
-  status: 'idle' | 'success' | 'error';
-  message: string;
-  outcome: PurchaseOutcome | null;
-  /** Monotonic counter, so buying the same thing twice still re-animates. */
-  revision: number;
-}
-
-/** Starting state for the buy control. */
-export const IDLE_PURCHASE: PurchaseState = {
-  status: 'idle',
-  message: '',
-  outcome: null,
-  revision: 0,
-};
 
 /** One line describing what happened, for the inline announcement. */
 function summarise(outcome: PurchaseOutcome): { status: 'success' | 'error'; message: string } {
