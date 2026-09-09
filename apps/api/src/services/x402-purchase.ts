@@ -16,10 +16,10 @@ import type { ChainProvider, MarketDataProvider, PaymentRequest } from '@pocket/
 import type { PrivyWalletProvider } from '@pocket/adapters';
 import type { Database } from '@pocket/db';
 import { decisionToJson, paymentToJson, type PaymentJson } from '../serialize.js';
-import { payForResource, requestResource } from './x402-http.js';
 import { parseResourceUrl } from './resource-url.js';
+import { requestResource } from './x402-http.js';
 import { keysForPurchase } from './x402-idempotency.js';
-import { recordSettlement } from './x402-settle.js';
+import { presentToSeller } from './x402-present.js';
 import { authorizeX402Payment } from './x402.js';
 import type { X402Requirements } from './x402-types.js';
 
@@ -167,34 +167,9 @@ export async function purchaseResource(
     };
   }
 
-  const paid = await payForResource(url, authorized.paymentPayload);
-
-  if (paid.kind === 'rejected') {
-    const failed = await recordSettlement(deps.db, orgId, authorized.payment.id, {
-      success: false,
-      reason: `The seller refused the payment (${paid.status}): ${paid.detail}`,
-    });
-    return {
-      status: 'failed',
-      code: 'SETTLEMENT_REJECTED',
-      message: `The seller refused the payment (${paid.status}): ${paid.detail}`,
-      payment: paymentToJson(failed, explorer),
-    };
-  }
-
-  const transactionId =
-    typeof paid.settlement?.['transaction'] === 'string'
-      ? paid.settlement['transaction']
-      : undefined;
-  const settled = await recordSettlement(deps.db, orgId, authorized.payment.id, {
-    success: true,
-    transactionId,
-  });
-
-  return {
-    status: 'paid',
-    result: paid.body,
-    payment: paymentToJson(settled, explorer),
-    settlement: paid.settlement,
-  };
+  return await presentToSeller(
+    { db: deps.db, orgId, paymentId: authorized.payment.id, explorer },
+    url,
+    authorized.paymentPayload,
+  );
 }
