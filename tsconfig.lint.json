@@ -1,0 +1,12 @@
+{
+  "extends": "./tsconfig.base.json",
+  "compilerOptions": { "noEmit": true, "allowJs": true, "types": ["node"] },
+  "include": [
+    "packages/*/src/**/*.ts",
+    "packages/*/tests/**/*.ts",
+    "apps/api/src/**/*.ts",
+    "apps/api/tests/**/*.ts",
+    "apps/mcp/src/**/*.ts",
+    "apps/paid-service/src/**/*.ts"
+  ]
+}

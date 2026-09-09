@@ -1,0 +1,8 @@
+dist
+.next
+node_modules
+pnpm-lock.yaml
+subgraph/generated
+subgraph/build
+apps/docs/.source
+next-env.d.ts

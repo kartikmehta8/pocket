@@ -1,0 +1,39 @@
+{
+  "name": "purse",
+  "private": true,
+  "version": "0.1.0",
+  "description": "Spending limits for AI agents.",
+  "packageManager": "pnpm@11.8.0",
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "prepare": "git config core.hooksPath .githooks",
+    "build": "pnpm -r --filter './packages/*' build && pnpm -r --filter './apps/*' build",
+    "dev": "pnpm -r --parallel --filter './apps/*' dev",
+    "dev:api": "pnpm --filter @purse/api dev",
+    "dev:mcp": "pnpm --filter @purse/mcp dev",
+    "dev:service": "pnpm --filter @purse/paid-service dev",
+    "dev:dashboard": "pnpm --filter @purse/dashboard dev",
+    "typecheck": "pnpm -r typecheck",
+    "test": "pnpm -r test",
+    "lint": "eslint . && pnpm --filter @purse/dashboard lint",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "db:push": "pnpm --filter @purse/db push",
+    "db:studio": "pnpm --filter @purse/db studio",
+    "seed": "pnpm --filter @purse/api seed",
+    "verify": "pnpm format:check && pnpm lint && pnpm typecheck && pnpm test && pnpm build"
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.17.0",
+    "@types/node": "^22.20.1",
+    "eslint": "^9.17.0",
+    "prettier": "^3.4.2",
+    "prettier-plugin-tailwindcss": "^0.8.1",
+    "tsx": "^4.19.2",
+    "typescript": "^5.7.2",
+    "typescript-eslint": "^8.18.1",
+    "vitest": "^2.1.8"
+  }
+}

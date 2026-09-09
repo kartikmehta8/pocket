@@ -1,0 +1,15 @@
+node_modules
+dist
+.next
+.turbo
+*.tsbuildinfo
+.env
+.logs
+.env.local
+.DS_Store
+coverage
+
+# subgraph
+subgraph/generated
+subgraph/build
+subgraph/node_modules
