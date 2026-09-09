@@ -1,0 +1,33 @@
+"""
+An ERC-20 token seen by this subgraph.
+
+Only the fields Purse actually queries are stored. A subgraph that indexes
+fields nobody reads costs indexing time and buys nothing.
+"""
+type Token @entity(immutable: true) {
+  "The token contract address."
+  id: Bytes!
+  symbol: String!
+  decimals: Int!
+}
+
+"""
+One value transfer.
+
+The field names here are the contract between the subgraph and Purse's
+analytics adapter. If you rename anything, override the query via
+`GraphOptions.query` in `packages/adapters/src/graph.ts` to match.
+"""
+type Transfer @entity(immutable: true) {
+  "Transaction hash plus log index, so each log is its own entity."
+  id: Bytes!
+  "Transaction hash. Purse compares this against the hash it recorded."
+  transaction: Bytes!
+  from: Bytes!
+  to: Bytes!
+  "Amount in the token's base units. Never scaled here."
+  value: BigInt!
+  "Block timestamp in seconds."
+  timestamp: BigInt!
+  token: Token!
+}

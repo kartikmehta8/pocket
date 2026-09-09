@@ -1,0 +1,33 @@
+specVersion: 1.0.0
+description: Indexes ERC-20 transfers on Hedera so Purse can reconcile its ledger against the chain.
+schema:
+  file: ./schema.graphql
+dataSources:
+  - kind: ethereum
+    name: Token
+    # Must match the network name you registered with graph-node. The
+    # docker-compose in this directory registers `hedera-testnet`.
+    network: hedera-testnet
+    source:
+      abi: ERC20
+      # The token to index. Testnet USDC is 0.0.429274 in EVM form.
+      # Replace with your own token if you are settling in something else.
+      address: '0x0000000000000000000000000000000000068cda'
+      # Indexing from block 0 on Hedera takes a very long time. Set this to a
+      # block shortly before your first payment. See README.md for how to read
+      # the current block height.
+      startBlock: 40268164
+    mapping:
+      kind: ethereum/events
+      apiVersion: 0.0.9
+      language: wasm/assemblyscript
+      entities:
+        - Token
+        - Transfer
+      abis:
+        - name: ERC20
+          file: ./abis/ERC20.json
+      eventHandlers:
+        - event: Transfer(indexed address,indexed address,uint256)
+          handler: handleTransfer
+      file: ./src/mapping.ts

@@ -1,0 +1,62 @@
+# A local Graph Node pointed at Hedera testnet.
+#
+# The Graph's hosted service and decentralized network do not support Hedera,
+# so self-hosting is the only way to run a real subgraph against it. Ports are
+# offset from the defaults where they would collide with Purse's own Postgres.
+services:
+  graph-node:
+    image: graphprotocol/graph-node:v0.36.1
+    depends_on:
+      ipfs:
+        condition: service_started
+      postgres:
+        condition: service_healthy
+    ports:
+      - '8000:8000' # GraphQL queries
+      - '8001:8001' # GraphQL subscriptions
+      - '8020:8020' # JSON-RPC deploy endpoint
+      - '8030:8030' # indexing status
+      - '8040:8040' # metrics
+    environment:
+      postgres_host: postgres
+      postgres_user: graph
+      postgres_pass: graph
+      postgres_db: graph
+      ipfs: 'ipfs:5001'
+      # `<name>:<url>` — the name must match `network:` in subgraph.yaml.
+      ethereum: 'hedera-testnet:https://testnet.hashio.io/api'
+      GRAPH_LOG: info
+      # Hedera's relay does not implement every trace API a full Graph Node
+      # expects. Sticking to event handlers, as this subgraph does, avoids them.
+      ETHEREUM_REORG_THRESHOLD: 1
+      ETHEREUM_ANCESTOR_COUNT: 1
+
+  ipfs:
+    image: ipfs/kubo:v0.34.1
+    ports:
+      - '5001:5001'
+    volumes:
+      - ipfs-data:/data/ipfs
+
+  postgres:
+    image: postgres:17-alpine
+    command: ['postgres', '-cshared_preload_libraries=pg_stat_statements']
+    ports:
+      - '5435:5432'
+    environment:
+      POSTGRES_USER: graph
+      POSTGRES_PASSWORD: graph
+      POSTGRES_DB: graph
+      PGDATA: /var/lib/postgresql/data
+      POSTGRES_INITDB_ARGS: '-E UTF8 --locale=C'
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U graph -d graph']
+      interval: 5s
+      timeout: 5s
+      retries: 20
+    volumes:
+      - graph-pgdata:/var/lib/postgresql/data
+
+volumes:
+  ipfs-data:
+  graph-pgdata:
