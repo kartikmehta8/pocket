@@ -1,0 +1,101 @@
+/**
+ * EVM transaction construction for Privy-custodied wallets.
+ *
+ * Kept apart from the provider so the shape of a transfer is testable without
+ * a Privy client, and so the provider reads as orchestration rather than
+ * encoding.
+ */
+
+import { Interface } from 'ethers';
+import { PurseError, type AssociateTokenInput, type SendPaymentInput } from '@purse/core';
+import { chainConfig, ERC20_ABI, IHRC719_ASSOCIATE, tokenAddress } from './chains.js';
+
+const erc20 = new Interface([...ERC20_ABI]);
+
+/** An EVM transaction in the hex-quantity shape Privy's wallet API expects. */
+export interface PrivyTransaction {
+  to: `0x${string}`;
+  value: `0x${string}`;
+  chainId: number;
+  data?: `0x${string}`;
+  gasLimit?: number;
+}
+
+/**
+ * Builds the transaction for a value transfer.
+ *
+ * @param input - Recipient, amount in base units, asset and chain.
+ * @returns The transaction to sign.
+ * @throws {PurseError} `VALIDATION_FAILED` when a token asset has no
+ *   configured contract address, rather than guessing one.
+ * @remarks A native transfer carries value directly. A token transfer carries
+ *   zero value and ERC-20 `transfer` calldata. Amounts are hex-encoded because
+ *   Privy types these fields as hex quantities.
+ */
+export function buildTransferTransaction(input: SendPaymentInput): PrivyTransaction {
+  const config = chainConfig(input.chain);
+  const token = tokenAddress(input.chain, input.asset);
+
+  if (token === null && input.asset !== config.nativeAsset) {
+    throw new PurseError(
+      'VALIDATION_FAILED',
+      `No contract address configured for ${input.asset}.`,
+      {
+        asset: input.asset,
+        chain: input.chain,
+      },
+    );
+  }
+
+  if (token === null) {
+    return {
+      to: input.to as `0x${string}`,
+      value: `0x${input.amount.toString(16)}`,
+      chainId: config.chainId,
+    };
+  }
+
+  return {
+    to: token as `0x${string}`,
+    data: erc20.encodeFunctionData('transfer', [input.to, input.amount]) as `0x${string}`,
+    value: '0x0',
+    chainId: config.chainId,
+  };
+}
+
+/**
+ * Builds the transaction that opts a wallet into holding a token.
+ *
+ * @param input - Wallet, asset and chain.
+ * @returns The transaction to sign, or `null` when the asset is the chain's
+ *   native currency and association does not apply.
+ * @throws {PurseError} `VALIDATION_FAILED` when the token has no configured
+ *   contract address.
+ * @remarks Calls `associate()` on the token's own address, which Hedera routes
+ *   to the token service under HIP-719. The gas limit is explicit because the
+ *   relay's estimate is unreliable for facade calls.
+ */
+export function buildAssociateTransaction(input: AssociateTokenInput): PrivyTransaction | null {
+  const config = chainConfig(input.chain);
+  if (input.asset === config.nativeAsset) return null;
+
+  const token = tokenAddress(input.chain, input.asset);
+  if (token === null) {
+    throw new PurseError(
+      'VALIDATION_FAILED',
+      `No contract address configured for ${input.asset}.`,
+      {
+        asset: input.asset,
+        chain: input.chain,
+      },
+    );
+  }
+
+  return {
+    to: token as `0x${string}`,
+    data: IHRC719_ASSOCIATE,
+    value: '0x0',
+    chainId: config.chainId,
+    gasLimit: 1_000_000,
+  };
+}
