@@ -19,13 +19,12 @@ dist
 !.env.example
 !.env.*.example
 
-# Not needed to build a server image.
+# Not part of any image. apps/docs and apps/dashboard are NOT excluded: each
+# has its own Dockerfile that builds from this same root context, and excluding
+# them here fails that build on a path it can see in the repository.
 .git
 .github
 .githooks
 .logs
-apps/docs
 subgraph
 scripts
-*.md
-!README.md

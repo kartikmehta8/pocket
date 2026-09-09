@@ -34,7 +34,8 @@ RUN addgroup -S pocket && adduser -S pocket -G pocket
 
 COPY --from=build --chown=pocket:pocket /app/apps/docs/.next/standalone ./
 COPY --from=build --chown=pocket:pocket /app/apps/docs/.next/static ./apps/docs/.next/static
-COPY --from=build --chown=pocket:pocket /app/apps/docs/public ./apps/docs/public
+# No public/ here, unlike the dashboard: this site ships no static files of its
+# own. Add the copy back alongside the directory if that changes.
 
 USER pocket
 EXPOSE 3001
