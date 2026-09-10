@@ -37,23 +37,37 @@ afterAll(async () => {
 });
 
 describe('session bootstrap', () => {
-  it('creates an organization and a one-time key on first sign-in', async () => {
+  it('creates an organization on first sign-in', async () => {
     const { status, body } = await signIn(`alice-${Date.now()}`, { orgName: 'Northwind' });
 
     expect(status).toBe(201);
     expect(body['provisioned']).toBe(true);
-    expect(body['apiKey']).toMatch(/^pocket_sk_/);
     expect((body['org'] as { name: string }).name).toBe('Northwind');
   });
 
-  it('returns the same organization on a second sign-in, without a key', async () => {
+  it('mints no credential nobody asked for', async () => {
+    const subject = `dana-${Date.now()}`;
+    const { body } = await signIn(subject);
+
+    // Signing in must not hand back a secret, and must not leave one behind
+    // for the account to be reached with either.
+    expect(body).not.toHaveProperty('apiKey');
+
+    const keys = await h.app.inject({
+      method: 'GET',
+      url: '/v1/api-keys',
+      headers: session(subject),
+    });
+    expect(keys.json<{ keys: unknown[] }>().keys).toHaveLength(0);
+  });
+
+  it('returns the same organization on a second sign-in', async () => {
     const subject = `bob-${Date.now()}`;
     const first = await signIn(subject);
     const second = await signIn(subject);
 
     expect(second.status).toBe(200);
     expect(second.body['provisioned']).toBe(false);
-    expect(second.body['apiKey']).toBeNull();
     expect((second.body['org'] as { id: string }).id).toBe(
       (first.body['org'] as { id: string }).id,
     );
@@ -97,6 +111,18 @@ describe('session-scoped requests', () => {
   });
 });
 
+/** Mints a key for `subject` and returns its id and plaintext. */
+async function mintKey(subject: string, label: string) {
+  const created = await h.app.inject({
+    method: 'POST',
+    url: '/v1/api-keys',
+    headers: session(subject),
+    payload: { label },
+  });
+  expect(created.statusCode).toBe(201);
+  return created.json<{ apiKey: string; key: { id: string; label: string } }>();
+}
+
 describe('api key management', () => {
   it('refuses key listing to an API key caller', async () => {
     const response = await h.app.inject({ method: 'GET', url: '/v1/api-keys', headers: h.auth });
@@ -129,31 +155,36 @@ describe('api key management', () => {
   it('refuses to revoke the last live key', async () => {
     const subject = `erin-${Date.now()}`;
     await signIn(subject);
-    const list = await h.app.inject({
-      method: 'GET',
-      url: '/v1/api-keys',
-      headers: session(subject),
-    });
-    const only = list.json<{ keys: Array<{ id: string }> }>().keys[0];
+    const only = await mintKey(subject, 'Only key');
 
     const response = await h.app.inject({
       method: 'DELETE',
-      url: `/v1/api-keys/${only?.id ?? ''}`,
+      url: `/v1/api-keys/${only.key.id}`,
       headers: session(subject),
     });
     expect(response.statusCode).toBe(400);
   });
 
+  it('reports a key that never existed as missing, not as the last one', async () => {
+    const subject = `ivan-${Date.now()}`;
+    await signIn(subject);
+
+    // A fresh organization holds no keys at all. Telling it to replace the
+    // last one before revoking would name a key it has never had.
+    const response = await h.app.inject({
+      method: 'DELETE',
+      url: '/v1/api-keys/key_doesnotexist',
+      headers: session(subject),
+    });
+    expect(response.statusCode).toBe(404);
+  });
+
   it('revokes a key and stops accepting it', async () => {
     const subject = `frank-${Date.now()}`;
     await signIn(subject);
-    const created = await h.app.inject({
-      method: 'POST',
-      url: '/v1/api-keys',
-      headers: session(subject),
-      payload: { label: 'Throwaway' },
-    });
-    const minted = created.json<{ apiKey: string; key: { id: string } }>();
+    // Two, because the last live key cannot be revoked.
+    await mintKey(subject, 'Keeper');
+    const minted = await mintKey(subject, 'Throwaway');
 
     const revoked = await h.app.inject({
       method: 'DELETE',

@@ -13,7 +13,7 @@ import {
   LedgerAnalyticsProvider,
   StubMarketDataProvider,
 } from '@pocket/adapters';
-import { getDb, createOrganization } from '@pocket/db';
+import { getDb, createOrganization, issueApiKey } from '@pocket/db';
 import type { FastifyInstance } from 'fastify';
 import { loadConfig } from '../src/config.js';
 import { buildServer } from '../src/server.js';
@@ -69,7 +69,8 @@ export async function createHarness(): Promise<Harness> {
     },
   });
 
-  const { org, apiKey } = await createOrganization(db, `test-${Date.now()}-${Math.random()}`);
+  const org = await createOrganization(db, `test-${Date.now()}-${Math.random()}`);
+  const { plaintext: apiKey } = await issueApiKey(db, org.id, 'Test key');
   return {
     app,
     apiKey,

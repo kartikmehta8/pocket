@@ -88,10 +88,6 @@ export function registerAuthRoutes(app: FastifyInstance, ctx: AppContext): void 
         createdAt: session.user.createdAt.toISOString(),
       },
       provisioned: session.provisioned,
-      // Present exactly once, on the response that created the organization.
-      // Nothing can retrieve it afterwards, so the dashboard shows it now or
-      // the operator mints a replacement.
-      apiKey: session.apiKey,
     };
   });
 }

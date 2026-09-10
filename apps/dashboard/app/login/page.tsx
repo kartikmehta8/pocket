@@ -6,6 +6,7 @@ import { BadgeCheck, GaugeCircle, Landmark, ShieldHalf } from 'lucide-react';
 import { LoginPanel } from '@/components/auth/login-panel';
 import { Wordmark } from '@/components/layout/wordmark';
 
+/** Tab title for the sign-in screen. */
 export const metadata: Metadata = { title: 'Sign in' };
 
 /** Nothing here is cacheable: the panel decides where to send the visitor. */
@@ -87,7 +88,8 @@ export default function LoginPage() {
             Sign in to Pocket
           </h2>
           <p className="text-text-secondary mt-1.5 text-sm leading-relaxed">
-            First time here? Signing in creates your organization and its first API key.
+            First time here? Signing in creates your organization. Nothing can spend until you say
+            it may.
           </p>
 
           <div className="mt-7">

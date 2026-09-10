@@ -4,44 +4,32 @@
  */
 
 import { and, eq, isNull, sql } from 'drizzle-orm';
-import { newApiKey, newId, apiKeyPrefix, type Organization } from '@pocket/core';
+import { newId, type Organization } from '@pocket/core';
 import type { Database } from '../client.js';
 import { hashApiKey } from '../client.js';
 import { apiKeys, organizations, users } from '../schema/index.js';
 import type { User } from './users.js';
 
-/** An organization plus the one-time plaintext key minted alongside it. */
-export interface CreatedOrganization {
-  org: Organization;
-  /** Shown to the caller once. Never retrievable again. */
-  apiKey: string;
-}
-
 /**
- * Creates an organization and its first API key.
+ * Creates an organization.
  *
  * @param db - Database handle.
  * @param name - Human-readable organization name.
- * @returns The organization and the plaintext key, which the caller must
- *   surface immediately because only its hash is retained.
+ * @returns The new organization.
+ * @remarks No credential is minted here. An organization that hands out a key
+ * nobody asked for has issued a secret its owner never saw, and a key that is
+ * never shown is a live credential with no one accountable for it. Callers
+ * that genuinely need one, the bootstrap endpoint and the seed script, ask for
+ * it with {@link issueApiKey} and surface it immediately.
  */
-export async function createOrganization(db: Database, name: string): Promise<CreatedOrganization> {
-  const orgId = newId('org');
-  const plaintext = newApiKey();
+export async function createOrganization(db: Database, name: string): Promise<Organization> {
+  const [row] = await db
+    .insert(organizations)
+    .values({ id: newId('org'), name })
+    .returning();
 
-  const org = await db.transaction(async (tx) => {
-    const [row] = await tx.insert(organizations).values({ id: orgId, name }).returning();
-    await tx.insert(apiKeys).values({
-      id: newId('key'),
-      orgId,
-      hash: hashApiKey(plaintext),
-      prefix: apiKeyPrefix(plaintext),
-    });
-    return row;
-  });
-
-  if (org === undefined) throw new Error('Organization insert returned no row.');
-  return { org, apiKey: plaintext };
+  if (row === undefined) throw new Error('Organization insert returned no row.');
+  return row;
 }
 
 /**

@@ -9,10 +9,9 @@
  */
 
 import { eq } from 'drizzle-orm';
-import { apiKeyPrefix, newApiKey, newId, type Organization } from '@pocket/core';
+import { newId, type Organization } from '@pocket/core';
 import type { Database } from '../client.js';
-import { hashApiKey } from '../client.js';
-import { apiKeys, organizations, users } from '../schema/index.js';
+import { organizations, users } from '../schema/index.js';
 
 /** A person who can sign in to the dashboard. */
 export interface User {
@@ -29,14 +28,6 @@ export interface ResolvedSession {
   user: User;
   /** True when this call is what brought the organization into existence. */
   provisioned: boolean;
-  /**
-   * Plaintext key minted alongside a brand-new organization.
-   *
-   * @remarks Present only when `provisioned` is true. It is never persisted in
-   * the clear and cannot be retrieved again; the caller either surfaces it or
-   * loses it.
-   */
-  apiKey: string | null;
 }
 
 /**
@@ -61,10 +52,9 @@ export async function resolveSession(
       .update(users)
       .set({ lastSeenAt: new Date(), ...(input.email === null ? {} : { email: input.email }) })
       .where(eq(users.id, existing.user.id));
-    return { ...existing, provisioned: false, apiKey: null };
+    return { ...existing, provisioned: false };
   }
 
-  const plaintext = newApiKey();
   const orgId = newId('org');
 
   const created = await db.transaction(async (tx) => {
@@ -73,14 +63,6 @@ export async function resolveSession(
       .values({ id: orgId, name: input.orgName })
       .returning();
     if (org === undefined) throw new Error('Organization insert returned no row.');
-
-    await tx.insert(apiKeys).values({
-      id: newId('key'),
-      orgId,
-      hash: hashApiKey(plaintext),
-      prefix: apiKeyPrefix(plaintext),
-      label: 'Default key',
-    });
 
     const [user] = await tx
       .insert(users)
@@ -92,14 +74,14 @@ export async function resolveSession(
   });
 
   if (created === null) {
-    // Another request won the race and owns the tenant. Ours was rolled back
-    // together with the key we minted, so there is nothing to hand back.
+    // Another request won the race and owns the tenant, so ours was rolled
+    // back and this sign-in provisioned nothing.
     const winner = await findSession(db, input.subject);
     if (winner === null) throw new Error('Session insert conflicted but no row was found.');
-    return { ...winner, provisioned: false, apiKey: null };
+    return { ...winner, provisioned: false };
   }
 
-  return { ...created, provisioned: true, apiKey: plaintext };
+  return { ...created, provisioned: true };
 }
 
 /**

@@ -120,6 +120,35 @@ export async function revokeApiKey(
 }
 
 /**
+ * Finds one of an organization's live keys.
+ *
+ * @param db - Database handle.
+ * @param orgId - Tenant scope.
+ * @param keyId - Key identifier.
+ * @returns The key, or `null` when it does not exist, is already revoked, or
+ *   belongs to another organization. All three answer the same way, so a
+ *   caller cannot use this to discover another tenant's key ids.
+ */
+export async function findLiveApiKey(
+  db: Database,
+  orgId: string,
+  keyId: string,
+): Promise<ApiKeySummary | null> {
+  const rows = await db
+    .select({
+      id: apiKeys.id,
+      label: apiKeys.label,
+      prefix: apiKeys.prefix,
+      createdAt: apiKeys.createdAt,
+      revokedAt: apiKeys.revokedAt,
+    })
+    .from(apiKeys)
+    .where(and(eq(apiKeys.id, keyId), eq(apiKeys.orgId, orgId), isNull(apiKeys.revokedAt)))
+    .limit(1);
+  return rows[0] ?? null;
+}
+
+/**
  * Counts an organization's usable keys.
  *
  * @param db - Database handle.

@@ -15,6 +15,7 @@ import {
   createAgent,
   createOrganization,
   createTaskBudget,
+  issueApiKey,
   closeDb,
   getDb,
   upsertBudget,
@@ -39,7 +40,8 @@ async function seed(): Promise<void> {
   const chain = config.CHAIN;
   const decimals = decimalsOf('USDC');
 
-  const { org, apiKey } = await createOrganization(db, 'Pocket Demo Organization');
+  const org = await createOrganization(db, 'Pocket Demo Organization');
+  const { plaintext: apiKey } = await issueApiKey(db, org.id, 'Seed key');
   const agent = await createAgent(db, {
     orgId: org.id,
     name: 'Hermes',

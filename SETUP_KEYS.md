@@ -351,8 +351,9 @@ The MCP server holds no key of its own. Every caller sends its own in an
 being an open door onto somebody else's agents.
 
 Once sign-in is configured you do not need `pnpm seed` at all: signing in mints
-the organization's first key, and **Settings → API keys** mints and revokes the
-rest. `POCKET_API_KEY` in the dashboard environment is the single-tenant escape
+your organization, and **Settings → API keys** is where you create the first key
+and every one after it. Signing in mints nothing on your behalf: a credential
+you were never shown is one nobody is accountable for. `POCKET_API_KEY` in the dashboard environment is the single-tenant escape
 hatch — it bypasses sign-in and pins the dashboard to one organization, which
 is right for an offline demo and wrong for anything else.
 

@@ -10,6 +10,7 @@ import {
   createOrganization,
   findOrganizationById,
   findUserById,
+  issueApiKey,
   renameOrganization,
 } from '@pocket/db';
 import { requireHuman } from '../auth.js';
@@ -30,13 +31,17 @@ export function registerOrgRoutes(app: FastifyInstance, ctx: AppContext): void {
 
   app.post('/v1/orgs', async (request, reply) => {
     const body = createOrgSchema.parse(request.body);
-    const { org, apiKey } = await createOrganization(ctx.db, body.name);
+    const org = await createOrganization(ctx.db, body.name);
+    // This endpoint is the only door into an organization with no signed-in
+    // person, so it mints the first key itself. Sign-in does not: a dashboard
+    // user can see the form and create one deliberately.
+    const { plaintext } = await issueApiKey(ctx.db, org.id, 'Bootstrap key');
     reply.status(201);
     // The plaintext key exists only in this response. It is never persisted,
     // never logged, and cannot be retrieved again.
     return {
       org: { id: org.id, name: org.name, createdAt: org.createdAt.toISOString() },
-      apiKey,
+      apiKey: plaintext,
     };
   });
 

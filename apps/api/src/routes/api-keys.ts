@@ -11,6 +11,7 @@ import { createApiKeySchema, PocketError } from '@pocket/core';
 import {
   appendAuditEvent,
   countLiveApiKeys,
+  findLiveApiKey,
   issueApiKey,
   listApiKeys,
   revokeApiKey,
@@ -67,6 +68,13 @@ export function registerApiKeyRoutes(app: FastifyInstance, ctx: AppContext): voi
   app.delete('/v1/api-keys/:id', async (request) => {
     requireHuman(request);
     const { id } = request.params as { id: string };
+
+    // Existence first. An organization with no keys at all, which is how every
+    // one of them starts, would otherwise be told to create a replacement for
+    // a key it never had, and a stranger probing another tenant's key id would
+    // learn something from the difference between the two refusals.
+    const target = await findLiveApiKey(ctx.db, request.orgId, id);
+    if (target === null) throw new PocketError('NOT_FOUND', 'API key not found.', { keyId: id });
 
     // Refusing the last live key is not paternalism: revoking it would strand
     // every agent runtime with no way back in except minting a new one from a
