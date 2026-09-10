@@ -1,26 +1,22 @@
 import type { Metadata } from 'next';
+import Image from 'next/image';
 import Link from 'next/link';
-import { ArrowUpRight, Coins, Eye, KeyRound, Landmark, Network } from 'lucide-react';
+import { ArrowUpRight, Coins, Eye } from 'lucide-react';
 
 import { listAgents } from '@/lib/api';
 import { CAPABILITIES, INTEGRATIONS } from '@/lib/capabilities';
 import { getCatalog } from '@/lib/marketplace';
-import { serviceUrls } from '@/lib/urls';
 import { PromptExamples } from '@/components/capabilities/prompt-examples';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import { PageHeader } from '@/components/ui/page-header';
 import { Stagger, StaggerItem } from '@/components/ui/reveal';
-import { Hint } from '@/components/ui/tooltip';
 
 export const metadata: Metadata = { title: 'What your agent can do' };
 
 /** Reads live agents and the live catalog to build real example prompts. */
 export const dynamic = 'force-dynamic';
-
-/** Icon per vendor, matched by name. Icons cannot live in the data module. */
-const INTEGRATION_ICONS = { Privy: KeyRound, Hedera: Landmark, 'The Graph': Network } as const;
 
 /**
  * Capabilities: the full set of things a connected agent can do, why each one
@@ -29,7 +25,6 @@ const INTEGRATION_ICONS = { Privy: KeyRound, Hedera: Landmark, 'The Graph': Netw
 export default async function CapabilitiesPage() {
   const [agentsResult, catalog] = await Promise.all([listAgents(), getCatalog()]);
   const agents = agentsResult.ok ? agentsResult.data.agents : [];
-  const urls = serviceUrls();
 
   return (
     <>
@@ -47,7 +42,7 @@ export default async function CapabilitiesPage() {
         }
       />
 
-      <PromptExamples agents={agents} resources={catalog.resources} mcpUrl={urls.mcp} />
+      <PromptExamples agents={agents} resources={catalog.resources} />
 
       <section className="flex flex-col gap-3">
         <div>
@@ -98,37 +93,46 @@ export default async function CapabilitiesPage() {
         </Stagger>
       </section>
 
-      <Card>
-        <CardHeader>
-          <div>
-            <CardTitle>What makes it work</CardTitle>
-            <CardDescription>
-              Three vendors, each responsible for one thing Pocket deliberately does not do itself.
-            </CardDescription>
-          </div>
-        </CardHeader>
-        <CardContent className="grid gap-4 sm:grid-cols-3">
-          {INTEGRATIONS.map((integration) => {
-            const Icon = INTEGRATION_ICONS[integration.name as keyof typeof INTEGRATION_ICONS];
-            return (
-              <div key={integration.name} className="flex flex-col gap-2">
-                <span className="border-border bg-accent-100 text-accent-700 flex size-8 items-center justify-center rounded-md border">
-                  <Icon aria-hidden className="size-4" strokeWidth={1.75} />
-                </span>
-                <div>
-                  <Hint label={integration.detail}>
-                    <p className="text-text cursor-help text-sm font-medium underline decoration-dotted underline-offset-4">
-                      {integration.name}
-                    </p>
-                  </Hint>
-                  <p className="eyebrow mt-0.5">{integration.role}</p>
-                </div>
-                <p className="text-text-secondary text-xs leading-relaxed">{integration.detail}</p>
-              </div>
-            );
-          })}
-        </CardContent>
-      </Card>
+      <section className="flex flex-col gap-3">
+        <div>
+          <h2 className="text-text text-md font-semibold tracking-tight">What makes it work</h2>
+          <p className="text-text-muted mt-0.5 text-sm">
+            Three vendors, each responsible for one thing Pocket deliberately does not do itself.
+          </p>
+        </div>
+
+        <Stagger className="grid gap-3 sm:grid-cols-3">
+          {INTEGRATIONS.map((integration) => (
+            <StaggerItem key={integration.name}>
+              <Card className="h-full">
+                <CardContent className="flex h-full flex-col gap-3 pt-4">
+                  <div className="flex items-center gap-3">
+                    <span className="flex size-10 shrink-0 items-center justify-center overflow-hidden rounded-md">
+                      <Image
+                        src={integration.logo}
+                        alt=""
+                        width={40}
+                        height={40}
+                        unoptimized
+                        className="size-full object-contain"
+                      />
+                    </span>
+                    <div className="min-w-0">
+                      <h3 className="text-text text-sm font-semibold tracking-tight">
+                        {integration.name}
+                      </h3>
+                      <p className="eyebrow mt-0.5">{integration.role}</p>
+                    </div>
+                  </div>
+                  <p className="text-text-secondary text-sm leading-relaxed">
+                    {integration.detail}
+                  </p>
+                </CardContent>
+              </Card>
+            </StaggerItem>
+          ))}
+        </Stagger>
+      </section>
     </>
   );
 }

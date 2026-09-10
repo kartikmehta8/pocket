@@ -1,7 +1,5 @@
 import 'server-only';
 
-import type { LucideIcon } from 'lucide-react';
-
 /** One tool the MCP server exposes to a connected agent. */
 export interface Capability {
   /** Tool name exactly as an agent sees it. */
@@ -85,26 +83,29 @@ export interface Integration {
   name: string;
   role: string;
   detail: string;
-  /** Set at render time; the icon component cannot cross a server boundary. */
-  icon?: LucideIcon;
+  /** The vendor's own mark, under `public/`. */
+  logo: string;
 }
 
 /** What each vendor is actually responsible for. */
 export const INTEGRATIONS: readonly Integration[] = [
   {
     name: 'Privy',
+    logo: '/logos/privy.png',
     role: 'Custody and signing',
     detail:
       'Holds every agent wallet and signs on instruction. No private key reaches Pocket, the database, the model, or a log line. A second, provider-side ceiling sits underneath Pocket’s own policy.',
   },
   {
     name: 'Hedera',
+    logo: '/logos/hedera.svg',
     role: 'Settlement',
     detail:
       'Where the money actually moves. Payments settle in USDC through an x402 facilitator that pays the gas, so an agent needs no native token to transact and every payment has a public receipt.',
   },
   {
     name: 'The Graph',
+    logo: '/logos/graph.svg',
     role: 'Indexing and pricing',
     detail:
       'Indexes settled transfers for reconciliation, and composes two independent products to price a payment in USD. When they disagree beyond tolerance, Pocket refuses to price and the policy denies.',
