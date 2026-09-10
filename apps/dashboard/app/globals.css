@@ -176,6 +176,13 @@
     text-rendering: optimizeLegibility;
     /* Anchors on the homepage glide. The reduced-motion block below undoes it. */
     scroll-behavior: smooth;
+    /*
+     * Styling the scrollbar below makes it a classic bar that takes up width,
+     * so a page that grows past the fold gains one and everything shifts left
+     * by its width. Reserving the gutter keeps the layout still whether or not
+     * there is anything to scroll.
+     */
+    scrollbar-gutter: stable;
   }
 
   body {
