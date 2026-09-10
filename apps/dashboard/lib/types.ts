@@ -178,6 +178,14 @@ export interface AgentDetail {
   policy: Policy | null;
   taskBudgets: TaskBudget[];
   balance: Balance | null;
+  /**
+   * The wallet's Hedera account id, such as `0.0.10444689`.
+   *
+   * `null` until something has been sent to the address, because that is what
+   * brings the account into existence. Some faucets ask for this rather than
+   * the address.
+   */
+  accountId: string | null;
 }
 
 // Account, credential and identity shapes.

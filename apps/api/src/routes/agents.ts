@@ -11,7 +11,6 @@ import {
   setBudgetSchema,
   setPolicySchema,
   updateAgentSchema,
-  type AssetId,
 } from '@pocket/core';
 import {
   appendAuditEvent,
@@ -24,8 +23,9 @@ import {
   upsertPolicy,
 } from '@pocket/db';
 import type { AppContext } from '../context.js';
+import { readAccountId, readBalance } from '../services/agent-chain.js';
 import { summariseAgent, summariseAllAgents } from '../services/agent-view.js';
-import { money, taskBudgetToJson } from '../serialize.js';
+import { taskBudgetToJson } from '../serialize.js';
 import { policyToJson } from '../serialize-policy.js';
 
 /**
@@ -100,25 +100,17 @@ export function registerAgentRoutes(app: FastifyInstance, ctx: AppContext): void
       listTaskBudgets(ctx.db, bundle.agent.id),
     ]);
 
-    // Balance travels with its asset, because an amount without a unit is not
-    // a balance. `null` means the chain read failed, which reads as "unknown"
-    // in the UI; a zero would be a lie.
-    let balance: { asset: string; amount: string } | null = null;
-    if (bundle.wallet !== null) {
-      const asset = bundle.budget?.asset ?? 'USDC';
-      try {
-        const raw = await ctx.chain.getBalance(bundle.wallet.address, asset as AssetId);
-        balance = { asset, amount: money(raw, asset) };
-      } catch {
-        balance = null;
-      }
-    }
+    const [balance, accountId] = await Promise.all([
+      readBalance(ctx, bundle.wallet, bundle.budget?.asset),
+      readAccountId(ctx, bundle.wallet),
+    ]);
 
     return {
       agent: summary,
       policy: bundle.policy === null ? null : policyToJson(bundle.policy),
       taskBudgets: taskBudgets.map(taskBudgetToJson),
       balance,
+      accountId,
     };
   });
 

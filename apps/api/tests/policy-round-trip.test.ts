@@ -96,3 +96,40 @@ describe('policy round trip', () => {
     expect(written.statusCode).toBe(400);
   });
 });
+
+describe('agent detail', () => {
+  it('reports the Hedera account id as null until the account exists', async () => {
+    const agentId = await createFundedAgent(h);
+
+    const read = await h.app.inject({
+      method: 'GET',
+      url: `/v1/agents/${agentId}`,
+      headers: h.auth,
+    });
+
+    // The deterministic wallet has no chain account behind it, and neither
+    // does a freshly provisioned real one. Null says "no account yet", which a
+    // faucet asking for a 0.0.x id needs the reader to understand.
+    expect(read.json()).toHaveProperty('accountId', null);
+  });
+});
+
+describe('a chain that will not answer', () => {
+  it('renders the agent rather than waiting on it', async () => {
+    const agentId = await createFundedAgent(h);
+
+    const started = Date.now();
+    const read = await h.app.inject({
+      method: 'GET',
+      url: `/v1/agents/${agentId}`,
+      headers: h.auth,
+    });
+    const elapsed = Date.now() - started;
+
+    // The mirror node's own ceiling is fifteen seconds. A detail page that
+    // waits that long for a value it only decorates itself with is broken
+    // whatever the value turns out to be.
+    expect(read.statusCode).toBe(200);
+    expect(elapsed).toBeLessThan(6_000);
+  });
+});
