@@ -29,7 +29,6 @@ export default async function CapabilitiesPage() {
   return (
     <>
       <PageHeader
-        eyebrow="Reference"
         title="What your agent can do"
         description="Eight tools reach your agent over MCP. One of them can move money; the other seven exist so it does not have to guess."
         actions={
