@@ -8,16 +8,28 @@ interface SlotProps {
   children?: ReactNode;
 }
 
+/** Props for {@link Card}. */
+export interface CardProps extends SlotProps {
+  /**
+   * The hard offset shadow the landing page and the capabilities banner carry,
+   * in place of the soft hover lift. For the one or two cards that anchor a
+   * page, not for a grid of them.
+   */
+  pop?: boolean;
+}
+
 /**
  * Elevation-1 surface with a hairline ring — the default container for
  * everything on the dashboard.
  */
-export function Card({ className, children }: SlotProps) {
+export function Card({ pop, className, children }: CardProps) {
   return (
     <div
       className={cn(
         'bg-surface ring-border rounded-lg ring-1 ring-inset',
-        'hover:shadow-e2 transition-shadow duration-(--duration-base) ease-(--ease-brand)',
+        pop
+          ? 'shadow-pop'
+          : 'hover:shadow-e2 transition-shadow duration-(--duration-base) ease-(--ease-brand)',
         className,
       )}
     >

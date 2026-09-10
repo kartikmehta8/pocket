@@ -1,42 +1,82 @@
-import { Clock, Database } from 'lucide-react';
+import { ArrowUpRight, Clock } from 'lucide-react';
+import Image from 'next/image';
 
 import { formatDateTime } from '@/lib/format';
 import type { CatalogResource } from '@/lib/marketplace';
-import type { AgentSummary } from '@/lib/types';
+import { providerMarks } from '@/lib/providers';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent } from '@/components/ui/card';
+import { CopyButton } from '@/components/ui/copy-button';
 import { Hint } from '@/components/ui/tooltip';
 import { BuyForm } from './buy-form';
 
 /**
- * One purchasable feed: what it is, where the data comes from, what it costs,
- * and the control that buys it.
+ * Where a feed's data comes from: the vendors' marks, then their names.
  *
- * The provider is named on the card. A buyer paying for data deserves to know
- * whose data it is before they pay, not after.
+ * @param provider The provider line as the seller advertises it.
+ * @remarks The names are always text beside the marks. A logo the reader does
+ * not recognise says nothing, and a buyer deserves to know whose data they are
+ * paying for before they pay.
+ */
+function Providers({ provider }: { provider: string }) {
+  const marks = providerMarks(provider);
+  const names = marks.map((mark) => mark.name).join(', ');
+  return (
+    <Hint label={`Pocket does not generate this data. It is fetched live from ${names}.`}>
+      <div className="flex min-w-0 cursor-help items-center gap-2">
+        <div className="flex shrink-0 -space-x-1.5">
+          {marks.map((mark) => (
+            <span
+              key={mark.name}
+              className="ring-surface bg-ash-100 flex size-6 items-center justify-center overflow-hidden rounded-full ring-2"
+            >
+              {mark.logo === null ? (
+                <span aria-hidden className="bg-ash-300 size-1.5 rounded-full" />
+              ) : (
+                <Image
+                  src={mark.logo}
+                  alt=""
+                  width={24}
+                  height={24}
+                  unoptimized
+                  className="size-full object-cover"
+                />
+              )}
+            </span>
+          ))}
+        </div>
+        <span className="text-text-secondary text-xs leading-snug font-medium">{names}</span>
+      </div>
+    </Hint>
+  );
+}
+
+/**
+ * One purchasable feed: whose data it is, what it is, what it costs, and one
+ * button that buys it.
  *
  * @param resource The seller's advertised feed.
- * @param agents Agents that could pay for it.
+ * @param agentId The agent paying, or `''` when none is registered yet.
  */
 export function ResourceCard({
   resource,
-  agents,
+  agentId,
 }: {
   resource: CatalogResource;
-  agents: AgentSummary[];
+  agentId: string;
 }) {
+  const price = `${resource.price} ${resource.assetSymbol}`;
+  // Host and path only. The scheme is noise at this size, and the copy button
+  // hands over the full URL anyway.
+  const endpoint = resource.url.replace(/^https?:\/\//, '');
+
   return (
-    <Card className="flex flex-col">
+    <Card className="flex h-full flex-col">
       <CardContent className="flex flex-1 flex-col gap-3 pt-4">
-        <div className="flex items-start justify-between gap-3">
-          <div className="min-w-0">
-            <h3 className="text-text text-sm font-semibold tracking-tight">{resource.title}</h3>
-            <p className="text-text-secondary mt-1 text-sm leading-relaxed">
-              {resource.description}
-            </p>
-          </div>
+        <div className="flex items-center justify-between gap-3">
+          <Providers provider={resource.provider} />
           <Hint label="Charged per call, settled in stablecoin on Hedera. The seller quotes this price in its 402 response; Pocket evaluates the same number.">
-            <span className="text-text figures shrink-0 cursor-help text-sm font-semibold">
+            <span className="text-text figures shrink-0 cursor-help text-sm font-semibold tracking-tight">
               {resource.price}
               <span className="text-text-muted ml-1 text-xs font-medium">
                 {resource.assetSymbol}
@@ -45,14 +85,12 @@ export function ResourceCard({
           </Hint>
         </div>
 
+        <div>
+          <h3 className="text-text text-md font-semibold tracking-tight">{resource.title}</h3>
+          <p className="text-text-secondary mt-1 text-sm leading-relaxed">{resource.description}</p>
+        </div>
+
         <div className="flex flex-wrap items-center gap-1.5">
-          <Badge
-            tone="neutral"
-            icon={Database}
-            hint={`Pocket does not generate this data. It is fetched live from ${resource.provider}.`}
-          >
-            {resource.provider}
-          </Badge>
           {resource.stale ? (
             <Badge
               tone="warning"
@@ -71,21 +109,38 @@ export function ResourceCard({
                   : `Last refreshed ${formatDateTime(resource.asOf)}. The seller refreshes every ${resource.refreshSeconds}s.`
               }
             >
-              {resource.refreshSeconds}s refresh
+              Refreshes every {resource.refreshSeconds}s
             </Badge>
           )}
         </div>
 
         <p className="text-text-muted text-xs leading-relaxed">{resource.useCase}</p>
 
-        <div className="mt-auto pt-1">
+        {/* The address an agent actually pays. Opening it in a browser shows
+            the seller's 402 and its terms, which is the whole handshake in one
+            click. */}
+        <div className="border-divider mt-auto flex items-center gap-1 border-t pt-3">
+          <a
+            href={resource.url}
+            target="_blank"
+            rel="noreferrer noopener"
+            className="text-text-secondary hover:text-text inline-flex min-w-0 items-center gap-1 rounded-sm font-mono text-xs"
+          >
+            <span className="truncate">{endpoint}</span>
+            <ArrowUpRight aria-hidden className="text-ash-400 size-3 shrink-0" strokeWidth={2} />
+          </a>
+          <CopyButton value={resource.url} label={`${resource.title} URL`} />
+        </div>
+
+        {agentId === '' ? null : (
           <BuyForm
-            agents={agents}
+            agentId={agentId}
             url={resource.url}
             reason={`${resource.title} from ${resource.provider}`}
             category="data"
+            label={`Buy for ${price}`}
           />
-        </div>
+        )}
       </CardContent>
     </Card>
   );

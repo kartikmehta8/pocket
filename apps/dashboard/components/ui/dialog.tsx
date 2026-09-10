@@ -5,6 +5,7 @@ import { X } from 'lucide-react';
 import { AnimatePresence, motion } from 'motion/react';
 import type { ReactNode } from 'react';
 
+import { cn } from '@/lib/cn';
 import { DURATION, EASE } from '@/lib/motion';
 
 /** Props for {@link Dialog}. */
@@ -13,6 +14,8 @@ export interface DialogProps {
   onOpenChange: (open: boolean) => void;
   title: string;
   description?: string;
+  /** A wider panel, for content that is read rather than filled in. */
+  wide?: boolean;
   children: ReactNode;
 }
 
@@ -21,7 +24,7 @@ export interface DialogProps {
  * fade and a short rise on the panel. Exit is animated through
  * `AnimatePresence`, so the panel is never yanked off screen.
  */
-export function Dialog({ open, onOpenChange, title, description, children }: DialogProps) {
+export function Dialog({ open, onOpenChange, title, description, wide, children }: DialogProps) {
   return (
     <DialogPrimitive.Root open={open} onOpenChange={onOpenChange}>
       <AnimatePresence>
@@ -42,7 +45,10 @@ export function Dialog({ open, onOpenChange, title, description, children }: Dia
                 animate={{ opacity: 1, y: 0, scale: 1 }}
                 exit={{ opacity: 0, y: 6, scale: 0.99 }}
                 transition={{ duration: DURATION.base, ease: EASE }}
-                className="bg-surface shadow-e3 ring-border fixed top-1/2 left-1/2 z-50 w-[min(28rem,calc(100vw-2rem))] -translate-x-1/2 -translate-y-1/2 rounded-lg p-5 ring-1 ring-inset"
+                className={cn(
+                  'bg-surface shadow-e3 ring-border fixed top-1/2 left-1/2 z-50 -translate-x-1/2 -translate-y-1/2 rounded-lg p-5 ring-1 ring-inset',
+                  wide ? 'w-[min(44rem,calc(100vw-2rem))]' : 'w-[min(28rem,calc(100vw-2rem))]',
+                )}
               >
                 <div className="mb-4 flex items-start justify-between gap-4">
                   <div>

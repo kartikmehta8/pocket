@@ -1,6 +1,5 @@
 import * as LabelPrimitive from '@radix-ui/react-label';
-import { ChevronDown } from 'lucide-react';
-import type { InputHTMLAttributes, ReactNode, SelectHTMLAttributes } from 'react';
+import type { InputHTMLAttributes, ReactNode } from 'react';
 
 import { cn } from '@/lib/cn';
 
@@ -52,40 +51,5 @@ export function Input({ className, ...rest }: InputProps) {
       )}
       {...rest}
     />
-  );
-}
-
-/** Props for {@link NativeSelect}. */
-export type NativeSelectProps = SelectHTMLAttributes<HTMLSelectElement>;
-
-/**
- * A plain `<select>`, styled to the input metrics.
- *
- * Deliberately native rather than the Radix `Select` used for filters: this one
- * posts inside a form to a server action, and a custom listbox would need a
- * shadow input to do that. Native also gets the platform picker on mobile.
- *
- * @param props Standard select attributes.
- */
-export function NativeSelect({ className, children, ...rest }: NativeSelectProps) {
-  return (
-    <div className="relative">
-      <select
-        className={cn(
-          'bg-surface text-text border-border h-9 w-full appearance-none rounded-md border pr-8 pl-3 text-sm',
-          'transition-colors duration-(--duration-fast) ease-(--ease-brand)',
-          'hover:bg-ash-25 disabled:bg-ash-100 disabled:text-text-muted disabled:cursor-not-allowed',
-          className,
-        )}
-        {...rest}
-      >
-        {children}
-      </select>
-      <ChevronDown
-        aria-hidden
-        className="text-ash-400 pointer-events-none absolute top-1/2 right-2 size-3.5 -translate-y-1/2"
-        strokeWidth={2}
-      />
-    </div>
   );
 }
