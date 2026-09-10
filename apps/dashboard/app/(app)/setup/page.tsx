@@ -1,54 +1,106 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
-import { ArrowUpRight, Wallet } from 'lucide-react';
+import { ArrowUpRight } from 'lucide-react';
 
-import { getPaymentStats, listAgents, listApiKeys } from '@/lib/api';
+import { getAgent, listAgents, listApiKeys, listPayments } from '@/lib/api';
 import { serviceUrls } from '@/lib/urls';
-import { ApiKeyMinter } from '@/components/setup/api-key-minter';
-import { HermesConnect } from '@/components/setup/hermes-connect';
-import { Step } from '@/components/setup/step';
-import { AgentCreateForm } from '@/components/agents/agent-create-form';
+import { hasAmount } from '@/lib/format';
+import type { AgentDetail } from '@/lib/types';
+import { SetupSteps } from '@/components/setup/setup-steps';
+import { type StepState } from '@/components/setup/step';
 import { Button } from '@/components/ui/button';
-import { CodeBlock } from '@/components/ui/code-block';
-import { InlineCode } from '@/components/ui/inline-code';
 import { PageHeader } from '@/components/ui/page-header';
-import { Hint } from '@/components/ui/tooltip';
 
+/** Tab title for the setup guide. */
 export const metadata: Metadata = { title: 'Connect an agent' };
 
 /** Live state decides which steps show as done, so nothing is prerendered. */
 export const dynamic = 'force-dynamic';
 
-/** Faucet for the testnet Pocket settles on by default. */
-const FAUCET_URL = 'https://portal.hedera.com/faucet';
+/**
+ * How many agents to inspect when deciding how far setup has got.
+ *
+ * @remarks A bound, because each one costs a chain read. Someone with more
+ * agents than this is long past needing this page.
+ */
+const FLEET_SAMPLE = 8;
 
 /**
- * Setup: five steps from an empty organization to an agent that has paid for
- * something, each marked done from live state rather than a remembered click.
+ * How many of the per-agent steps an agent satisfies.
+ *
+ * @param detail An agent's detail, or `null`.
+ * @returns A count used only to pick which agent this page should follow.
+ */
+function progress(detail: AgentDetail | null): number {
+  if (detail === null) return -1;
+  return (
+    (hasAmount(detail.balance?.amount) ? 1 : 0) +
+    (detail.agent.budget != null ? 1 : 0) +
+    (detail.policy != null ? 1 : 0)
+  );
+}
+
+/**
+ * Setup: seven steps from an empty organization to a settled payment.
+ *
+ * @remarks Every step's completion is read from live state rather than a
+ * remembered click, so returning to this page shows how far you actually got.
+ * Two of them have no direct signal, so they read one honestly: a runtime that
+ * has reached Pocket at all proves it is connected, even if policy refused the
+ * attempt, and only a settlement proves a purchase.
  */
 export default async function SetupPage() {
-  const [agentsResult, keysResult, statsResult] = await Promise.all([
+  const [agentsResult, keysResult, paymentsResult] = await Promise.all([
     listAgents(),
     listApiKeys(),
-    getPaymentStats({ days: 30 }),
+    listPayments({ limit: 50 }),
   ]);
 
   const agents = agentsResult.ok ? agentsResult.data.agents : [];
-  const agent = agents[0] ?? null;
-  // Key management needs a signed-in person. In API-key mode the call is
-  // refused, which is not an error worth showing — the step just explains why.
-  const keys = keysResult.ok ? keysResult.data.keys.filter((key) => key.revokedAt === null) : [];
-  const settled = statsResult.ok ? statsResult.data.settled : 0;
 
+  // Whichever agent is furthest along, not simply the first one registered.
+  // Funding the second agent and watching step two stay unticked is the kind
+  // of thing that reads as a broken page rather than a wrong guess.
+  const details = await Promise.all(
+    agents.slice(0, FLEET_SAMPLE).map(async (candidate) => {
+      const result = await getAgent(candidate.id);
+      return result.ok ? result.data : null;
+    }),
+  );
+  const detail = details.reduce<AgentDetail | null>(
+    (best, candidate) => (progress(candidate) > progress(best) ? candidate : best),
+    null,
+  );
+  const agent = detail?.agent ?? agents[0] ?? null;
+
+  // Key management needs a signed-in person. In API-key mode the call is
+  // refused, which is not an error worth showing: the step explains why.
+  const keys = keysResult.ok ? keysResult.data.keys.filter((key) => key.revokedAt === null) : [];
+  const payments = paymentsResult.ok ? paymentsResult.data.payments : [];
   const urls = serviceUrls();
-  const funded = agents.some((entry) => entry.budget !== null);
+  const resource = urls.paidService ?? 'http://localhost:8402';
+
+  const reached = [
+    agent !== null,
+    hasAmount(detail?.balance?.amount),
+    detail?.agent.budget != null,
+    detail?.policy != null,
+    keys.length > 0,
+    payments.some((payment) => payment.initiatedBy === 'agent'),
+    payments.some((payment) => payment.status === 'settled'),
+  ];
+  const total = reached.length;
+  const next = reached.indexOf(false);
+
+  /** Resolves one step's state from the run as a whole. */
+  const stateOf = (position: number): StepState =>
+    reached[position] === true ? 'done' : position === next ? 'current' : 'todo';
 
   return (
-    <>
+    <div className="gap-section flex w-full max-w-3xl flex-col">
       <PageHeader
-        eyebrow="Getting started"
         title="Connect an agent"
-        description="Five steps from an empty organization to an agent that pays for its own data."
+        description="Seven steps from an empty organization to an agent that has paid for its own data."
         actions={
           <Button variant="secondary" asChild>
             <Link href="/agents">
@@ -59,135 +111,16 @@ export default async function SetupPage() {
         }
       />
 
-      <ol className="flex flex-col">
-        <Step
-          index={1}
-          title="Register an agent"
-          summary="Pocket provisions a Privy-custodied wallet for it. No key ever reaches your server or the model."
-          done={agent !== null}
-        >
-          {agent === null ? (
-            <AgentCreateForm />
-          ) : (
-            <CodeBlock
-              code={agent.wallet?.address ?? 'Wallet pending'}
-              label={`${agent.name} wallet address`}
-              caption={
-                <span className="flex items-center gap-1.5">
-                  <Wallet aria-hidden className="size-3.5" strokeWidth={1.75} />
-                  {agent.name} · {agent.wallet?.chain ?? 'unassigned'}
-                </span>
-              }
-            />
-          )}
-        </Step>
-
-        <Step
-          index={2}
-          title="Fund the wallet"
-          summary="Send test USDC to the address above. The wallet is opted into the token automatically when it is created."
-          done={funded}
-        >
-          <p className="text-text-secondary text-sm leading-relaxed">
-            On Hedera testnet, use the portal faucet for HBAR and the USDC test token. Balances show
-            on the agent page once the transfer confirms.
-          </p>
-          <div>
-            <Button variant="secondary" asChild>
-              <a href={FAUCET_URL} target="_blank" rel="noreferrer noopener">
-                Hedera faucet
-                <ArrowUpRight aria-hidden className="size-3.5" strokeWidth={2} />
-              </a>
-            </Button>
-          </div>
-        </Step>
-
-        <Step
-          index={3}
-          title="Set a budget and a policy"
-          summary="Until both exist the agent cannot spend anything. That is the deny-by-default rule, not a missing feature."
-          done={agent?.budget !== null && agent !== null}
-        >
-          <p className="text-text-secondary text-sm leading-relaxed">
-            The budget sets a daily ceiling and a per-transaction ceiling. The policy names which
-            assets, chains, categories and recipients are allowed, and the amount above which a
-            human has to approve.
-          </p>
-          {agent === null ? null : (
-            <div>
-              <Button variant="secondary" asChild>
-                <Link href={`/agents/${agent.id}`}>
-                  Configure {agent.name}
-                  <ArrowUpRight aria-hidden className="size-3.5" strokeWidth={2} />
-                </Link>
-              </Button>
-            </div>
-          )}
-        </Step>
-
-        <Step
-          index={4}
-          title="Create an API key for your agent runtime"
-          summary="Your agent runtime presents this key to the MCP server. It rides in a transport header, so the model never sees it and cannot leak it in a completion."
-          done={keys.length > 0}
-        >
-          {keysResult.ok ? (
-            <ApiKeyMinter existing={keys.length} />
-          ) : (
-            <p className="text-text-secondary text-sm leading-relaxed">
-              This dashboard is running with <InlineCode>POCKET_API_KEY</InlineCode> set, so it is
-              authenticated as a machine rather than a person. Sign in to manage keys.
-            </p>
-          )}
-        </Step>
-
-        <Step
-          index={5}
-          title="Point your agent runtime at the MCP server"
-          summary="One command. The server exposes eight tools: paying for a resource, previewing a decision, opening a task budget, and reading spend."
-          done={settled > 0}
-          last
-        >
-          <HermesConnect url={urls.mcp} />
-
-          <div className="border-border bg-ash-50 rounded-md border p-3">
-            <p className="text-text text-sm font-medium">Then ask it to buy something</p>
-            <p className="text-text-secondary mt-1 text-sm leading-relaxed">
-              Name the agent and the ceiling in the prompt. Pocket evaluates the policy before
-              anything is signed, and a refusal comes back to the agent as a reason it can act on.
-            </p>
-            <CodeBlock
-              className="mt-2.5"
-              label="Example prompt"
-              caption="Prompt"
-              code={
-                agent === null
-                  ? 'Get current token prices from a paid data feed. Spend up to $0.50.'
-                  : `Get current token prices from ${
-                      urls.paidService ?? 'http://localhost:8402'
-                    }/v1/market/prices using agent ${agent.id}, then tell me which asset moved most in the last 24 hours.`
-              }
-            />
-          </div>
-
-          <p className="text-text-muted text-xs leading-relaxed">
-            <Hint label="Every attempt is recorded, including the ones policy refused. A blocked payment is a row with a reason, not a discarded event.">
-              <span className="cursor-help underline decoration-dotted underline-offset-2">
-                Watch it happen
-              </span>
-            </Hint>{' '}
-            on{' '}
-            <Link href="/payments" className="text-accent-600 hover:underline">
-              Payments
-            </Link>{' '}
-            and{' '}
-            <Link href="/audit" className="text-accent-600 hover:underline">
-              Audit
-            </Link>
-            .
-          </p>
-        </Step>
-      </ol>
-    </>
+      <SetupSteps
+        agent={agent}
+        detail={detail}
+        keysAvailable={keysResult.ok}
+        liveKeys={keys.length}
+        mcpUrl={urls.mcp}
+        resource={resource}
+        stateOf={stateOf}
+        total={total}
+      />
+    </div>
   );
 }

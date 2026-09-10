@@ -64,6 +64,18 @@ export function formatAmount(
 }
 
 /**
+ * Whether a decimal amount is greater than zero.
+ *
+ * @param value Decimal string such as `"0.00"` or `"19.99"`.
+ * @returns `true` when any digit is non-zero.
+ * @remarks Character inspection rather than arithmetic, so no money value is
+ * ever routed through a binary float to answer a yes-or-no question.
+ */
+export function hasAmount(value: string | null | undefined): boolean {
+  return typeof value === 'string' && /[1-9]/.test(value);
+}
+
+/**
  * Convert a decimal string to a number for geometry only — chart heights and
  * meter widths. Never use the result as a monetary value.
  *
