@@ -11,6 +11,14 @@ export interface CodeBlockProps {
   label: string;
   /** Optional caption strip above the code — a filename, a shell, a header name. */
   caption?: ReactNode;
+  /**
+   * Wrap onto several lines instead of scrolling sideways.
+   *
+   * @remarks For prose: a prompt, a sentence, anything with spaces to break
+   * at. Leave it off for an address or a command, where a wrap invents a line
+   * break that is not in the value.
+   */
+  wrap?: boolean;
   className?: string;
 }
 
@@ -21,7 +29,7 @@ export interface CodeBlockProps {
  * wrapped address or JSON pointer is easy to mis-transcribe by hand — and the
  * copy button means nobody has to.
  */
-export function CodeBlock({ code, label, caption, className }: CodeBlockProps) {
+export function CodeBlock({ code, label, caption, wrap = false, className }: CodeBlockProps) {
   return (
     <div className={cn('border-border bg-ash-50 overflow-hidden rounded-md border', className)}>
       {caption === undefined ? null : (
@@ -30,7 +38,12 @@ export function CodeBlock({ code, label, caption, className }: CodeBlockProps) {
         </div>
       )}
       <div className="flex items-start gap-2 px-3 py-2.5">
-        <pre className="text-text-secondary min-w-0 flex-1 overflow-x-auto font-mono text-xs leading-relaxed">
+        <pre
+          className={cn(
+            'text-text-secondary min-w-0 flex-1 font-mono text-xs leading-relaxed',
+            wrap ? 'break-words whitespace-pre-wrap' : 'no-scrollbar overflow-x-auto',
+          )}
+        >
           <code>{code}</code>
         </pre>
         <CopyButton value={code} label={label} className="mt-px" />

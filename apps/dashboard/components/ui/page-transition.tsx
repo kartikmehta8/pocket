@@ -19,7 +19,9 @@ export function PageTransition({ children }: { children: ReactNode }) {
   const pathname = usePathname();
   const reduced = useReducedMotion();
 
-  if (reduced) return <>{children}</>;
+  // Only the animation is dropped, never the layout: returning the children
+  // bare would take the column's spacing with it and collapse the page.
+  if (reduced) return <div className="gap-section flex w-full flex-col">{children}</div>;
 
   return (
     <motion.div
