@@ -52,10 +52,14 @@ const BADGE: Record<StepState, { label: string; className: string } | null> = {
 /**
  * One step in the setup sequence.
  *
- * @remarks Three things carry the state, none of them colour alone: the
- * marker's glyph, a written pill, and a screen-reader-only line. The connector
+ * @remarks The state is carried by more than colour: the marker's glyph, and
+ * a written pill — or, for the one state that has no pill, a spoken line. The connector
  * beneath a finished step is solid and the rest are dashed, so the eye can see
  * how far the run has got without reading any of them.
+ *
+ * A finished step is a tinted disc rather than a filled green block. Seven of
+ * those stacked down a column shout louder than the one step still asking to
+ * be done, which is the only thing on the page anybody has to act on.
  */
 export function Step({
   index,
@@ -71,13 +75,19 @@ export function Step({
   const badge = BADGE[state];
 
   return (
-    <li className="relative flex gap-4 pb-8 last:pb-0">
+    <li className="relative flex gap-3.5 pb-7 last:pb-0">
+      {/* Geometry, so the connector meets the marker instead of near it: the
+          marker is 1.75rem, the rule 1px. Centre is 0.875rem, so the rule sits
+          there exactly and starts 0.5rem below the marker's foot. */}
       {last ? null : (
         <span
           aria-hidden
           className={cn(
-            'absolute top-10 bottom-1 left-[0.9375rem] w-0',
-            done ? 'border-success border-l-2' : 'border-divider border-l-2 border-dashed',
+            'absolute top-9 bottom-1 left-[0.875rem] w-0 border-l',
+            // Solid against dashed carries the difference, so the connector
+            // uses the theme's hairline like the markers rather than a colour
+            // of its own. Colour was never doing the work here anyway.
+            done ? 'border-border' : 'border-divider border-dashed',
           )}
         />
       )}
@@ -85,19 +95,23 @@ export function Step({
       <span
         aria-hidden
         className={cn(
-          'relative z-10 flex size-8 shrink-0 items-center justify-center rounded-lg border',
+          'relative z-10 flex size-7 shrink-0 items-center justify-center rounded-full border',
           'transition-colors duration-(--duration-base) ease-(--ease-brand)',
+          // The same black hairline the theme puts around every other
+          // container. A soft green edge made the finished marker read as a
+          // different family of object from the two beside it.
+          'border-border',
           done
-            ? 'border-border bg-success text-white'
+            ? 'bg-success-soft text-success-ink'
             : state === 'current'
-              ? 'border-border bg-accent-100 text-accent-700 ring-accent-200 ring-2'
-              : 'border-border bg-surface text-ash-400',
+              ? 'bg-accent-100 text-accent-700 ring-accent-200 ring-2'
+              : 'bg-surface text-ash-400',
         )}
       >
         {done ? (
-          <Check className="size-4" strokeWidth={2.5} />
+          <Check className="size-3.5" strokeWidth={2.75} />
         ) : (
-          <Icon className="size-4" strokeWidth={1.75} />
+          <Icon className="size-3.5" strokeWidth={1.75} />
         )}
       </span>
 
@@ -107,9 +121,9 @@ export function Step({
         </p>
         <div className="mt-1 flex flex-wrap items-center gap-2">
           <h3 className="text-text text-sm font-semibold tracking-tight">{title}</h3>
-          <span className="sr-only">
-            {done ? 'Complete' : state === 'current' ? 'Next to do' : 'Not started'}
-          </span>
+          {/* Only for the one state with no visible pill. Rendering it for
+              the others makes a screen reader say "Complete" then "Done". */}
+          {badge === null ? <span className="sr-only">Not started</span> : null}
           {badge ? (
             <span
               className={cn(
