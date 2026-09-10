@@ -60,8 +60,12 @@ function isActive(pathname: string, href: string): boolean {
  * instead of finding it somewhere new. Inside a surface the marker is a tinted
  * fill and a rule, not the black hairline the theme uses around cards — a
  * hard outline on every nav item competes with the content it frames.
+ *
+ * @param idPrefix Distinguishes this copy's shared-layout element from the
+ *   other's. The rail is rendered twice, and two rails claiming the same
+ *   layout id would animate as one element sliding between them.
  */
-export function Nav() {
+export function Nav({ idPrefix }: { idPrefix: string }) {
   const pathname = usePathname();
   const reduced = useReducedMotion();
 
@@ -89,7 +93,7 @@ export function Nav() {
                 {active ? (
                   <motion.span
                     aria-hidden
-                    layoutId="nav-active"
+                    layoutId={`${idPrefix}-nav-active`}
                     transition={
                       reduced
                         ? { duration: 0 }

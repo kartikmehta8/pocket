@@ -1,5 +1,7 @@
 import 'server-only';
 
+import { cache } from 'react';
+
 import { query, request } from './http';
 import type { ApiResult } from './http';
 import type {
@@ -22,10 +24,17 @@ export type { ApiErr, ApiOk, ApiResult } from './http';
 // Account administration — organization, credentials and agent registration.
 export * from './api-account';
 
-/** `GET /v1/health` — adapter wiring, unauthenticated. */
-export function getHealth(): Promise<ApiResult<Health>> {
-  return request<Health>('GET', '/v1/health');
-}
+/**
+ * `GET /v1/health` — adapter wiring, unauthenticated.
+ *
+ * @remarks Memoised for the duration of one render. The rail is drawn twice on
+ * every page, once fixed and once inside the mobile drawer, and both halves
+ * want the same answer. Without this each render asks the API twice for a
+ * value that cannot have changed in between.
+ */
+export const getHealth = cache((): Promise<ApiResult<Health>> =>
+  request<Health>('GET', '/v1/health'),
+);
 
 /** `GET /v1/agents` — every agent in the organization. */
 export function listAgents(): Promise<ApiResult<{ agents: AgentSummary[] }>> {

@@ -28,12 +28,14 @@ const SLOTS = [
 /**
  * Sidebar footer: which provider is serving each adapter, and whether it is live.
  *
+ * @param id Stable identifier for the disclosure, unique on the page.
+ *
  * Fetches on the server and hands the result to a client disclosure, so the
  * health call stays out of the browser bundle while the panel can still open
  * and close. An unreachable API renders as `Unknown` rather than throwing —
  * the rail must not take the page down with it.
  */
-export async function AdapterHealth() {
+export async function AdapterHealth({ id }: { id: string }) {
   const result = await getHealth();
   const adapters = result.ok ? result.data.adapters : null;
 
@@ -44,5 +46,5 @@ export async function AdapterHealth() {
     mode: adapters?.[key],
   }));
 
-  return <AdapterPanel slots={slots} />;
+  return <AdapterPanel slots={slots} id={id} />;
 }

@@ -1,11 +1,11 @@
 'use client';
 
-import * as Collapsible from '@radix-ui/react-collapsible';
 import { ChevronDown } from 'lucide-react';
 import { useState } from 'react';
 
 import { cn } from '@/lib/cn';
 import type { AdapterMode } from '@/lib/types';
+import { ProviderMark } from '@/components/ui/provider-mark';
 
 /** One adapter slot, with what it governs and why that matters. */
 export interface AdapterSlot {
@@ -18,26 +18,26 @@ export interface AdapterSlot {
   mode: AdapterMode | undefined;
 }
 
-/** Provider ids as they should read to a person. */
-const PROVIDER_NAMES: Record<string, string> = {
-  privy: 'Privy',
-  hedera: 'Hedera',
-  'the-graph': 'The Graph',
-  ledger: 'Local ledger',
-  mock: 'Deterministic fake',
-  open: 'Offline (accepts any token)',
-  stub: 'Deterministic fake',
+/** How each provider id should read, and the mark that goes with it. */
+const PROVIDERS: Record<string, { name: string; logo: string | null }> = {
+  privy: { name: 'Privy', logo: '/logos/privy.png' },
+  hedera: { name: 'Hedera', logo: '/logos/hedera.svg' },
+  'the-graph': { name: 'The Graph', logo: '/logos/graph.svg' },
+  ledger: { name: 'Local ledger', logo: null },
+  mock: { name: 'Deterministic fake', logo: null },
+  open: { name: 'Offline', logo: null },
+  stub: { name: 'Deterministic fake', logo: null },
 };
 
 /**
- * Renders a provider id for display.
+ * Resolves a provider id to how it should be shown.
  *
  * @param provider Raw id from the health endpoint.
- * @returns A readable name, falling back to the id itself so an unmapped
+ * @returns Its name and mark, falling back to the id itself so an unmapped
  *   provider shows what it is rather than nothing.
  */
-function providerName(provider: string): string {
-  return PROVIDER_NAMES[provider] ?? provider;
+function providerFor(provider: string): { name: string; logo: string | null } {
+  return PROVIDERS[provider] ?? { name: provider, logo: null };
 }
 
 /**
@@ -49,16 +49,25 @@ function providerName(provider: string): string {
  * anything is running on a fake.
  *
  * @param slots Every adapter slot, in the order they should be read.
+ * @param id Stable identifier for the panel, unique on the page.
+ * @remarks The id is passed in rather than generated. This rail is rendered
+ *   twice, once fixed and once inside the mobile drawer, and a generated id
+ *   is allocated by tree position: the two copies arrive in a different order
+ *   on the client than on the server, and the markup fails to hydrate.
  */
-export function AdapterPanel({ slots }: { slots: readonly AdapterSlot[] }) {
+export function AdapterPanel({ slots, id }: { slots: readonly AdapterSlot[]; id: string }) {
   const [open, setOpen] = useState(false);
   const known = slots.filter((slot) => slot.mode !== undefined);
   const faked = known.filter((slot) => !slot.mode?.live).length;
   const allLive = known.length > 0 && faked === 0;
 
   return (
-    <Collapsible.Root open={open} onOpenChange={setOpen} className="border-divider border-t">
-      <Collapsible.Trigger
+    <div className="border-divider border-t">
+      <button
+        type="button"
+        aria-expanded={open}
+        aria-controls={id}
+        onClick={() => setOpen((current) => !current)}
         className={cn(
           'group flex w-full items-center gap-2 px-5 py-3 text-left',
           'transition-colors duration-(--duration-fast) ease-(--ease-brand)',
@@ -105,41 +114,50 @@ export function AdapterPanel({ slots }: { slots: readonly AdapterSlot[] }) {
         <span className="sr-only">
           {open ? 'Hide adapter details' : 'Show which provider serves each adapter'}
         </span>
-      </Collapsible.Trigger>
+      </button>
 
-      <Collapsible.Content className="collapse-panel">
-        <ul className="flex flex-col gap-2.5 px-5 pt-0.5 pb-4">
-          {slots.map(({ key, label, role, mode }) => {
-            // Liveness comes from the API, never inferred from the provider
-            // name: the local ledger fallback is not a live index.
-            const live = mode?.live === true;
-            return (
-              <li key={key} className="flex flex-col gap-0.5">
-                <div className="flex items-baseline justify-between gap-2">
-                  <span className="text-text text-xs font-medium">{label}</span>
-                  <span
-                    className={cn(
-                      'text-2xs shrink-0 font-medium',
-                      live ? 'text-success-ink' : 'text-ash-500',
+      {/* `inert` keeps the collapsed rows out of the tab order and away from a
+          screen reader, which `hidden` would do too but a grid animation
+          cannot use: an element with `display: none` has no height to animate
+          from. */}
+      <div id={id} data-open={open} inert={!open} className="collapse-panel">
+        <div>
+          <ul className="flex flex-col gap-2.5 px-5 pt-0.5 pb-4">
+            {slots.map(({ key, label, role, mode }) => {
+              // Liveness comes from the API, never inferred from the provider
+              // name: the local ledger fallback is not a live index.
+              const live = mode?.live === true;
+              return (
+                <li key={key} className="flex flex-col gap-1">
+                  <div className="flex flex-wrap items-center justify-between gap-1.5">
+                    <span className="text-text text-xs font-medium">{label}</span>
+                    {mode === undefined ? (
+                      <ProviderMark src={null} name="Unknown" className="text-2xs py-0.5" />
+                    ) : (
+                      <ProviderMark
+                        src={providerFor(mode.provider).logo}
+                        name={providerFor(mode.provider).name}
+                        className={cn('text-2xs py-0.5', live ? '' : 'text-ash-500')}
+                      />
                     )}
-                  >
-                    {mode === undefined ? 'Unknown' : providerName(mode.provider)}
-                  </span>
-                </div>
-                <p className="text-text-muted text-2xs leading-relaxed">{role}</p>
-                {mode !== undefined && !live ? (
-                  <p className="text-warning-ink text-2xs">Simulated — not talking to a vendor.</p>
-                ) : null}
-              </li>
-            );
-          })}
-        </ul>
-        {known.length === 0 ? (
-          <p className="text-text-muted text-2xs px-5 pb-4 leading-relaxed">
-            The API could not be reached, so no provider can be confirmed.
-          </p>
-        ) : null}
-      </Collapsible.Content>
-    </Collapsible.Root>
+                  </div>
+                  <p className="text-text-muted text-2xs leading-relaxed">{role}</p>
+                  {mode !== undefined && !live ? (
+                    <p className="text-warning-ink text-2xs">
+                      Simulated — not talking to a vendor.
+                    </p>
+                  ) : null}
+                </li>
+              );
+            })}
+          </ul>
+          {known.length === 0 ? (
+            <p className="text-text-muted text-2xs px-5 pb-4 leading-relaxed">
+              The API could not be reached, so no provider can be confirmed.
+            </p>
+          ) : null}
+        </div>
+      </div>
+    </div>
   );
 }

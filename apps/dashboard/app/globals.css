@@ -265,6 +265,60 @@
   animation: pocket-overlay-pop var(--duration-fast) var(--ease-brand);
 }
 
+/*
+ * Scrollbars, in the theme's own materials.
+ *
+ * A default scrollbar is the one piece of chrome a design cannot reach, and on
+ * a page built from hairlines and flat fills it reads as somebody else's
+ * furniture. Thin track, hairline thumb, and no arrows.
+ */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: var(--color-ash-300) transparent;
+}
+
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background-clip: padding-box;
+  /* The padding is what keeps the thumb clear of the edge instead of welded
+     to it, which is the difference between a bar and a smear. */
+  border: 3px solid transparent;
+  border-radius: 999px;
+  background-color: var(--color-ash-300);
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background-color: var(--color-ash-400);
+}
+
+::-webkit-scrollbar-corner {
+  background: transparent;
+}
+
+/** Entrance for a panel that arrives from the left edge. */
+@keyframes pocket-drawer-in {
+  from {
+    transform: translateX(-100%);
+  }
+  to {
+    transform: none;
+  }
+}
+
+@utility drawer-in {
+  &[data-state='open'] {
+    animation: pocket-drawer-in var(--duration-base) var(--ease-brand);
+  }
+}
+
 /**
  * A column that scrolls without showing it.
  *
@@ -285,41 +339,26 @@
 /**
  * Disclosure open and close.
  *
- * Radix measures the panel and publishes its height as a custom property, so
- * the transition runs on a real pixel value rather than an animation to
- * `auto`, which does not interpolate.
+ * A grid row animated from `0fr` to `1fr`, which interpolates where a height
+ * of `auto` does not. The alternative is measuring the panel and publishing
+ * its height as a custom property, which needs a generated id per instance and
+ * so cannot survive the same subtree being rendered twice.
  */
-@keyframes pocket-collapse-open {
-  from {
-    height: 0;
-    opacity: 0;
-  }
-  to {
-    height: var(--radix-collapsible-content-height);
-    opacity: 1;
-  }
-}
-
-@keyframes pocket-collapse-close {
-  from {
-    height: var(--radix-collapsible-content-height);
-    opacity: 1;
-  }
-  to {
-    height: 0;
-    opacity: 0;
-  }
-}
-
 @utility collapse-panel {
-  overflow: hidden;
+  display: grid;
+  grid-template-rows: 0fr;
+  transition:
+    grid-template-rows var(--duration-base) var(--ease-brand),
+    opacity var(--duration-fast) var(--ease-brand);
+  opacity: 0;
 
-  &[data-state='open'] {
-    animation: pocket-collapse-open var(--duration-base) var(--ease-brand);
+  &[data-open='true'] {
+    grid-template-rows: 1fr;
+    opacity: 1;
   }
 
-  &[data-state='closed'] {
-    animation: pocket-collapse-close var(--duration-fast) var(--ease-brand);
+  & > * {
+    overflow: hidden;
   }
 }
 
