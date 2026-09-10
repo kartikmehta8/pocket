@@ -10,7 +10,7 @@ import {
   ShoppingBag,
   Sparkles,
 } from 'lucide-react';
-import { motion } from 'motion/react';
+import { motion, useReducedMotion } from 'motion/react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 
@@ -51,17 +51,25 @@ function isActive(pathname: string, href: string): boolean {
 /**
  * Primary navigation.
  *
- * The active item is marked by a filled surface, an `aria-current`
- * announcement, and a shared layout element that slides between items — never
- * by colour alone.
+ * The active item is marked three ways that do not depend on each other: an
+ * `aria-current` announcement, a weight and colour change, and a rail down its
+ * leading edge. Never colour alone.
+ *
+ * @remarks The rail is a single shared element that slides between items
+ * rather than one per link fading in and out, so the eye follows where it went
+ * instead of finding it somewhere new. Inside a surface the marker is a tinted
+ * fill and a rule, not the black hairline the theme uses around cards — a
+ * hard outline on every nav item competes with the content it frames.
  */
 export function Nav() {
   const pathname = usePathname();
+  const reduced = useReducedMotion();
+
   return (
-    <nav aria-label="Primary" className="flex flex-col gap-4 px-3">
+    <nav aria-label="Primary" className="flex flex-col gap-5 px-3">
       {SECTIONS.map((section) => (
-        <div key={section.label} className="flex flex-col gap-0.5">
-          <p className="eyebrow px-2.5 pb-1">{section.label}</p>
+        <div key={section.label} className="flex flex-col gap-px">
+          <p className="eyebrow px-3 pb-1.5">{section.label}</p>
           {section.links.map(({ href, label, icon: Icon }) => {
             const active = isActive(pathname, href);
             return (
@@ -70,28 +78,38 @@ export function Nav() {
                 href={href}
                 aria-current={active ? 'page' : undefined}
                 className={cn(
-                  'relative flex items-center gap-2.5 rounded-md px-2.5 py-1.5 text-sm font-medium',
+                  'group relative flex items-center gap-2.5 rounded-lg py-2 pr-2.5 pl-3 text-sm',
                   'transition-colors duration-(--duration-fast) ease-(--ease-brand)',
-                  active ? 'text-text' : 'text-text-secondary hover:bg-ash-100 hover:text-text',
+                  'focus-visible:ring-accent-300 focus-visible:ring-2 focus-visible:outline-none',
+                  active
+                    ? 'text-accent-700 font-semibold'
+                    : 'text-text-secondary hover:bg-ash-50 hover:text-text font-medium',
                 )}
               >
                 {active ? (
                   <motion.span
                     aria-hidden
                     layoutId="nav-active"
-                    transition={{ type: 'spring', stiffness: 460, damping: 38 }}
-                    className="bg-accent-100 ring-border absolute inset-0 rounded-md ring-1 ring-inset"
-                  />
+                    transition={
+                      reduced
+                        ? { duration: 0 }
+                        : { type: 'spring', stiffness: 520, damping: 42, mass: 0.7 }
+                    }
+                    className="bg-accent-50 absolute inset-0 rounded-lg"
+                  >
+                    <span className="bg-accent-500 absolute top-1.5 bottom-1.5 left-0 w-[3px] rounded-full" />
+                  </motion.span>
                 ) : null}
+
                 <Icon
                   aria-hidden
                   className={cn(
                     'relative size-4 shrink-0 transition-colors duration-(--duration-fast)',
-                    active ? 'text-accent-600' : 'text-ash-500',
+                    active ? 'text-accent-600' : 'text-ash-400 group-hover:text-ash-600',
                   )}
-                  strokeWidth={1.75}
+                  strokeWidth={active ? 2 : 1.75}
                 />
-                <span className="relative">{label}</span>
+                <span className="relative truncate">{label}</span>
               </Link>
             );
           })}

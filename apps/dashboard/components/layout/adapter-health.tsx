@@ -1,70 +1,48 @@
-import { CircleDot, CircleDashed } from 'lucide-react';
-
 import { getHealth } from '@/lib/api';
-import { cn } from '@/lib/cn';
-import { Hint } from '@/components/ui/tooltip';
+import { AdapterPanel, type AdapterSlot } from './adapter-panel';
 
-/** Adapter slots reported by `GET /v1/health`, with what each one governs. */
+/**
+ * The five ports, and what the thing plugged into each one is responsible for.
+ *
+ * One line each, ordered by how much a reader cares if it is wrong: custody
+ * first, then settlement, then everything that only shapes what is displayed.
+ * Nothing here explains the fallbacks — a reader looking at a live system does
+ * not need to hear about the offline one.
+ */
 const SLOTS = [
-  { key: 'wallet', hint: 'Who custodies agent wallets and signs their transactions.' },
-  { key: 'chain', hint: 'Where balances are read and settlement receipts are confirmed.' },
   {
-    key: 'analytics',
-    hint: 'Where spend history is indexed. The ledger fallback reads the local database instead.',
+    key: 'wallet',
+    label: 'Wallet',
+    role: 'Custodies every agent wallet and signs its payments. No private key reaches Pocket.',
   },
+  { key: 'chain', label: 'Chain', role: 'Where payments settle and receipts are confirmed.' },
+  { key: 'analytics', label: 'Analytics', role: 'Indexes spend history behind the charts.' },
   {
     key: 'market',
-    hint: 'Live token pricing. Without it a policy that sets a USD ceiling denies rather than guesses.',
+    label: 'Market data',
+    role: 'Live token prices, so a policy can cap spend in dollars.',
   },
-  {
-    key: 'identity',
-    hint: 'Who verifies dashboard sign-ins. Offline mode accepts any token and is for local use only.',
-  },
+  { key: 'identity', label: 'Identity', role: 'Verifies who signs in to this dashboard.' },
 ] as const;
 
 /**
- * Sidebar footer showing which adapters are live and which are mocked.
- * Renders an "unknown" row rather than throwing when the API is unreachable.
+ * Sidebar footer: which provider is serving each adapter, and whether it is live.
+ *
+ * Fetches on the server and hands the result to a client disclosure, so the
+ * health call stays out of the browser bundle while the panel can still open
+ * and close. An unreachable API renders as `Unknown` rather than throwing —
+ * the rail must not take the page down with it.
  */
 export async function AdapterHealth() {
   const result = await getHealth();
   const adapters = result.ok ? result.data.adapters : null;
 
-  return (
-    <div className="border-divider border-t px-5 py-4">
-      <p className="eyebrow mb-2">Adapters</p>
-      <ul className="flex flex-col gap-1.5">
-        {SLOTS.map(({ key, hint }) => {
-          const mode = adapters?.[key];
-          // Liveness comes from the API, never inferred from the provider name:
-          // the `ledger` analytics fallback is not a live index.
-          const live = mode?.live === true;
-          const Icon = live ? CircleDot : CircleDashed;
-          return (
-            <li key={key} className="flex items-center justify-between gap-2 text-xs">
-              <Hint label={hint} side="right">
-                <span className="text-text-secondary cursor-help capitalize underline decoration-dotted underline-offset-2">
-                  {key}
-                </span>
-              </Hint>
-              <span
-                className={cn(
-                  'text-2xs inline-flex items-center gap-1 rounded-full px-1.5 py-0.5 font-medium ring-1 ring-inset',
-                  live
-                    ? 'bg-success-soft text-success-ink ring-success-line'
-                    : 'bg-ash-50 text-ash-600 ring-ash-200',
-                )}
-              >
-                <Icon aria-hidden className="size-2.5" strokeWidth={2.5} />
-                {mode === undefined ? 'Unknown' : live ? 'Live' : mode.provider}
-              </span>
-            </li>
-          );
-        })}
-      </ul>
-      {adapters ? null : (
-        <p className="text-2xs text-text-muted mt-2">API unreachable. Showing last known slots.</p>
-      )}
-    </div>
-  );
+  const slots: AdapterSlot[] = SLOTS.map(({ key, label, role }) => ({
+    key,
+    label,
+    role,
+    mode: adapters?.[key],
+  }));
+
+  return <AdapterPanel slots={slots} />;
 }

@@ -266,6 +266,64 @@
 }
 
 /**
+ * A column that scrolls without showing it.
+ *
+ * For chrome that is always present, such as the left rail: a scrollbar
+ * appearing and vanishing as a panel opens draws the eye to the furniture
+ * rather than the content. Wheel, touch, and keyboard scrolling are untouched,
+ * so nothing becomes unreachable.
+ */
+@utility no-scrollbar {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+
+  &::-webkit-scrollbar {
+    display: none;
+  }
+}
+
+/**
+ * Disclosure open and close.
+ *
+ * Radix measures the panel and publishes its height as a custom property, so
+ * the transition runs on a real pixel value rather than an animation to
+ * `auto`, which does not interpolate.
+ */
+@keyframes pocket-collapse-open {
+  from {
+    height: 0;
+    opacity: 0;
+  }
+  to {
+    height: var(--radix-collapsible-content-height);
+    opacity: 1;
+  }
+}
+
+@keyframes pocket-collapse-close {
+  from {
+    height: var(--radix-collapsible-content-height);
+    opacity: 1;
+  }
+  to {
+    height: 0;
+    opacity: 0;
+  }
+}
+
+@utility collapse-panel {
+  overflow: hidden;
+
+  &[data-state='open'] {
+    animation: pocket-collapse-open var(--duration-base) var(--ease-brand);
+  }
+
+  &[data-state='closed'] {
+    animation: pocket-collapse-close var(--duration-fast) var(--ease-brand);
+  }
+}
+
+/**
  * Fine dot lattice for the landing hero.
  *
  * A flat texture rather than a blurred gradient: the theme is built on crisp
