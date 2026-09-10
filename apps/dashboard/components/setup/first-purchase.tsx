@@ -1,13 +1,20 @@
 import Link from 'next/link';
 
+import { Check } from 'lucide-react';
+
+import { Button } from '@/components/ui/button';
 import { CodeBlock } from '@/components/ui/code-block';
 
 /** Props for {@link FirstPurchase}. */
 export interface FirstPurchaseProps {
   /** The agent to name in the prompt, or `null` before one exists. */
   agentId: string | null;
-  /** Base URL of the example paid resource. */
-  resource: string;
+  /** Base URL of the example paid resource, or `null` when none is deployed. */
+  resource: string | null;
+  /** Whether the operator has already confirmed the purchase. */
+  done: boolean;
+  /** Called when they confirm it. */
+  onDone: () => void;
 }
 
 /**
@@ -17,16 +24,36 @@ export interface FirstPurchaseProps {
  * agents attached has no way to guess which wallet a request should spend
  * from, and picking one for the operator is exactly the decision Pocket exists
  * to keep out of the model's hands.
+ *
+ * Confirmed rather than verified. Reading a settlement back looked rigorous
+ * and behaved badly: a purchase made from another agent, or before this run,
+ * or beyond the window this page reads, all left a finished setup insisting it
+ * was unfinished. The ledger is the record — this is a walkthrough.
  */
-export function FirstPurchase({ agentId, resource }: FirstPurchaseProps) {
+export function FirstPurchase({ agentId, resource, done, onDone }: FirstPurchaseProps) {
+  const naming = agentId === null ? '' : ` using agent ${agentId}`;
   const prompt =
-    agentId === null
-      ? `Get current token prices from ${resource}/v1/market/prices, then tell me which asset moved most in the last 24 hours.`
-      : `Get current token prices from ${resource}/v1/market/prices using agent ${agentId}, then tell me which asset moved most in the last 24 hours.`;
+    resource === null
+      ? null
+      : `Get current token prices from ${resource}/v1/market/prices${naming}, then tell me which asset moved most in the last 24 hours.`;
 
   return (
     <>
-      <CodeBlock wrap code={prompt} label="Example prompt" caption="Ask your agent" />
+      {prompt === null ? (
+        <p className="text-text-secondary text-sm leading-relaxed">
+          No example resource is deployed for this environment, so there is no prompt to copy. Point
+          your agent at any paid endpoint that answers 402 and the flow below is the same.
+        </p>
+      ) : (
+        <CodeBlock wrap code={prompt} label="Example prompt" caption="Ask your agent" />
+      )}
+
+      {agentId === null ? (
+        <p className="text-text-muted text-xs leading-relaxed">
+          Register an agent in step one and this prompt will name it. Without a name a runtime
+          holding several agents has no way to know which wallet to spend from.
+        </p>
+      ) : null}
 
       <div className="border-divider grid gap-3 rounded-md border p-3 sm:grid-cols-3">
         {[
@@ -50,13 +77,30 @@ export function FirstPurchase({ agentId, resource }: FirstPurchaseProps) {
         ))}
       </div>
 
+      {done ? null : (
+        <div className="flex flex-wrap items-center gap-2">
+          <Button variant="primary" icon={Check} onClick={onDone}>
+            I have done this
+          </Button>
+          <span className="text-text-muted text-xs">
+            Finishes the guide. The payment itself is on Payments either way.
+          </span>
+        </div>
+      )}
+
       <p className="text-text-muted text-xs leading-relaxed">
         Every attempt lands on{' '}
-        <Link href="/payments" className="text-accent-600 hover:underline">
+        <Link
+          href="/payments"
+          className="text-accent-600 decoration-accent-300 hover:decoration-accent-600 underline underline-offset-2"
+        >
           Payments
         </Link>{' '}
         and{' '}
-        <Link href="/audit" className="text-accent-600 hover:underline">
+        <Link
+          href="/audit"
+          className="text-accent-600 decoration-accent-300 hover:decoration-accent-600 underline underline-offset-2"
+        >
           Audit
         </Link>
         , including the ones policy refused. A blocked payment is a row with a reason, not a

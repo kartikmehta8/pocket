@@ -1,3 +1,5 @@
+'use client';
+
 import { Bot, Coins, Gauge, KeyRound, PlugZap, ShieldHalf, ShoppingCart } from 'lucide-react';
 
 import type { AgentDetail, AgentSummary } from '@/lib/types';
@@ -23,12 +25,16 @@ export interface SetupStepsProps {
   liveKeys: number;
   /** Where an agent runtime connects. */
   mcpUrl: string;
-  /** Base URL of the example paid resource. */
-  resource: string;
+  /** Base URL of the example paid resource, or `null` when none is deployed. */
+  resource: string | null;
   /** Resolves one step's state from the run as a whole. */
   stateOf: (position: number) => StepState;
   /** How many steps there are. */
   total: number;
+  /** Called when the operator confirms the runtime is attached. */
+  onConnected: () => void;
+  /** Called when they confirm the first purchase. */
+  onPurchased: () => void;
 }
 
 /**
@@ -46,7 +52,17 @@ export function SetupSteps({
   resource,
   stateOf,
   total,
+  onConnected,
+  onPurchased,
 }: SetupStepsProps) {
+  // Resolved once each: these five drive both the marker and the body, and
+  // asking twice invites the two answers to drift apart.
+  const fund = stateOf(1);
+  const budget = stateOf(2);
+  const policy = stateOf(3);
+  const connect = stateOf(5);
+  const purchase = stateOf(6);
+
   return (
     <ol className="flex flex-col">
       <Step
@@ -74,13 +90,13 @@ export function SetupSteps({
         icon={Coins}
         title="Fund its wallet with USDC"
         summary="The only funding step. An agent needs the asset it spends and nothing else."
-        state={stateOf(1)}
+        state={fund}
       >
         <FundStep
           address={agent?.wallet?.address ?? null}
           accountId={detail?.accountId ?? null}
           balance={detail?.balance?.amount ?? null}
-          funded={stateOf(1) === 'done'}
+          funded={fund === 'done'}
         />
       </Step>
 
@@ -90,9 +106,14 @@ export function SetupSteps({
         icon={Gauge}
         title="Set a daily budget"
         summary="A daily ceiling and a per-transaction ceiling. This is how much, not what for."
-        state={stateOf(2)}
+        state={budget}
       >
-        <ConfigureStep agentId={agent?.id ?? null} agentName={agent?.name ?? null} kind="budget" />
+        <ConfigureStep
+          agentId={agent?.id ?? null}
+          agentName={agent?.name ?? null}
+          kind="budget"
+          done={budget === 'done'}
+        />
       </Step>
 
       <Step
@@ -101,9 +122,14 @@ export function SetupSteps({
         icon={ShieldHalf}
         title="Write a spending policy"
         summary="What it may buy, in which asset, from whom. Without one the agent is refused even with money in the wallet."
-        state={stateOf(3)}
+        state={policy}
       >
-        <ConfigureStep agentId={agent?.id ?? null} agentName={agent?.name ?? null} kind="policy" />
+        <ConfigureStep
+          agentId={agent?.id ?? null}
+          agentName={agent?.name ?? null}
+          kind="policy"
+          done={policy === 'done'}
+        />
       </Step>
 
       <Step
@@ -130,9 +156,9 @@ export function SetupSteps({
         icon={PlugZap}
         title="Connect your agent runtime"
         summary="One command. Eight tools reach your agent: one that can spend, and seven so it does not have to guess."
-        state={stateOf(5)}
+        state={connect}
       >
-        <HermesConnect url={mcpUrl} />
+        <HermesConnect url={mcpUrl} done={connect === 'done'} onDone={onConnected} />
       </Step>
 
       <Step
@@ -141,10 +167,15 @@ export function SetupSteps({
         icon={ShoppingCart}
         title="Make the first purchase"
         summary="Ask for something behind a paywall. Pocket decides before anything is signed."
-        state={stateOf(6)}
+        state={purchase}
         last
       >
-        <FirstPurchase agentId={agent?.id ?? null} resource={resource} />
+        <FirstPurchase
+          agentId={agent?.id ?? null}
+          resource={resource}
+          done={purchase === 'done'}
+          onDone={onPurchased}
+        />
       </Step>
     </ol>
   );

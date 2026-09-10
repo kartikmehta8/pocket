@@ -1,9 +1,11 @@
 'use client';
 
 import * as ToggleGroup from '@radix-ui/react-toggle-group';
+import { Check } from 'lucide-react';
 import { useId, useState } from 'react';
 
 import { cn } from '@/lib/cn';
+import { Button } from '@/components/ui/button';
 import { CodeBlock } from '@/components/ui/code-block';
 import { Field, Input } from '@/components/ui/field';
 
@@ -52,6 +54,16 @@ function recipe(client: Client, url: string, apiKey: string): { caption: string;
   }
 }
 
+/** Props for {@link HermesConnect}. */
+export interface HermesConnectProps {
+  /** The MCP endpoint this organization should connect to. */
+  url: string;
+  /** Whether the operator has already confirmed the runtime is attached. */
+  done: boolean;
+  /** Called when they confirm it. */
+  onDone: () => void;
+}
+
 /**
  * Connection recipes for the MCP server, one tab per runtime.
  *
@@ -61,9 +73,13 @@ function recipe(client: Client, url: string, apiKey: string): { caption: string;
  * header rather than in the conversation, so the model still never sees it and
  * cannot leak it in a completion.
  *
- * @param url The MCP endpoint this organization should connect to.
+ * Whether the command was actually run happens in somebody's terminal, which
+ * Pocket cannot see, so this step is confirmed rather than verified. Guessing
+ * from payment records only ever produced false negatives.
+ *
+ * @param props The MCP endpoint, and whether the step is behind us.
  */
-export function HermesConnect({ url }: { url: string }) {
+export function HermesConnect({ url, done, onDone }: HermesConnectProps) {
   const [client, setClient] = useState<Client>('Claude Code');
   const [apiKey, setApiKey] = useState('');
   const keyId = useId();
@@ -117,6 +133,17 @@ export function HermesConnect({ url }: { url: string }) {
       </Field>
 
       <CodeBlock code={code} label={`${client} MCP configuration`} caption={caption} />
+
+      {done ? null : (
+        <div className="flex flex-wrap items-center gap-2">
+          <Button variant="secondary" icon={Check} onClick={onDone}>
+            I have done this
+          </Button>
+          <span className="text-text-muted text-xs">
+            Run it in your terminal, then mark the step done.
+          </span>
+        </div>
+      )}
     </div>
   );
 }

@@ -18,7 +18,13 @@ export interface ServiceUrls {
   mcp: string;
   /** Base URL of the Pocket API. */
   api: string;
-  /** The example paid resource, when one is deployed. */
+  /**
+   * The example paid resource, when one is deployed.
+   *
+   * @remarks `null` rather than a guess. The setup guide puts this address
+   * into a prompt with a copy button, and a plausible-looking default would
+   * hand an operator an instruction that cannot work.
+   */
   paidService: string | null;
   /** The documentation site. */
   docs: string;
