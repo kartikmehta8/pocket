@@ -8,6 +8,13 @@ name: Deploy
 # Runs only after CI has gone green on main. `push` would deploy commits whose
 # lint, typecheck and test jobs are still running or have already failed, so the
 # trigger is CI's completion rather than the push itself.
+#
+# Only what changed is rebuilt. Each service is diffed against the last commit
+# this workflow released, through the workspace packages it depends on, and an
+# unchanged service has its previous image retagged to the new commit instead
+# of being built again. The host then sees a full image set under one tag,
+# pulls nothing new for the retagged ones, and leaves those containers running.
+# A push that touches nothing the backend depends on builds and deploys nothing.
 on:
   workflow_run:
     workflows: [CI]
@@ -23,6 +30,8 @@ on:
 permissions:
   contents: read
   packages: write
+  # To find the last successful release, which is what the diff is taken from.
+  actions: read
 
 # One deploy at a time, and never cancel one midway: an interrupted run can
 # leave migrations applied with the old images still serving.
@@ -34,13 +43,110 @@ env:
   REGISTRY: ghcr.io
 
 jobs:
-  images:
-    name: Build and push ${{ matrix.service }}
+  changes:
+    name: What changed since the last release
     # A CI run that failed, was cancelled, or came from a pull request must not
     # reach the registry. workflow_dispatch carries no workflow_run payload.
     if: >-
       github.event_name == 'workflow_dispatch' ||
       github.event.workflow_run.conclusion == 'success'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    outputs:
+      sha: ${{ steps.diff.outputs.sha }}
+      base: ${{ steps.diff.outputs.base }}
+      api: ${{ steps.diff.outputs.api }}
+      mcp: ${{ steps.diff.outputs.mcp }}
+      paid-service: ${{ steps.diff.outputs.paid-service }}
+      migrate: ${{ steps.diff.outputs.migrate }}
+      # Whether the host needs a release at all.
+      deploy: ${{ steps.diff.outputs.deploy }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          # workflow_run checks out the default branch by default, which may
+          # already be ahead of the commit CI actually validated.
+          ref: >-
+            ${{ github.event_name == 'workflow_dispatch'
+                && inputs.ref
+                || github.event.workflow_run.head_sha }}
+          # The diff needs the previous release's commit, not just the tip.
+          fetch-depth: 0
+
+      - name: Diff against the last release
+        id: diff
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          sha="$(git rev-parse HEAD)"
+          echo "sha=$sha" >> "$GITHUB_OUTPUT"
+
+          all() {
+            for service in api mcp paid-service migrate; do
+              echo "$service=true" >> "$GITHUB_OUTPUT"
+            done
+            echo "deploy=true" >> "$GITHUB_OUTPUT"
+            echo "base=" >> "$GITHUB_OUTPUT"
+          }
+
+          # A manual run is a full build: it may be a rollback to a commit whose
+          # images have since been pruned, and there is no last release it can
+          # honestly be diffed against.
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            echo "Manual run: building everything."
+            all
+            exit 0
+          fi
+
+          # The last run of this workflow that finished green on main. Every
+          # such run leaves a complete image set tagged with its commit, either
+          # built or retagged, so it is safe to retag from.
+          base="$(gh api \
+            "repos/${{ github.repository }}/actions/workflows/deploy.yml/runs?branch=main&event=workflow_run&status=success&per_page=1" \
+            --jq '.workflow_runs[0].head_sha // empty')"
+          if [ -z "$base" ] || ! git cat-file -e "$base^{commit}" 2>/dev/null; then
+            echo "No previous release to diff against: building everything."
+            all
+            exit 0
+          fi
+          echo "base=$base" >> "$GITHUB_OUTPUT"
+          echo "Diffing $base..$sha"
+
+          changed="$(git diff --name-only "$base" "$sha")"
+          printf '%s\n' "$changed"
+
+          touched() { printf '%s\n' "$changed" | grep -qE "$1"; }
+
+          # What every image is built from. A change here rebuilds all four.
+          shared='^(Dockerfile|\.dockerignore|package\.json|pnpm-lock\.yaml|pnpm-workspace\.yaml|tsconfig\.base\.json)$|^packages/core/'
+
+          # One line per service: its own source, plus the workspace packages
+          # it depends on. Mirrors the dependencies in each app's package.json;
+          # a new @pocket/* dependency belongs here too.
+          api=false;          touched "$shared|^apps/api/|^packages/(db|adapters)/" && api=true
+          mcp=false;          touched "$shared|^apps/mcp/"                          && mcp=true
+          paid=false;         touched "$shared|^apps/paid-service/|^packages/adapters/" && paid=true
+          migrate=false;      touched "$shared|^packages/db/"                       && migrate=true
+
+          # The stack itself. A compose change reaches the host without any
+          # image being rebuilt.
+          deploy=false
+          if [ "$api" = true ] || [ "$mcp" = true ] || [ "$paid" = true ] || [ "$migrate" = true ] \
+             || touched '^docker-compose\.prod\.yml$|^\.github/workflows/deploy\.yml$'; then
+            deploy=true
+          fi
+
+          {
+            echo "api=$api"
+            echo "mcp=$mcp"
+            echo "paid-service=$paid"
+            echo "migrate=$migrate"
+            echo "deploy=$deploy"
+          } | tee -a "$GITHUB_OUTPUT"
+
+  images:
+    name: ${{ needs.changes.outputs[matrix.service] == 'true' && 'Build and push' || 'Retag' }} ${{ matrix.service }}
+    needs: changes
     runs-on: ubuntu-latest
     timeout-minutes: 30
     strategy:
@@ -49,11 +155,9 @@ jobs:
       # workspace package they start, and the migration runner is a stage that
       # forks off the build before the server image is assembled.
       #
-      # All four are rebuilt on every release rather than filtered by path.
-      # Every one of them depends on packages/core, packages/db and
-      # packages/adapters, so almost any change rebuilds almost everything, and
-      # a filter that gets it wrong ships a stale image against a new schema.
-      # The layer cache makes an unchanged service cheap anyway.
+      # A service the diff did not touch is not rebuilt: its image from the
+      # last release is retagged with this commit, so the host always finds a
+      # complete set under one tag and the pull for that service is a no-op.
       matrix:
         include:
           - service: api
@@ -70,13 +174,9 @@ jobs:
             app: api
     steps:
       - uses: actions/checkout@v4
+        if: needs.changes.outputs[matrix.service] == 'true'
         with:
-          # workflow_run checks out the default branch by default, which may
-          # already be ahead of the commit CI actually validated.
-          ref: >-
-            ${{ github.event_name == 'workflow_dispatch'
-                && inputs.ref
-                || github.event.workflow_run.head_sha }}
+          ref: ${{ needs.changes.outputs.sha }}
 
       - uses: docker/setup-buildx-action@v3
 
@@ -94,16 +194,8 @@ jobs:
           owner="$(echo "${{ github.repository_owner }}" | tr '[:upper:]' '[:lower:]')"
           echo "name=${{ env.REGISTRY }}/${owner}/pocket-${{ matrix.service }}" >> "$GITHUB_OUTPUT"
 
-      - name: Resolve the release tag
-        id: release
-        run: |
-          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
-            echo "sha=$(git rev-parse HEAD)" >> "$GITHUB_OUTPUT"
-          else
-            echo "sha=${{ github.event.workflow_run.head_sha }}" >> "$GITHUB_OUTPUT"
-          fi
-
       - name: Build and push
+        if: needs.changes.outputs[matrix.service] == 'true'
         uses: docker/build-push-action@v6
         with:
           context: .
@@ -115,34 +207,35 @@ jobs:
           # The commit tag is what the deploy pins to, so a rollback is a tag
           # change rather than a rebuild. `latest` is a convenience pointer only.
           tags: |
-            ${{ steps.image.outputs.name }}:${{ steps.release.outputs.sha }}
+            ${{ steps.image.outputs.name }}:${{ needs.changes.outputs.sha }}
             ${{ steps.image.outputs.name }}:latest
           cache-from: type=gha,scope=pocket-${{ matrix.service }}
           cache-to: type=gha,mode=max,scope=pocket-${{ matrix.service }}
           provenance: false
 
+      # A manifest-only operation in the registry: nothing is pulled or pushed,
+      # the previous release's image simply gains this commit's tag.
+      - name: Retag the previous release
+        if: needs.changes.outputs[matrix.service] != 'true'
+        run: |
+          docker buildx imagetools create \
+            --tag "${{ steps.image.outputs.name }}:${{ needs.changes.outputs.sha }}" \
+            --tag "${{ steps.image.outputs.name }}:latest" \
+            "${{ steps.image.outputs.name }}:${{ needs.changes.outputs.base }}"
+
   deploy:
     name: Release to the host
-    needs: images
+    needs: [changes, images]
+    # Nothing the backend runs from changed, so the host is left alone. The
+    # images job still ran, so this commit has a full tag set to diff from.
+    if: needs.changes.outputs.deploy == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 20
     environment: production
     steps:
       - uses: actions/checkout@v4
         with:
-          ref: >-
-            ${{ github.event_name == 'workflow_dispatch'
-                && inputs.ref
-                || github.event.workflow_run.head_sha }}
-
-      - name: Resolve the release tag
-        id: release
-        run: |
-          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
-            echo "sha=$(git rev-parse HEAD)" >> "$GITHUB_OUTPUT"
-          else
-            echo "sha=${{ github.event.workflow_run.head_sha }}" >> "$GITHUB_OUTPUT"
-          fi
+          ref: ${{ needs.changes.outputs.sha }}
 
       # A pinned host key rather than StrictHostKeyChecking=no: without it the
       # first connection of every run trusts whatever answers on that address.
@@ -181,7 +274,7 @@ jobs:
 
           owner="\$(echo "${{ github.repository_owner }}" | tr '[:upper:]' '[:lower:]')"
           export REGISTRY="ghcr.io/\${owner}"
-          export IMAGE_TAG="${{ steps.release.outputs.sha }}"
+          export IMAGE_TAG="${{ needs.changes.outputs.sha }}"
 
           # A private docker config for this deploy only. The host is shared
           # with other stacks running as the same user, so logging in and out
@@ -208,15 +301,21 @@ jobs:
 
           # Out of band and before the new images serve. This means the OLD code
           # briefly runs against the NEW schema, so a migration has to stay
-          # backward compatible for one release.
+          # backward compatible for one release. Skipped when nothing under
+          # packages/db changed since the last release: there is nothing to
+          # apply, and a schema tool has no business running for nothing.
           # -T and </dev/null: this container must never hold stdin open.
-          compose --profile migrate run --rm -T pocket-migrate < /dev/null
+          if [ "${{ needs.changes.outputs.migrate }}" = "true" ]; then
+            compose --profile migrate run --rm -T pocket-migrate < /dev/null
+          else
+            echo "Schema unchanged since the last release; skipping migration."
+          fi
 
           # --remove-orphans is scoped to this compose project (name: pocket),
           # so it cannot touch the other stacks sharing this host.
           compose up -d --wait --wait-timeout 240 --remove-orphans
 
-          echo "${{ steps.release.outputs.sha }}" > .deployed-tag
+          echo "${{ needs.changes.outputs.sha }}" > .deployed-tag
 
           # Dangling images only — never -a, which would evict images the
           # host's other stacks still depend on.
@@ -243,7 +342,7 @@ jobs:
           ssh -i ~/.ssh/id_deploy -p "$PORT" \
             "${{ secrets.DEPLOY_USER }}@${{ secrets.DEPLOY_HOST }}" \
             "cd '${{ secrets.DEPLOY_PATH }}' && \
-             test \"\$(cat .deployed-tag)\" = '${{ steps.release.outputs.sha }}' && \
+             test \"\$(cat .deployed-tag)\" = '${{ needs.changes.outputs.sha }}' && \
              docker compose -f docker-compose.yml --env-file .env exec -T pocket-api \
                node -e \"fetch('http://127.0.0.1:8080/v1/health').then(r=>r.json()).then(d=>{console.log(JSON.stringify(d.adapters));process.exit(d.ok?0:1)})\""
 
