@@ -9,8 +9,7 @@
  * submit. Pocket never broadcasts and never holds a key.
  */
 
-import { assetForTokenId, createPrivyHederaSigner, PrivyWalletProvider } from '@pocket/adapters';
-import { recordSettlement } from './x402-settle.js';
+import { assetForTokenId, PrivyWalletProvider } from '@pocket/adapters';
 import {
   PocketError,
   newId,
@@ -32,6 +31,7 @@ import { decisionToJson } from '../serialize.js';
 import { keyToRetain, statusFor } from './x402-record.js';
 import { decide, loadAuthorizationContext } from './authorization.js';
 import { buildX402Request } from './x402-request.js';
+import { signAuthorizedPayment } from './x402-sign.js';
 import { priceIfRequired } from './pricing.js';
 import { type X402PaymentPayload, type X402Requirements } from './x402-types.js';
 
@@ -177,30 +177,7 @@ export async function authorizeX402Payment(
   // budget. Signing can still fail — an account the wallet cannot sign for, a
   // mirror node that is down, Privy refusing — and a reservation that outlives
   // the attempt would consume budget for a payment that never existed.
-  let transaction: string;
-  try {
-    const signer = await createPrivyHederaSigner({
-      signDigest: (walletId, digest) => deps.wallet.signDigest(walletId, digest),
-      walletId: wallet.providerWalletId,
-      evmAddress: wallet.address,
-      network: input.requirements.network,
-      mirrorNodeUrl: deps.mirrorNodeUrl,
-    });
-
-    transaction = await signer.createPartiallySignedTransferTransaction({
-      network: input.requirements.network,
-      amount: input.requirements.amount,
-      payTo: input.requirements.payTo,
-      asset: input.requirements.asset,
-      extra: input.requirements.extra ?? undefined,
-    });
-  } catch (cause) {
-    await recordSettlement(deps.db, orgId, payment.id, {
-      success: false,
-      reason: `The payment could not be signed: ${String(cause)}`,
-    });
-    throw cause;
-  }
+  const transaction = await signAuthorizedPayment(deps, orgId, payment, wallet, input.requirements);
 
   return {
     payment,

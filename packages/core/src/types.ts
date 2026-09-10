@@ -78,6 +78,13 @@ export interface Wallet {
   provider: string;
   providerWalletId: string;
   address: string;
+  /**
+   * Compressed secp256k1 public key, `0x`-prefixed.
+   *
+   * `null` for wallets provisioned before it was captured. Those derive it on
+   * demand and are filled in the first time they pay.
+   */
+  publicKey: string | null;
   chain: string;
   createdAt: Date;
 }

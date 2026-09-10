@@ -18,8 +18,9 @@ import {
   type WalletProvider,
   type ChainId,
 } from '@pocket/core';
-import { chainConfig } from './chains.js';
 import { createWalletPolicy } from './privy-policy.js';
+import { publicKeyForWallet } from './secp256k1-key.js';
+import { provisionPrivyWallet, sendPrivyTransaction } from './privy-provision.js';
 import { buildAssociateTransaction, buildTransferTransaction } from './privy-transactions.js';
 
 /** Options for {@link PrivyWalletProvider}. */
@@ -93,20 +94,27 @@ export class PrivyWalletProvider implements WalletProvider {
     chain: ChainId;
   }): Promise<ProvisionedWallet> {
     const policyId = await this.#ensurePolicy();
-    try {
-      const wallet = await this.#privy.walletApi.createWallet({
-        chainType: 'ethereum',
-        ...(policyId === null ? {} : { policyIds: [policyId] }),
-      });
-      return { providerWalletId: wallet.id, address: wallet.address };
-    } catch (cause) {
-      throw new PocketError(
-        'UPSTREAM_UNAVAILABLE',
-        'Privy could not provision a wallet.',
-        { agentId: input.agentId },
-        cause,
-      );
-    }
+    const wallet = await provisionPrivyWallet(this.#privy, { policyId, agentId: input.agentId });
+    const publicKey = await this.publicKeyFor({
+      providerWalletId: wallet.id,
+      address: wallet.address,
+    });
+    return { providerWalletId: wallet.id, address: wallet.address, publicKey };
+  }
+
+  /**
+   * Reveals the wallet's compressed public key.
+   *
+   * @param input - Provider wallet id and the address it must hash to.
+   * @returns The `0x`-prefixed 33-byte compressed public key.
+   * @throws {PocketError} `PAYMENT_FAILED` when Privy will not sign, or
+   *   `VALIDATION_FAILED` when the signature recovers to a different address.
+   */
+  public publicKeyFor(input: { providerWalletId: string; address: string }): Promise<string> {
+    return publicKeyForWallet(
+      (digest) => this.signDigest(input.providerWalletId, digest),
+      input.address,
+    );
   }
 
   /**
@@ -147,22 +155,11 @@ export class PrivyWalletProvider implements WalletProvider {
   public async associateToken(input: AssociateTokenInput): Promise<SubmittedTransaction | null> {
     const built = buildAssociateTransaction(input);
     if (built === null) return null;
-    try {
-      const result = await this.#privy.walletApi.ethereum.sendTransaction({
-        walletId: input.providerWalletId,
-        caip2: chainConfig(input.chain).caip2,
-        idempotencyKey: input.idempotencyKey,
-        transaction: built,
-      });
-      return { txHash: result.hash };
-    } catch (cause) {
-      throw new PocketError(
-        'PAYMENT_FAILED',
-        'Privy rejected the token association.',
-        { chain: input.chain, asset: input.asset },
-        cause,
-      );
-    }
+    return await sendPrivyTransaction(this.#privy, {
+      ...input,
+      transaction: built,
+      refusal: 'Privy rejected the token association.',
+    });
   }
 
   /**
@@ -175,24 +172,10 @@ export class PrivyWalletProvider implements WalletProvider {
    *   transaction, including when its own policy denies it.
    */
   public async sendPayment(input: SendPaymentInput): Promise<SubmittedTransaction> {
-    const config = chainConfig(input.chain);
-    const transaction = buildTransferTransaction(input);
-
-    try {
-      const result = await this.#privy.walletApi.ethereum.sendTransaction({
-        walletId: input.providerWalletId,
-        caip2: config.caip2,
-        idempotencyKey: input.idempotencyKey,
-        transaction,
-      });
-      return { txHash: result.hash };
-    } catch (cause) {
-      throw new PocketError(
-        'PAYMENT_FAILED',
-        'Privy rejected the transaction.',
-        { chain: input.chain, asset: input.asset },
-        cause,
-      );
-    }
+    return await sendPrivyTransaction(this.#privy, {
+      ...input,
+      transaction: buildTransferTransaction(input),
+      refusal: 'Privy rejected the transaction.',
+    });
   }
 }

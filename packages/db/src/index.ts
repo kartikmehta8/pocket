@@ -19,3 +19,4 @@ export * from './repos/payments.js';
 export * from './repos/spend.js';
 export * from './repos/task-budgets.js';
 export * from './repos/users.js';
+export * from './repos/wallets.js';

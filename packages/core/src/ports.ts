@@ -14,6 +14,15 @@ export interface ProvisionedWallet {
   providerWalletId: string;
   /** The public address. */
   address: string;
+  /**
+   * The compressed secp256k1 public key, `0x`-prefixed.
+   *
+   * @remarks Hedera addresses an account by key, and a chain only learns a
+   * key once the account has signed something. Capturing it at provisioning
+   * means the first payment does not have to be preceded by a throwaway
+   * transaction just to publish it.
+   */
+  publicKey: string;
 }
 
 /** Instruction to move value from a managed wallet. */
@@ -56,6 +65,13 @@ export interface WalletProvider {
     agentId: string;
     chain: ChainId;
   }): Promise<ProvisionedWallet>;
+  /**
+   * Reveals the compressed public key behind a wallet address.
+   *
+   * @remarks Exists for wallets provisioned before the key was recorded, and
+   * for providers that cannot return it at creation time.
+   */
+  publicKeyFor(input: { providerWalletId: string; address: string }): Promise<string>;
   /** Signs and broadcasts a value transfer. */
   sendPayment(input: SendPaymentInput): Promise<SubmittedTransaction>;
   /**

@@ -16,15 +16,9 @@
  * address.
  */
 
-import {
-  AccountId,
-  Hbar,
-  PublicKey,
-  TokenId,
-  TransactionId,
-  TransferTransaction,
-} from '@hiero-ledger/sdk';
+import { AccountId, Hbar, TokenId, TransactionId, TransferTransaction } from '@hiero-ledger/sdk';
 import { createHederaClient, HBAR_ASSET_ID } from '@x402/hedera';
+import { resolveHederaAccount } from './hedera-account.js';
 import { keccak256, getBytes } from 'ethers';
 import { PocketError } from '@pocket/core';
 
@@ -57,78 +51,15 @@ export interface PrivyHederaSignerOptions {
   network: string;
   /** Mirror node base URL for account resolution. */
   mirrorNodeUrl: string;
-}
-
-interface MirrorAccount {
-  account?: unknown;
-  evm_address?: unknown;
-  key?: { _type?: unknown; key?: unknown } | null;
-}
-
-/**
- * Resolves a Hedera account id and public key from an EVM address.
- *
- * Exported because the seller needs the same translation: the x402 Hedera
- * scheme addresses accounts by id, while wallets are provisioned by EVM
- * address.
- *
- * @param mirrorNodeUrl - Mirror node base URL.
- * @param evmAddress - The wallet's `0x` address.
- * @returns The account id and its ECDSA public key.
- * @throws {PocketError} `NOT_FOUND` when the account does not exist yet, which
- *   on Hedera means it has never received a transfer, or
- *   `VALIDATION_FAILED` when the account has published no key yet (a hollow
- *   account, completed by its first signed transaction) or is held by a key of
- *   a type a Privy wallet cannot sign with.
- */
-export async function resolveHederaAccount(
-  mirrorNodeUrl: string,
-  evmAddress: string,
-): Promise<{ accountId: string; evmAddress: string; publicKey: PublicKey }> {
-  const response = await fetch(
-    `${mirrorNodeUrl.replace(/\/$/, '')}/api/v1/accounts/${evmAddress}`,
-    { signal: AbortSignal.timeout(15_000) },
-  );
-  if (!response.ok) {
-    throw new PocketError('NOT_FOUND', 'No Hedera account exists for this wallet yet.', {
-      evmAddress,
-    });
-  }
-  const body = (await response.json()) as MirrorAccount;
-  const accountId = body.account;
-  const resolvedEvm = body.evm_address;
-  const keyType = body.key?._type;
-  const keyHex = body.key?.key;
-
-  if (typeof accountId !== 'string') {
-    throw new PocketError('NOT_FOUND', 'Mirror node returned no account id.', { evmAddress });
-  }
-  // A hollow account — created by a transfer to an EVM address that has never
-  // signed anything — has no key on record yet. That is not the same fault as
-  // an account held by a key of the wrong type, and saying so sends the reader
-  // to the wrong place: the fix is to associate the token, whose transaction
-  // publishes the key and completes the account.
-  if (body.key === null || body.key === undefined) {
-    throw new PocketError(
-      'VALIDATION_FAILED',
-      'This Hedera account has not published a public key yet, so it cannot be signed for. It was created by a transfer and is still hollow. Associate the asset first: that transaction publishes the key and completes the account.',
-      { evmAddress, accountId },
-    );
-  }
-  if (keyType !== 'ECDSA_SECP256K1' || typeof keyHex !== 'string') {
-    throw new PocketError(
-      'VALIDATION_FAILED',
-      'Hedera account is not secp256k1, so a Privy wallet cannot sign for it.',
-      { evmAddress, keyType: String(keyType) },
-    );
-  }
-  return {
-    accountId,
-    // The mirror node echoes the canonical EVM address, which may differ from
-    // the long-zero form of the account number.
-    evmAddress: typeof resolvedEvm === 'string' ? resolvedEvm : evmAddress,
-    publicKey: PublicKey.fromStringECDSA(keyHex),
-  };
+  /**
+   * The wallet's compressed public key, when it is already known.
+   *
+   * @remarks Supply it and the mirror node is consulted only for the account
+   * id. That is what lets a freshly funded account pay: until it has signed
+   * something the chain has no key on file for it, so a lookup would fail on
+   * exactly the transaction that would have fixed it.
+   */
+  publicKey?: string | undefined;
 }
 
 /**
@@ -143,6 +74,7 @@ export async function createPrivyHederaSigner(
   const { accountId, publicKey } = await resolveHederaAccount(
     options.mirrorNodeUrl,
     options.evmAddress,
+    options.publicKey,
   );
   const payer = AccountId.fromString(accountId);
 

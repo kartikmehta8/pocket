@@ -58,6 +58,7 @@ async function seed(): Promise<void> {
     provider: adapters.wallet.name,
     providerWalletId: provisioned.providerWalletId,
     address: provisioned.address,
+    publicKey: provisioned.publicKey,
     chain,
   });
 

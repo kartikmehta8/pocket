@@ -68,6 +68,7 @@ export function registerAgentRoutes(app: FastifyInstance, ctx: AppContext): void
       provider: ctx.wallet.name,
       providerWalletId: provisioned.providerWalletId,
       address: provisioned.address,
+      publicKey: provisioned.publicKey,
       chain,
     });
 

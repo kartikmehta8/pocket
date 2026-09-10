@@ -4,7 +4,7 @@
 
 import { and, eq } from 'drizzle-orm';
 import { newId, type Agent, type AgentStatus, type Budget, type Wallet } from '@pocket/core';
-import type { Database, Transaction } from '../client.js';
+import type { Database } from '../client.js';
 import { agents, budgets, policies, wallets } from '../schema/index.js';
 
 /** An agent with the rows that constrain it, as the API returns them together. */
@@ -44,25 +44,6 @@ export async function createAgent(db: Database, input: NewAgent): Promise<Agent>
     .returning();
   if (row === undefined) throw new Error('Agent insert returned no row.');
   return row as Agent;
-}
-
-/**
- * Records a provisioned wallet against an agent.
- *
- * @param db - Database or transaction handle.
- * @param input - Provider identifiers and the public address. No secrets.
- * @returns The persisted wallet row.
- */
-export async function attachWallet(
-  db: Database | Transaction,
-  input: Omit<Wallet, 'id' | 'createdAt'>,
-): Promise<Wallet> {
-  const [row] = await db
-    .insert(wallets)
-    .values({ id: newId('wal'), ...input })
-    .returning();
-  if (row === undefined) throw new Error('Wallet insert returned no row.');
-  return row;
 }
 
 /**

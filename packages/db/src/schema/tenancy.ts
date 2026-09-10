@@ -67,6 +67,13 @@ export const wallets = pgTable(
     provider: text('provider').notNull(),
     providerWalletId: text('provider_wallet_id').notNull(),
     address: text('address').notNull(),
+    /**
+     * Compressed secp256k1 public key, `0x`-prefixed.
+     *
+     * Nullable for wallets provisioned before it was captured; those derive it
+     * on demand and are filled in the first time they pay.
+     */
+    publicKey: text('public_key'),
     chain: text('chain').notNull(),
     createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
   },

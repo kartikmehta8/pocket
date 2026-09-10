@@ -20,7 +20,8 @@ import { GraphMarketDataProvider } from './graph-market.js';
 import { HederaChainProvider } from './hedera.js';
 import { OpenIdentityVerifier } from './identity-mocks.js';
 import { UnpricedMarketDataProvider } from './market-mocks.js';
-import { LedgerAnalyticsProvider, MockChainProvider, MockWalletProvider } from './mocks.js';
+import { LedgerAnalyticsProvider, MockChainProvider } from './mocks.js';
+import { MockWalletProvider } from './wallet-mocks.js';
 import { PrivyWalletProvider } from './privy.js';
 import { PrivyIdentityVerifier } from './privy-identity.js';
 
@@ -28,13 +29,17 @@ export * from './chains.js';
 export * from './graph.js';
 export * from './graph-market.js';
 export * from './hedera.js';
+export * from './hedera-account.js';
 export * from './identity-mocks.js';
 export * from './market-mocks.js';
 export * from './mocks.js';
+export * from './wallet-mocks.js';
 export * from './privy.js';
 export * from './privy-policy.js';
+export * from './privy-provision.js';
 export * from './privy-transactions.js';
 export * from './privy-hedera-signer.js';
+export * from './secp256k1-key.js';
 export * from './privy-identity.js';
 
 /** How one adapter slot resolved. */
