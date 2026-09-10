@@ -1,5 +1,6 @@
 'use client';
 
+import { Save } from 'lucide-react';
 import { useState, useTransition } from 'react';
 
 import { ActionFeedback } from '@/components/ui/action-feedback';
@@ -76,8 +77,8 @@ export function BudgetEditor({ agentId, budget }: BudgetEditorProps) {
             </Field>
           </div>
           <div className="flex items-center gap-3">
-            <Button type="submit" variant="primary" size="sm" disabled={pending}>
-              {pending ? 'Saving…' : 'Save budget'}
+            <Button type="submit" variant="primary" size="sm" icon={Save} loading={pending}>
+              {pending ? 'Saving' : 'Save budget'}
             </Button>
             <ActionFeedback state={state} />
           </div>

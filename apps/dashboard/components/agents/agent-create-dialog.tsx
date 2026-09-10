@@ -19,10 +19,7 @@ export function AgentCreateDialog({ label = 'New agent' }: { label?: string }) {
   return (
     <DialogPrimitive.Root open={open} onOpenChange={setOpen}>
       <DialogPrimitive.Trigger asChild>
-        <Button>
-          <Plus aria-hidden className="size-3.5" strokeWidth={2.25} />
-          {label}
-        </Button>
+        <Button icon={Plus}>{label}</Button>
       </DialogPrimitive.Trigger>
 
       <DialogPrimitive.Portal>

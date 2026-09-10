@@ -95,9 +95,8 @@ export function BuyForm({
         </Field>
         <Hint label="Runs the full x402 exchange: fetch, policy decision, signature, settlement. Nothing is signed unless policy allows it.">
           <span>
-            <Button type="submit" variant="primary" disabled={pending}>
-              <ShoppingCart aria-hidden className="size-3.5" strokeWidth={2} />
-              {pending ? 'Paying…' : label}
+            <Button type="submit" variant="primary" icon={ShoppingCart} loading={pending}>
+              {pending ? 'Paying' : label}
             </Button>
           </span>
         </Hint>

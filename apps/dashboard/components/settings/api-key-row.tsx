@@ -1,6 +1,6 @@
 'use client';
 
-import { Trash2 } from 'lucide-react';
+import { Trash2, X } from 'lucide-react';
 import { useState, useTransition } from 'react';
 
 import { revokeApiKeyAction } from '@/lib/actions-account';
@@ -59,11 +59,17 @@ export function ApiKeyRow({ apiKey, canRevoke }: { apiKey: ApiKey; canRevoke: bo
         <ActionFeedback state={state} className="min-h-0" />
         {revoked ? null : confirming ? (
           <>
-            <Button variant="ghost" onClick={() => setConfirming(false)} disabled={pending}>
+            <Button
+              variant="ghost"
+              size="sm"
+              icon={X}
+              onClick={() => setConfirming(false)}
+              disabled={pending}
+            >
               Cancel
             </Button>
-            <Button variant="danger" onClick={revoke} disabled={pending}>
-              {pending ? 'Revoking…' : 'Confirm revoke'}
+            <Button variant="danger" size="sm" icon={Trash2} onClick={revoke} loading={pending}>
+              {pending ? 'Revoking' : 'Confirm revoke'}
             </Button>
           </>
         ) : (
@@ -75,8 +81,13 @@ export function ApiKeyRow({ apiKey, canRevoke }: { apiKey: ApiKey; canRevoke: bo
             }
           >
             <span>
-              <Button variant="danger" onClick={() => setConfirming(true)} disabled={!canRevoke}>
-                <Trash2 aria-hidden className="size-3.5" strokeWidth={2} />
+              <Button
+                variant="danger"
+                size="sm"
+                icon={Trash2}
+                onClick={() => setConfirming(true)}
+                disabled={!canRevoke}
+              >
                 Revoke
               </Button>
             </span>

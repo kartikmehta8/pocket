@@ -99,7 +99,7 @@ export function LoginPanel({ configured }: { configured: boolean }) {
         ) : (
           <ArrowRight aria-hidden className="size-4" strokeWidth={2} />
         )}
-        {phase === 'exchanging' ? 'Opening your workspace…' : 'Continue'}
+        {phase === 'exchanging' ? 'Opening your workspace' : 'Continue'}
       </Button>
 
       {phase === 'error' ? (

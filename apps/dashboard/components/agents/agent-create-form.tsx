@@ -6,7 +6,7 @@ import { useActionState, useId } from 'react';
 import { createAgentAction } from '@/lib/actions-account';
 import { IDLE_ACTION } from '@/lib/action-state';
 import { ActionFeedback } from '@/components/ui/action-feedback';
-import { Button } from '@/components/ui/button';
+import { Button, SUBMIT_WIDTH } from '@/components/ui/button';
 import { Field, Input } from '@/components/ui/field';
 
 /**
@@ -22,21 +22,19 @@ export function AgentCreateForm() {
 
   return (
     <form action={submit} className="flex flex-col gap-3">
-      <div className="flex flex-wrap items-end gap-2">
+      {/* Two fields with hints of different heights cannot share a row with a
+          button and stay aligned: bottom-aligning puts the button level with
+          the hints, and centre-aligning puts it level with nothing. The button
+          gets its own row instead. */}
+      <div className="grid gap-3 sm:grid-cols-2">
         <Field
           htmlFor={nameId}
           label="Agent name"
-          className="min-w-[12rem] flex-1"
           hint="How it appears in payments and the audit trail."
         >
           <Input id={nameId} name="name" placeholder="Hermes" maxLength={120} required />
         </Field>
-        <Field
-          htmlFor={descriptionId}
-          label="What it does"
-          className="min-w-[14rem] flex-1"
-          hint="Optional."
-        >
+        <Field htmlFor={descriptionId} label="What it does" hint="Optional.">
           <Input
             id={descriptionId}
             name="description"
@@ -44,12 +42,19 @@ export function AgentCreateForm() {
             maxLength={500}
           />
         </Field>
-        <Button type="submit" disabled={pending} className="mb-6">
-          <Bot aria-hidden className="size-3.5" strokeWidth={2} />
-          {pending ? 'Provisioning…' : 'Create agent'}
-        </Button>
       </div>
-      <ActionFeedback state={state} />
+      <div className="flex flex-wrap items-center gap-3">
+        <Button
+          type="submit"
+          variant="primary"
+          icon={Bot}
+          loading={pending}
+          className={SUBMIT_WIDTH}
+        >
+          {pending ? 'Provisioning' : 'Create agent'}
+        </Button>
+        <ActionFeedback state={state} className="min-h-0" />
+      </div>
     </form>
   );
 }

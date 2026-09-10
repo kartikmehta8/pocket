@@ -1,5 +1,6 @@
 'use client';
 
+import { Scale } from 'lucide-react';
 import { useActionState, useState } from 'react';
 
 import { Button } from '@/components/ui/button';
@@ -92,8 +93,8 @@ export function PaymentPreview({ agentId, defaultAsset, defaultChain }: PaymentP
             </Field>
           </div>
           <div>
-            <Button type="submit" variant="primary" size="sm" disabled={pending}>
-              {pending ? 'Evaluating…' : 'Evaluate'}
+            <Button type="submit" variant="primary" size="sm" icon={Scale} loading={pending}>
+              {pending ? 'Evaluating' : 'Evaluate'}
             </Button>
           </div>
         </form>

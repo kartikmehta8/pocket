@@ -1,5 +1,6 @@
 'use client';
 
+import { Target } from 'lucide-react';
 import { useState, useTransition } from 'react';
 
 import { ActionFeedback } from '@/components/ui/action-feedback';
@@ -91,8 +92,8 @@ export function TaskBudgetDialog({
           <Button type="button" size="sm" onClick={() => onOpenChange(false)}>
             Cancel
           </Button>
-          <Button type="submit" variant="primary" size="sm" disabled={pending}>
-            {pending ? 'Opening…' : 'Open budget'}
+          <Button type="submit" variant="primary" size="sm" icon={Target} loading={pending}>
+            {pending ? 'Opening' : 'Open budget'}
           </Button>
         </div>
       </form>

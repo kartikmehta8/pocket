@@ -61,8 +61,7 @@ export function TokenList({
           }}
           className={mono ? 'font-mono text-xs' : undefined}
         />
-        <Button size="md" onClick={add} aria-label={`Add ${itemNoun}`}>
-          <Plus aria-hidden className="size-3.5" strokeWidth={2.25} />
+        <Button size="md" icon={Plus} onClick={add} aria-label={`Add ${itemNoun}`}>
           Add
         </Button>
       </div>

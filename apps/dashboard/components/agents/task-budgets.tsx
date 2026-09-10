@@ -42,8 +42,7 @@ export function TaskBudgets({ agentId, taskBudgets, defaultAsset }: TaskBudgetsP
           <CardTitle>Task budgets</CardTitle>
           <CardDescription>Ring-fenced allowances scoped to a single task.</CardDescription>
         </div>
-        <Button size="sm" onClick={() => setDialogOpen(true)}>
-          <Plus aria-hidden className="size-3.5" strokeWidth={2.25} />
+        <Button size="sm" icon={Plus} onClick={() => setDialogOpen(true)}>
           New
         </Button>
       </CardHeader>

@@ -1,5 +1,6 @@
 'use client';
 
+import { Save } from 'lucide-react';
 import { useState, useTransition } from 'react';
 
 import { ActionFeedback } from '@/components/ui/action-feedback';
@@ -44,6 +45,15 @@ const EMPTY_POLICY: Policy = {
   approvalThreshold: null,
 };
 
+/**
+ * Edits an agent's whole spending policy.
+ *
+ * @param agentId Agent whose policy this is.
+ * @param policy The stored policy, or `null` when none is configured yet.
+ * @remarks Saving replaces the document rather than patching it. A policy that
+ *   merged would let a rule survive an edit that was meant to remove it, which
+ *   is the one mistake a spending rule must not make.
+ */
 export function PolicyEditor({ agentId, policy }: PolicyEditorProps) {
   const [draft, setDraft] = useState<Policy>(policy ?? EMPTY_POLICY);
   const [thresholdOn, setThresholdOn] = useState(policy?.approvalThreshold != null);
@@ -169,8 +179,8 @@ export function PolicyEditor({ agentId, policy }: PolicyEditorProps) {
           </div>
 
           <div className="border-divider flex items-center gap-3 border-t pt-4">
-            <Button type="submit" variant="primary" size="sm" disabled={pending}>
-              {pending ? 'Saving…' : 'Save policy'}
+            <Button type="submit" variant="primary" size="sm" icon={Save} loading={pending}>
+              {pending ? 'Saving' : 'Save policy'}
             </Button>
             <Button
               type="button"
