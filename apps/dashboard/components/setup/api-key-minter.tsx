@@ -8,7 +8,7 @@ import { createApiKeyAction } from '@/lib/actions-account';
 import { IDLE_SECRET } from '@/lib/action-state';
 import { DURATION, EASE } from '@/lib/motion';
 import { ActionFeedback } from '@/components/ui/action-feedback';
-import { Button } from '@/components/ui/button';
+import { Button, SUBMIT_WIDTH } from '@/components/ui/button';
 import { CodeBlock } from '@/components/ui/code-block';
 import { Field, Input } from '@/components/ui/field';
 
@@ -28,25 +28,32 @@ export function ApiKeyMinter({ existing }: { existing: number }) {
 
   return (
     <div className="flex flex-col gap-3">
-      <form action={submit} className="flex flex-wrap items-end gap-2">
+      <form action={submit}>
         <Field
           htmlFor={labelId}
           label="Key name"
           hint="Name it after what will use it, so you can revoke that one thing later."
-          className="min-w-[14rem] flex-1"
         >
-          <Input
-            id={labelId}
-            name="label"
-            defaultValue={existing === 0 ? 'MCP server' : `MCP server ${existing + 1}`}
-            maxLength={60}
-            required
-          />
+          <div className="flex flex-wrap items-center gap-2">
+            <Input
+              id={labelId}
+              name="label"
+              defaultValue={existing === 0 ? 'MCP server' : `MCP server ${existing + 1}`}
+              maxLength={60}
+              className="w-full max-w-xs min-w-[11rem] flex-1"
+              required
+            />
+            <Button
+              type="submit"
+              variant="primary"
+              icon={KeyRound}
+              loading={pending}
+              className={SUBMIT_WIDTH}
+            >
+              {pending ? 'Creating' : 'Create key'}
+            </Button>
+          </div>
         </Field>
-        <Button type="submit" disabled={pending} className="mb-6">
-          <KeyRound aria-hidden className="size-3.5" strokeWidth={2} />
-          {pending ? 'Creating…' : 'Create key'}
-        </Button>
       </form>
 
       <AnimatePresence initial={false}>
