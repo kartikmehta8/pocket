@@ -120,7 +120,7 @@ export default async function SettingsPage() {
         </div>
 
         {/* Reference, not a form: parked in the column the forms do not need. */}
-        <Card className="lg:sticky lg:top-20">
+        <Card pop className="lg:sticky lg:top-20">
           <CardHeader>
             <div>
               <CardTitle>Endpoints</CardTitle>
