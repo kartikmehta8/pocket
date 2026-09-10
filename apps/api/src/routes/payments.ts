@@ -29,6 +29,7 @@ const listQuerySchema = z.object({
   agentId: z.string().optional(),
   status: z.string().optional(),
   limit: z.coerce.number().int().positive().max(200).optional(),
+  cursor: z.string().max(128).optional(),
 });
 
 /**
@@ -84,13 +85,17 @@ export function registerPaymentRoutes(app: FastifyInstance, ctx: AppContext): vo
 
   app.get('/v1/payments', async (request) => {
     const query = listQuerySchema.parse(request.query);
-    const rows = await listPayments(ctx.db, request.orgId, {
+    const page = await listPayments(ctx.db, request.orgId, {
       agentId: query.agentId,
       status: query.status as PaymentStatus | undefined,
       limit: query.limit,
+      cursor: query.cursor,
     });
     return {
-      payments: rows.map((row) => paymentToJson(row, (hash) => ctx.chain.explorerUrl(hash))),
+      payments: page.payments.map((row) =>
+        paymentToJson(row, (hash) => ctx.chain.explorerUrl(hash)),
+      ),
+      nextCursor: page.nextCursor,
     };
   });
 

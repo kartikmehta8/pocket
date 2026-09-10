@@ -137,34 +137,74 @@ export interface PaymentFilter {
   agentId?: string | undefined;
   status?: PaymentStatus | undefined;
   limit?: number | undefined;
+  /** Opaque cursor from a previous page's `nextCursor`. */
+  cursor?: string | undefined;
+}
+
+/** One page of payments plus the cursor that follows it. */
+export interface PaymentsPage {
+  payments: Array<Payment & { agentName: string }>;
+  nextCursor: string | null;
 }
 
 /**
- * Lists payments for an organization, newest first.
+ * The shape of a cursor: the row's `created_at` as Postgres prints it, then
+ * its id, separated by a bar. Anything else is ignored and reads as page one.
+ */
+const CURSOR =
+  /^(\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}(?:\.\d{1,6})?[+-]\d{2}(?::\d{2})?)\|([A-Za-z0-9_-]+)$/;
+
+/**
+ * Lists payments for an organization, newest first, one page at a time.
  *
  * @param db - Database handle.
  * @param orgId - Tenant scope.
- * @param filter - Optional agent, status and page size.
- * @returns Payments joined with their agent's name for display.
+ * @param filter - Optional agent, status, page size and cursor.
+ * @returns Payments joined with their agent's name, and the cursor for the
+ *   page after them.
+ * @remarks Pagination is keyset on `(created_at, id)`, compared as a row so
+ * two payments written in the same instant still page in a stable order. The
+ * timestamp travels in the cursor as Postgres's own text form, not as a
+ * JavaScript date, because a `Date` keeps milliseconds and the column keeps
+ * microseconds; rounding it would let a row slip between two pages.
  */
 export async function listPayments(
   db: Database,
   orgId: string,
   filter: PaymentFilter = {},
-): Promise<Array<Payment & { agentName: string }>> {
+): Promise<PaymentsPage> {
+  const limit = Math.min(filter.limit ?? 50, 200);
   const conditions = [eq(payments.orgId, orgId)];
   if (filter.agentId !== undefined) conditions.push(eq(payments.agentId, filter.agentId));
   if (filter.status !== undefined) conditions.push(eq(payments.status, filter.status));
+  const cursor = filter.cursor === undefined ? null : CURSOR.exec(filter.cursor);
+  if (cursor !== null) {
+    const [, createdAt, id] = cursor;
+    conditions.push(
+      sql`(${payments.createdAt}, ${payments.id}) < (${createdAt}::timestamptz, ${id})`,
+    );
+  }
 
   const rows = await db
-    .select({ payment: payments, agentName: agents.name })
+    .select({
+      payment: payments,
+      agentName: agents.name,
+      createdAtText: sql<string>`${payments.createdAt}::text`,
+    })
     .from(payments)
     .innerJoin(agents, eq(agents.id, payments.agentId))
     .where(and(...conditions))
-    .orderBy(desc(payments.createdAt))
-    .limit(Math.min(filter.limit ?? 50, 200));
+    .orderBy(desc(payments.createdAt), desc(payments.id))
+    .limit(limit + 1);
 
-  return rows.map((row) => ({ ...(row.payment as Payment), agentName: row.agentName }));
+  const page = rows.slice(0, limit);
+  const last = page[page.length - 1];
+  const nextCursor =
+    rows.length > limit && last !== undefined ? `${last.createdAtText}|${last.payment.id}` : null;
+  return {
+    payments: page.map((row) => ({ ...(row.payment as Payment), agentName: row.agentName })),
+    nextCursor,
+  };
 }
 
 /**
