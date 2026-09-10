@@ -13,9 +13,9 @@ for port in "${PORT:-8080}" "${PAID_SERVICE_PORT:-8402}" "${MCP_PORT:-8081}"; do
 done
 
 mkdir -p .logs
-pnpm --filter @pocket/api          exec tsx src/index.ts > .logs/api.log   2>&1 &
-pnpm --filter @pocket/paid-service exec tsx src/index.ts > .logs/paid.log  2>&1 &
-pnpm --filter @pocket/mcp          exec tsx src/index.ts > .logs/mcp.log   2>&1 &
+pnpm --filter @pocket/api          exec tsx watch src/index.ts > .logs/api.log   2>&1 &
+pnpm --filter @pocket/paid-service exec tsx watch src/index.ts > .logs/paid.log  2>&1 &
+pnpm --filter @pocket/mcp          exec tsx watch src/index.ts > .logs/mcp.log   2>&1 &
 
 until curl -sf "http://localhost:${PORT:-8080}/v1/health"        >/dev/null \
    && curl -sf "http://localhost:${PAID_SERVICE_PORT:-8402}/health" >/dev/null \
