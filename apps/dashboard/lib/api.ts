@@ -83,6 +83,9 @@ export function getTimeseries(params: {
 export function listAudit(params: {
   limit?: number;
   cursor?: string;
+  /** An action family such as `payment`, matched as a prefix. */
+  action?: string;
+  actorType?: AuditEvent['actorType'];
 }): Promise<ApiResult<{ events: AuditEvent[]; nextCursor: string | null }>> {
   return request<{ events: AuditEvent[]; nextCursor: string | null }>(
     'GET',

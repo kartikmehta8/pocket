@@ -20,12 +20,6 @@ export const staggerContainer: Variants = {
   shown: { transition: { staggerChildren: 0.045, delayChildren: 0.02 } },
 };
 
-/** Stagger for long, dense lists such as the audit trail. */
-export const denseStaggerContainer: Variants = {
-  hidden: {},
-  shown: { transition: { staggerChildren: 0.012 } },
-};
-
 /** Child of {@link staggerContainer} — rises a few pixels as it fades in. */
 export const staggerItem: Variants = {
   hidden: { opacity: 0, y: 8 },
