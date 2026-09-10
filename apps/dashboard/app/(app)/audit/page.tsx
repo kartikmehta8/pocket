@@ -87,7 +87,7 @@ export default async function AuditPage({
             agents={agents}
             action={action}
             actorType={actorType ?? ''}
-            nextCursor={result.data.nextCursor}
+            nextCursor={result.data.nextCursor ?? null}
             page={page}
           />
         </Suspense>

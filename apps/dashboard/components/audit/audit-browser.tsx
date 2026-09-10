@@ -1,16 +1,12 @@
 'use client';
 
-import { ArrowLeft, ArrowRight } from 'lucide-react';
-import Link from 'next/link';
-import { useRouter, useSearchParams } from 'next/navigation';
-import { useTransition } from 'react';
-
-import { Button } from '@/components/ui/button';
+import { Pager } from '@/components/ui/pager';
 import { Select } from '@/components/ui/select';
 import { AUDIT_ACTIVITIES, AUDIT_ACTORS } from '@/lib/catalog';
 import { cn } from '@/lib/cn';
 import { humanize } from '@/lib/format';
 import type { AuditEvent } from '@/lib/types';
+import { useSearchNavigation } from '@/lib/use-search-navigation';
 
 import { AuditTable } from './audit-table';
 
@@ -46,9 +42,6 @@ const ACTOR_OPTIONS = [
  * page is a full page and the link can be shared. Changing a filter starts
  * again from the newest event: a cursor from one view means nothing in another.
  *
- * @remarks The trail pages forward on a cursor, so "older" is the only way
- * on. "Newest" is offered on every later page as the way back, which matches
- * how the trail is read: from now, backwards, then back to now.
  */
 export function AuditBrowser({
   events,
@@ -58,38 +51,8 @@ export function AuditBrowser({
   nextCursor,
   page,
 }: AuditBrowserProps) {
-  const router = useRouter();
-  const searchParams = useSearchParams();
-  const [pending, startTransition] = useTransition();
-
-  const href = (mutate: (params: URLSearchParams) => void): string => {
-    const next = new URLSearchParams(searchParams.toString());
-    mutate(next);
-    const queryString = next.toString();
-    return queryString === '' ? '/audit' : `/audit?${queryString}`;
-  };
-
-  const apply = (key: string, value: string) => {
-    const target = href((params) => {
-      if (value === ANY) params.delete(key);
-      else params.set(key, value);
-      params.delete('cursor');
-      params.delete('page');
-    });
-    startTransition(() => router.replace(target));
-  };
-
-  const newest = href((params) => {
-    params.delete('cursor');
-    params.delete('page');
-  });
-  const older =
-    nextCursor === null
-      ? null
-      : href((params) => {
-          params.set('cursor', nextCursor);
-          params.set('page', String(page + 1));
-        });
+  const { apply, pageLinks, pending } = useSearchNavigation('/audit');
+  const { newest, older } = pageLinks(nextCursor, page);
 
   return (
     <div className="flex flex-col gap-4">
@@ -102,7 +65,7 @@ export function AuditBrowser({
             id="filter-activity"
             value={action === '' ? ANY : action}
             options={ACTIVITY_OPTIONS}
-            onValueChange={(value) => apply('action', value)}
+            onValueChange={(value) => apply('action', value, ANY)}
           />
         </div>
         <div className="flex min-w-36 flex-1 flex-col gap-1.5 sm:w-44 sm:flex-none">
@@ -113,7 +76,7 @@ export function AuditBrowser({
             id="filter-actor"
             value={actorType === '' ? ANY : actorType}
             options={ACTOR_OPTIONS}
-            onValueChange={(value) => apply('actorType', value)}
+            onValueChange={(value) => apply('actorType', value, ANY)}
           />
         </div>
         <p className="figures text-text-muted pb-2.5 text-xs">
@@ -139,31 +102,7 @@ export function AuditBrowser({
           }
         />
 
-        {page > 1 || older !== null ? (
-          <div className="border-divider flex items-center justify-between gap-2 border-t px-4 py-3">
-            {page > 1 ? (
-              <Button asChild size="sm">
-                <Link href={newest}>
-                  <ArrowLeft aria-hidden className="size-3.5" strokeWidth={2} />
-                  Newest
-                </Link>
-              </Button>
-            ) : (
-              // Holds the left slot, so "Older" stays on the right on page one.
-              <span />
-            )}
-            {older !== null ? (
-              <Button asChild size="sm">
-                <Link href={older}>
-                  Older
-                  <ArrowRight aria-hidden className="size-3.5" strokeWidth={2} />
-                </Link>
-              </Button>
-            ) : (
-              <span className="text-text-muted text-xs">Start of the record</span>
-            )}
-          </div>
-        ) : null}
+        <Pager page={page} newest={newest} older={older} />
       </div>
     </div>
   );

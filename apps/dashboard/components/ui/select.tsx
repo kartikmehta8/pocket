@@ -56,7 +56,7 @@ export function Select({
           position="popper"
           sideOffset={6}
           className={cn(
-            'bg-surface z-50 max-h-72 min-w-(--radix-select-trigger-width) overflow-hidden rounded-lg p-1',
+            'bg-surface z-50 max-h-72 max-w-[calc(100vw-2rem)] min-w-(--radix-select-trigger-width) overflow-hidden rounded-lg p-1',
             'shadow-e3 ring-border ring-1 ring-inset',
           )}
         >
@@ -73,7 +73,9 @@ export function Select({
                 <SelectPrimitive.ItemIndicator className="absolute left-2 inline-flex">
                   <Check aria-hidden className="text-accent-600 size-3.5" strokeWidth={2.5} />
                 </SelectPrimitive.ItemIndicator>
-                <SelectPrimitive.ItemText>{option.label}</SelectPrimitive.ItemText>
+                <SelectPrimitive.ItemText className="truncate">
+                  {option.label}
+                </SelectPrimitive.ItemText>
               </SelectPrimitive.Item>
             ))}
           </SelectPrimitive.Viewport>

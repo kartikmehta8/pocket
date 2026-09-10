@@ -1,7 +1,6 @@
 'use client';
 
-import { ChevronRight, ScrollText } from 'lucide-react';
-import { AnimatePresence, motion, useReducedMotion } from 'motion/react';
+import { ScrollText } from 'lucide-react';
 import Link from 'next/link';
 import { useState } from 'react';
 
@@ -9,11 +8,11 @@ import { Badge } from '@/components/ui/badge';
 import { CodeBlock } from '@/components/ui/code-block';
 import { CopyButton } from '@/components/ui/copy-button';
 import { EmptyState } from '@/components/ui/empty-state';
+import { ExpandButton } from '@/components/ui/expand-button';
 import { Table, TableFrame, TBody, TD, TH, THead } from '@/components/ui/table';
 import { cn } from '@/lib/cn';
 import { agentIdOf, describeEvent } from '@/lib/audit';
 import { formatDateTime, formatPrecise } from '@/lib/format';
-import { DURATION, EASE } from '@/lib/motion';
 import { actorPresentation } from '@/lib/status';
 import type { AuditEvent } from '@/lib/types';
 
@@ -71,36 +70,22 @@ function AuditDetail({ event }: { event: AuditEvent }) {
   );
 }
 
-/** The disclosure control, shared by the table row and the phone-width card. */
-function ExpandButton({
-  open,
-  disabled,
-  action,
-  onClick,
-}: {
-  open: boolean;
-  disabled: boolean;
-  action: string;
-  onClick: () => void;
-}) {
+/**
+ * The raw event, opened and closed by a CSS grid transition.
+ *
+ * @remarks Always in the DOM, sized to nothing while closed. A JavaScript
+ * height animation inside a table row re-laid the table on every frame and
+ * visibly stuttered; a grid row going from `0fr` to `1fr` is one transition
+ * the browser runs on its own. `inert` keeps the closed body out of the tab
+ * order and away from a screen reader.
+ */
+function Detail({ event, open }: { event: AuditEvent; open: boolean }) {
   return (
-    <button
-      type="button"
-      onClick={onClick}
-      aria-expanded={open}
-      disabled={disabled}
-      aria-label={`${open ? 'Hide' : 'Show'} payload for ${action}`}
-      className="text-ash-400 hover:bg-ash-100 hover:text-text inline-flex size-6 shrink-0 cursor-pointer items-center justify-center rounded-sm disabled:cursor-default disabled:opacity-30 disabled:hover:bg-transparent"
-    >
-      <ChevronRight
-        aria-hidden
-        className={cn(
-          'size-4 transition-transform duration-(--duration-fast) ease-(--ease-brand)',
-          open && 'rotate-90',
-        )}
-        strokeWidth={2}
-      />
-    </button>
+    <div data-open={open} inert={!open} className="collapse-panel">
+      <div>
+        <AuditDetail event={event} />
+      </div>
+    </div>
   );
 }
 
@@ -117,7 +102,6 @@ interface RowProps {
  * for. The payload opens beneath at full width.
  */
 function EventCard({ event, agents, open, onToggle }: RowProps) {
-  const reduced = useReducedMotion();
   const actor = actorPresentation(event.actorType);
   const agentId = agentIdOf(event);
   return (
@@ -160,24 +144,11 @@ function EventCard({ event, agents, open, onToggle }: RowProps) {
         <ExpandButton
           open={open}
           disabled={!hasPayload(event)}
-          action={event.action}
+          subject={`payload for ${event.action}`}
           onClick={onToggle}
         />
       </div>
-      <AnimatePresence initial={false}>
-        {open ? (
-          <motion.div
-            key="detail"
-            initial={reduced ? false : { height: 0 }}
-            animate={{ height: 'auto' }}
-            exit={reduced ? { opacity: 0 } : { height: 0 }}
-            transition={{ duration: DURATION.base, ease: EASE }}
-            className="overflow-hidden"
-          >
-            <AuditDetail event={event} />
-          </motion.div>
-        ) : null}
-      </AnimatePresence>
+      <Detail event={event} open={open} />
     </li>
   );
 }
@@ -186,11 +157,10 @@ function EventCard({ event, agents, open, onToggle }: RowProps) {
  * One event as a table row, with the raw payload in a row of its own beneath
  * it while open.
  *
- * @remarks The last row drops its divider so it does not double up with the
- * border of whatever follows the table.
+ * @remarks Dividers are top borders, so the last row never doubles up with
+ * whatever follows the table, and an open panel sits flush under its row.
  */
 function EventRow({ event, agents, open, onToggle }: RowProps) {
-  const reduced = useReducedMotion();
   const actor = actorPresentation(event.actorType);
   const agentId = agentIdOf(event);
   const details = describeEvent(event);
@@ -238,35 +208,20 @@ function EventRow({ event, agents, open, onToggle }: RowProps) {
           <ExpandButton
             open={open}
             disabled={!hasPayload(event)}
-            action={event.action}
+            subject={`payload for ${event.action}`}
             onClick={onToggle}
           />
         </TD>
       </tr>
-      <AnimatePresence initial={false}>
-        {open ? (
-          <motion.tr
-            key="detail"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            transition={{ duration: DURATION.fast, ease: EASE }}
-            className="[&>td]:border-divider [&:last-child>td]:border-b-0 [&>td]:border-b"
-          >
-            <td colSpan={COLUMNS} className="p-0">
-              <motion.div
-                initial={reduced ? false : { height: 0 }}
-                animate={{ height: 'auto' }}
-                exit={reduced ? { opacity: 0 } : { height: 0 }}
-                transition={{ duration: DURATION.base, ease: EASE }}
-                className="overflow-hidden"
-              >
-                <AuditDetail event={event} />
-              </motion.div>
-            </td>
-          </motion.tr>
-        ) : null}
-      </AnimatePresence>
+      <tr>
+        <td colSpan={COLUMNS} className="p-0">
+          {/* Zero width, full minimum: the panel fills the row without its
+              content ever counting toward the table's width. */}
+          <div className="w-0 min-w-full">
+            <Detail event={event} open={open} />
+          </div>
+        </td>
+      </tr>
     </>
   );
 }

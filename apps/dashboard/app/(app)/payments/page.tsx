@@ -15,7 +15,7 @@ export const dynamic = 'force-dynamic';
 export const metadata: Metadata = { title: 'Payments' };
 
 /** How many payments one page of the table holds. */
-const PAGE_LIMIT = 200;
+const PAGE_LIMIT = 30;
 
 /** Read a single search param as a string, ignoring repeats. */
 function readParam(value: string | string[] | undefined): string {
@@ -28,7 +28,18 @@ function readStatus(value: string): PaymentStatus | undefined {
   return PAYMENT_STATUSES.find((status) => status === value);
 }
 
-/** Payments index: filterable, expandable payment history for the whole org. */
+/** Read the page number, counting from one. Anything odd is page one. */
+function readPage(value: string): number {
+  return /^[1-9]\d{0,4}$/.test(value) ? Number(value) : 1;
+}
+
+/**
+ * Payments index: filterable, expandable payment history for the whole org.
+ *
+ * @remarks Filters and the cursor live in the URL, so any view can be shared
+ * and the browser's back button walks the pages. An unknown status in a stale
+ * link is ignored rather than forwarded.
+ */
 export default async function PaymentsPage({
   searchParams,
 }: {
@@ -36,14 +47,16 @@ export default async function PaymentsPage({
 }) {
   const params = await searchParams;
   const agentId = readParam(params['agentId']);
-  const statusParam = readParam(params['status']);
-  const status = readStatus(statusParam);
+  const status = readStatus(readParam(params['status']));
+  const cursor = readParam(params['cursor']);
+  const page = cursor === '' ? 1 : readPage(readParam(params['page']));
 
   const [paymentsResult, agentsResult] = await Promise.all([
     listPayments({
       limit: PAGE_LIMIT,
       ...(agentId === '' ? {} : { agentId }),
       ...(status ? { status } : {}),
+      ...(cursor === '' ? {} : { cursor }),
     }),
     listAgents(),
   ]);
@@ -51,7 +64,6 @@ export default async function PaymentsPage({
   return (
     <>
       <PageHeader
-        eyebrow="Ledger"
         title="Payments"
         description="Every payment attempt, including the ones policy stopped. Expand a row for its reason, resource and denial code."
       />
@@ -68,6 +80,8 @@ export default async function PaymentsPage({
             agents={agentsResult.ok ? agentsResult.data.agents : []}
             agentId={agentId}
             status={status ?? ''}
+            nextCursor={paymentsResult.data.nextCursor ?? null}
+            page={page}
           />
         </Suspense>
       )}

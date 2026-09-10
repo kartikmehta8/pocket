@@ -51,8 +51,12 @@ export function listPayments(params: {
   agentId?: string;
   status?: PaymentStatus;
   limit?: number;
-}): Promise<ApiResult<{ payments: Payment[] }>> {
-  return request<{ payments: Payment[] }>('GET', `/v1/payments${query(params)}`);
+  cursor?: string;
+}): Promise<ApiResult<{ payments: Payment[]; nextCursor: string | null }>> {
+  return request<{ payments: Payment[]; nextCursor: string | null }>(
+    'GET',
+    `/v1/payments${query(params)}`,
+  );
 }
 
 /** `GET /v1/payments/stats` — true counts by status over the window. */

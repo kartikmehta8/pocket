@@ -1,14 +1,14 @@
 'use client';
 
-import { useRouter, useSearchParams } from 'next/navigation';
-import { useMemo, useState, useTransition } from 'react';
+import { useMemo } from 'react';
 
-import { Input } from '@/components/ui/field';
+import { Pager } from '@/components/ui/pager';
 import { Select } from '@/components/ui/select';
-import { cn } from '@/lib/cn';
 import { PAYMENT_STATUSES } from '@/lib/catalog';
+import { cn } from '@/lib/cn';
 import { humanize } from '@/lib/format';
 import type { AgentSummary, Payment } from '@/lib/types';
+import { useSearchNavigation } from '@/lib/use-search-navigation';
 
 import { PaymentsTable } from './payments-table';
 
@@ -16,10 +16,14 @@ import { PaymentsTable } from './payments-table';
 export interface PaymentsBrowserProps {
   payments: Payment[];
   agents: AgentSummary[];
-  /** Currently applied `agentId` filter, or `''` for all. */
+  /** Applied `agentId` filter, or `''` for all. */
   agentId: string;
-  /** Currently applied `status` filter, or `''` for all. */
+  /** Applied `status` filter, or `''` for all. */
   status: string;
+  /** Cursor for the page after this one, or `null` on the last page. */
+  nextCursor: string | null;
+  /** Which page this is, counting from one. */
+  page: number;
 }
 
 /** Sentinel used for "no filter" — Radix Select treats `''` as unset. */
@@ -31,15 +35,23 @@ const STATUS_OPTIONS = [
 ];
 
 /**
- * Filter bar plus results. Agent and status are server-side filters carried in
- * the URL, matching `GET /v1/payments`; the free-text search narrows the
- * fetched page client-side so the surviving rows animate into place.
+ * Filter bar, results and paging for the payment history.
+ *
+ * Both filters are applied by the API and carried in the URL, so a filtered
+ * page is a full page and the link can be shared. Changing a filter starts
+ * again from the newest payment: a cursor from one view means nothing in
+ * another.
  */
-export function PaymentsBrowser({ payments, agents, agentId, status }: PaymentsBrowserProps) {
-  const router = useRouter();
-  const searchParams = useSearchParams();
-  const [pending, startTransition] = useTransition();
-  const [search, setSearch] = useState('');
+export function PaymentsBrowser({
+  payments,
+  agents,
+  agentId,
+  status,
+  nextCursor,
+  page,
+}: PaymentsBrowserProps) {
+  const { apply, pageLinks, pending } = useSearchNavigation('/payments');
+  const { newest, older } = pageLinks(nextCursor, page);
 
   const agentOptions = useMemo(
     () => [
@@ -49,32 +61,10 @@ export function PaymentsBrowser({ payments, agents, agentId, status }: PaymentsB
     [agents],
   );
 
-  const apply = (key: string, value: string) => {
-    const next = new URLSearchParams(searchParams.toString());
-    if (value === ANY) next.delete(key);
-    else next.set(key, value);
-    const queryString = next.toString();
-    startTransition(() =>
-      router.replace(queryString === '' ? '/payments' : `/payments?${queryString}`),
-    );
-  };
-
-  const visible = useMemo(() => {
-    const needle = search.trim().toLowerCase();
-    if (needle === '') return payments;
-    return payments.filter(
-      (payment) =>
-        payment.reason.toLowerCase().includes(needle) ||
-        payment.recipient.toLowerCase().includes(needle) ||
-        payment.agentName.toLowerCase().includes(needle) ||
-        (payment.denialCode ?? '').toLowerCase().includes(needle),
-    );
-  }, [payments, search]);
-
   return (
     <div className="flex flex-col gap-4">
       <div className="flex flex-wrap items-end gap-3">
-        <div className="flex w-44 flex-col gap-1.5">
+        <div className="flex min-w-36 flex-1 flex-col gap-1.5 sm:w-44 sm:flex-none">
           <label className="eyebrow" htmlFor="filter-agent">
             Agent
           </label>
@@ -82,10 +72,10 @@ export function PaymentsBrowser({ payments, agents, agentId, status }: PaymentsB
             id="filter-agent"
             value={agentId === '' ? ANY : agentId}
             options={agentOptions}
-            onValueChange={(value) => apply('agentId', value)}
+            onValueChange={(value) => apply('agentId', value, ANY)}
           />
         </div>
-        <div className="flex w-44 flex-col gap-1.5">
+        <div className="flex min-w-36 flex-1 flex-col gap-1.5 sm:w-44 sm:flex-none">
           <label className="eyebrow" htmlFor="filter-status">
             Status
           </label>
@@ -93,23 +83,12 @@ export function PaymentsBrowser({ payments, agents, agentId, status }: PaymentsB
             id="filter-status"
             value={status === '' ? ANY : status}
             options={STATUS_OPTIONS}
-            onValueChange={(value) => apply('status', value)}
-          />
-        </div>
-        <div className="flex min-w-56 flex-1 flex-col gap-1.5">
-          <label className="eyebrow" htmlFor="filter-search">
-            Search
-          </label>
-          <Input
-            id="filter-search"
-            type="search"
-            placeholder="Reason, recipient, agent or denial code…"
-            value={search}
-            onChange={(event) => setSearch(event.target.value)}
+            onValueChange={(value) => apply('status', value, ANY)}
           />
         </div>
         <p className="figures text-text-muted pb-2.5 text-xs">
-          {visible.length} of {payments.length}
+          {payments.length} {payments.length === 1 ? 'payment' : 'payments'}
+          {page > 1 || older !== null ? ` · page ${page}` : ''}
         </p>
       </div>
 
@@ -120,7 +99,15 @@ export function PaymentsBrowser({ payments, agents, agentId, status }: PaymentsB
           pending && 'opacity-60',
         )}
       >
-        <PaymentsTable payments={visible} emptyTitle="No payments match these filters" />
+        <PaymentsTable
+          payments={payments}
+          emptyTitle={
+            agentId === '' && status === '' && page === 1
+              ? 'No payments yet'
+              : 'No payments match these filters'
+          }
+        />
+        <Pager page={page} newest={newest} older={older} />
       </div>
     </div>
   );
