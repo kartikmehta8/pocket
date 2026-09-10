@@ -7,7 +7,7 @@
  * after a committed one.
  */
 
-import { and, desc, eq, lt } from 'drizzle-orm';
+import { and, desc, eq, like, lt, or } from 'drizzle-orm';
 import { newId, type AuditEvent } from '@pocket/core';
 import type { Database, Transaction } from '../client.js';
 import { auditEvents } from '../schema/index.js';
@@ -53,25 +53,54 @@ export interface AuditPage {
   nextCursor: string | null;
 }
 
+/** Narrows a page of the trail. */
+export interface AuditFilter {
+  limit?: number;
+  /** Opaque cursor from a previous page. */
+  cursor?: string | undefined;
+  /**
+   * An action family, matched as a prefix: `payment` reads `payment.settled`,
+   * `payment.rejected` and the rest.
+   */
+  action?: string | undefined;
+  actorType?: AuditEvent['actorType'] | undefined;
+}
+
 /**
  * Reads the audit trail newest first.
  *
  * @param db - Database handle.
  * @param orgId - Tenant scope.
- * @param options - Page size and an opaque cursor from a previous page.
+ * @param options - Page size, an opaque cursor from a previous page, and
+ *   optional narrowing by action family or actor.
  * @returns A page of events and the cursor to fetch the next one.
  * @remarks Pagination keys on the monotonic `seq` column rather than on
  * `createdAt`, so events written in the same millisecond still page correctly.
+ * Filters apply before the page is cut, so a filtered page is always full
+ * until the trail runs out.
  */
 export async function listAuditEvents(
   db: Database,
   orgId: string,
-  options: { limit?: number; cursor?: string | undefined } = {},
+  options: AuditFilter = {},
 ): Promise<AuditPage> {
   const limit = Math.min(options.limit ?? 50, 200);
   const conditions = [eq(auditEvents.orgId, orgId)];
   if (options.cursor !== undefined && /^\d+$/.test(options.cursor)) {
     conditions.push(lt(auditEvents.seq, Number(options.cursor)));
+  }
+  if (options.action !== undefined) {
+    // `_` is a LIKE wildcard, and `task_budget` has one. Escaped, so the
+    // family matches exactly the actions that carry it.
+    const family = options.action.replace(/[\\%_]/g, '\\$&');
+    const inFamily = or(
+      eq(auditEvents.action, options.action),
+      like(auditEvents.action, `${family}.%`),
+    );
+    if (inFamily !== undefined) conditions.push(inFamily);
+  }
+  if (options.actorType !== undefined) {
+    conditions.push(eq(auditEvents.actorType, options.actorType));
   }
 
   const rows = await db

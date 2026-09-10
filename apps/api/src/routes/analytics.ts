@@ -19,6 +19,12 @@ const analyticsQuerySchema = z.object({
 const auditQuerySchema = z.object({
   limit: z.coerce.number().int().positive().max(200).optional(),
   cursor: z.string().optional(),
+  /** An action family such as `payment` or `api_key`; matched as a prefix. */
+  action: z
+    .string()
+    .regex(/^[a-z][a-z_.]{0,63}$/)
+    .optional(),
+  actorType: z.enum(['agent', 'human', 'system']).optional(),
 });
 
 /**
@@ -81,6 +87,8 @@ export function registerAnalyticsRoutes(app: FastifyInstance, ctx: AppContext): 
     const page = await listAuditEvents(ctx.db, request.orgId, {
       limit: query.limit ?? 50,
       cursor: query.cursor,
+      action: query.action,
+      actorType: query.actorType,
     });
     return { events: page.events.map(auditEventToJson), nextCursor: page.nextCursor };
   });
