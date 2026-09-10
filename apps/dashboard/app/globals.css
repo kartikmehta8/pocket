@@ -271,36 +271,43 @@
  * A default scrollbar is the one piece of chrome a design cannot reach, and on
  * a page built from hairlines and flat fills it reads as somebody else's
  * furniture. Thin track, hairline thumb, and no arrows.
+ *
+ * Kept inside `base` so a utility can still override it. Unlayered rules beat
+ * every layer no matter how specific the selector, so declaring these at the
+ * top level would let `*` outrank `.no-scrollbar` and quietly reinstate the
+ * scrollbar on anything asking to hide one.
  */
-* {
-  scrollbar-width: thin;
-  scrollbar-color: var(--color-ash-300) transparent;
-}
+@layer base {
+  * {
+    scrollbar-width: thin;
+    scrollbar-color: var(--color-ash-300) transparent;
+  }
 
-::-webkit-scrollbar {
-  width: 10px;
-  height: 10px;
-}
+  ::-webkit-scrollbar {
+    width: 10px;
+    height: 10px;
+  }
 
-::-webkit-scrollbar-track {
-  background: transparent;
-}
+  ::-webkit-scrollbar-track {
+    background: transparent;
+  }
 
-::-webkit-scrollbar-thumb {
-  background-clip: padding-box;
-  /* The padding is what keeps the thumb clear of the edge instead of welded
-     to it, which is the difference between a bar and a smear. */
-  border: 3px solid transparent;
-  border-radius: 999px;
-  background-color: var(--color-ash-300);
-}
+  ::-webkit-scrollbar-thumb {
+    background-clip: padding-box;
+    /* The padding is what keeps the thumb clear of the edge instead of welded
+       to it, which is the difference between a bar and a smear. */
+    border: 3px solid transparent;
+    border-radius: 999px;
+    background-color: var(--color-ash-300);
+  }
 
-::-webkit-scrollbar-thumb:hover {
-  background-color: var(--color-ash-400);
-}
+  ::-webkit-scrollbar-thumb:hover {
+    background-color: var(--color-ash-400);
+  }
 
-::-webkit-scrollbar-corner {
-  background: transparent;
+  ::-webkit-scrollbar-corner {
+    background: transparent;
+  }
 }
 
 /** Entrance for a panel that arrives from the left edge. */

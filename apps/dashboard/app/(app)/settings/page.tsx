@@ -128,8 +128,11 @@ export default async function SettingsPage() {
             </div>
           </CardHeader>
           <CardContent className="flex flex-col gap-3">
-            <CodeBlock code={urls.mcp} label="MCP endpoint" caption="MCP server" />
-            <CodeBlock code={urls.api} label="API base URL" caption="Pocket API" />
+            {/* Wrapped, not scrolled: this column is narrow and a production
+                URL runs past its edge, where a scrollbar hides the tail of the
+                very value the card exists to show. */}
+            <CodeBlock wrap code={urls.mcp} label="MCP endpoint" caption="MCP server" />
+            <CodeBlock wrap code={urls.api} label="API base URL" caption="Pocket API" />
           </CardContent>
         </Card>
       </div>

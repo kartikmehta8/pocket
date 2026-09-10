@@ -14,9 +14,13 @@ export interface CodeBlockProps {
   /**
    * Wrap onto several lines instead of scrolling sideways.
    *
-   * @remarks For prose: a prompt, a sentence, anything with spaces to break
-   * at. Leave it off for an address or a command, where a wrap invents a line
-   * break that is not in the value.
+   * @remarks For anything that would otherwise overflow its column: a prompt,
+   * a sentence, a URL. Text with spaces breaks at them and only a word longer
+   * than the line is split, so the wrap is invisible until it has to happen.
+   *
+   * Leave it off for a command or a hash, where a value that runs past the
+   * edge is a signal worth keeping. It costs nothing either way: the copy
+   * button hands over the exact text, so no wrap is ever transcribed by hand.
    */
   wrap?: boolean;
   className?: string;
@@ -25,9 +29,10 @@ export interface CodeBlockProps {
 /**
  * A copyable block of exact text: a command, a config file, a header value.
  *
- * Scrolls horizontally inside its own box rather than wrapping, because a
- * wrapped address or JSON pointer is easy to mis-transcribe by hand — and the
- * copy button means nobody has to.
+ * Scrolls horizontally inside its own box by default rather than wrapping,
+ * because a wrapped address or JSON pointer is easy to mis-transcribe by hand
+ * — and the copy button means nobody has to. Pass `wrap` where the value has
+ * to fit a narrow column instead.
  */
 export function CodeBlock({ code, label, caption, wrap = false, className }: CodeBlockProps) {
   return (
