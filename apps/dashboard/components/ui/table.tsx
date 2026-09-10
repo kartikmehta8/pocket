@@ -13,10 +13,18 @@ export function TableFrame({ className, children }: SlotProps) {
   return <div className={cn('w-full overflow-x-auto', className)}>{children}</div>;
 }
 
-/** The table element, with tabular figures switched on for the whole grid. */
+/**
+ * The table element, with tabular figures switched on for the whole grid.
+ *
+ * @remarks Borders are kept separate and drawn on cells, never on rows. With
+ * collapsed borders Chromium paints a row's background over them, so a hovered
+ * or tinted row lost its dividers. Cell borders sit above the background.
+ */
 export function Table({ className, children }: SlotProps) {
   return (
-    <table className={cn('figures w-full min-w-max border-collapse text-sm', className)}>
+    <table
+      className={cn('figures w-full min-w-max border-separate border-spacing-0 text-sm', className)}
+    >
       {children}
     </table>
   );
@@ -25,7 +33,7 @@ export function Table({ className, children }: SlotProps) {
 /** Table head with a hairline underline. */
 export function THead({ className, children }: SlotProps) {
   return (
-    <thead className={cn('border-divider border-b', className)}>
+    <thead className={cn('[&_th]:border-divider [&_th]:border-b', className)}>
       <tr>{children}</tr>
     </thead>
   );

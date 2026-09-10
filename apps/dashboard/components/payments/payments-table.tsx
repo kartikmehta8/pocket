@@ -73,7 +73,7 @@ export function PaymentsTable({
                   layout={reduced ? false : 'position'}
                   transition={{ duration: DURATION.base, ease: EASE }}
                   className={cn(
-                    'border-divider border-b transition-colors duration-(--duration-fast) ease-(--ease-brand)',
+                    '[&>td]:border-divider transition-colors duration-(--duration-fast) ease-(--ease-brand) [&>td]:border-b',
                     blocked ? 'bg-danger-soft/50 hover:bg-danger-soft' : 'hover:bg-ash-25',
                   )}
                 >
@@ -136,7 +136,7 @@ export function PaymentsTable({
                       animate={{ opacity: 1 }}
                       exit={{ opacity: 0 }}
                       transition={{ duration: DURATION.fast, ease: EASE }}
-                      className="border-divider border-b"
+                      className="[&>td]:border-divider [&:last-child>td]:border-b-0 [&>td]:border-b"
                     >
                       <td colSpan={columnCount} className="p-0">
                         <motion.div

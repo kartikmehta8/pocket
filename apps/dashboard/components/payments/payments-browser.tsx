@@ -115,7 +115,7 @@ export function PaymentsBrowser({ payments, agents, agentId, status }: PaymentsB
 
       <div
         className={cn(
-          'bg-surface ring-border rounded-lg ring-1 ring-inset',
+          'bg-surface border-border overflow-hidden rounded-lg border',
           'transition-opacity duration-(--duration-base) ease-(--ease-brand)',
           pending && 'opacity-60',
         )}
