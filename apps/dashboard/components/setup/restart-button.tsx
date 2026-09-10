@@ -10,7 +10,13 @@ export interface RestartButtonProps {
   onRestart: () => void;
   /** Whether the server is re-rendering after a press. */
   pending: boolean;
-  /** Distinguishes this copy for a screen reader, since two are rendered. */
+  /**
+   * Accessible name, distinguishing this copy from the other.
+   *
+   * @remarks Must contain the visible text. Voice control matches on what is
+   * written on the button, so an accessible name that omits it leaves
+   * "click Restart guide" activating nothing.
+   */
   label: string;
 }
 

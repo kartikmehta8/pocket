@@ -69,11 +69,16 @@ export function Guide({
   const [pending, startTransition] = useTransition();
   const [connected, setConnected] = useState(false);
   const [purchased, setPurchased] = useState(false);
+  // Separate from `purchased` on purpose. Closing the dialog must not undo
+  // the step that opened it, and Radix reports every dismissal — escape, the
+  // scrim, the close button, a destination link — through `onOpenChange`.
+  const [celebrating, setCelebrating] = useState(false);
 
   const restart = (): void => {
     document.cookie = `${RESTART_COOKIE}=${Date.now()}; path=/; max-age=${COOKIE_MAX_AGE}; samesite=lax`;
     setConnected(false);
     setPurchased(false);
+    setCelebrating(false);
     startTransition(() => {
       router.refresh();
     });
@@ -116,6 +121,7 @@ export function Guide({
             onPurchased={() => {
               setConnected(true);
               setPurchased(true);
+              setCelebrating(true);
             }}
           />
 
@@ -129,14 +135,14 @@ export function Guide({
               <RestartButton
                 onRestart={restart}
                 pending={pending}
-                label="Restart the guide, from the end"
+                label="Restart guide, from the end"
               />
             </div>
           ) : null}
         </CardContent>
       </Card>
 
-      <CompletionDialog open={purchased} onOpenChange={setPurchased} docsUrl={docsUrl} />
+      <CompletionDialog open={celebrating} onOpenChange={setCelebrating} docsUrl={docsUrl} />
     </>
   );
 }

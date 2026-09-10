@@ -26,14 +26,17 @@ const EARLIEST = 1_600_000_000_000;
  * @param value - The cookie's value, or `undefined` when it is not set.
  * @param now - Current epoch milliseconds.
  * @returns Epoch milliseconds, or `null` when there is no usable restart.
- * @remarks An instant in the future is refused. It would hide every agent the
- * organization will ever register, which looks exactly like a guide that has
- * stopped working.
+ * @remarks The browser stamps this and the server reads it, so the two clocks
+ * are not the same clock. A browser running a minute fast would otherwise
+ * write an instant the server calls impossible, and the button would do
+ * nothing at all — silently, since a refused cookie renders exactly like no
+ * cookie. Clamping to now costs nothing and cannot misfire: an instant in the
+ * future would hide every agent the organization ever registers.
  */
 export function readRestartAt(value: string | undefined, now: number): number | null {
   if (value === undefined || !/^\d{1,15}$/.test(value)) return null;
   const at = Number(value);
-  return at >= EARLIEST && at <= now ? at : null;
+  return at >= EARLIEST ? Math.min(at, now) : null;
 }
 
 /**

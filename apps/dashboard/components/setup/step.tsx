@@ -25,10 +25,11 @@ export interface StepProps {
   /** Marker glyph. Replaced by a check once the step is done. */
   icon: LucideIcon;
   /**
-   * Whether the system can already see this step's result.
+   * How far this step has got.
    *
-   * @remarks Derived from live state — an agent exists, a balance arrived, a
-   * payment settled — never from a checkbox the operator ticked themselves.
+   * @remarks Resolved by the guide, not here. Most steps read it from live
+   * state — an agent exists, a balance arrived, a policy was written — but the
+   * two that happen in a terminal are confirmed by the operator instead.
    */
   state: StepState;
   /** Whether a connector runs down to the next step. */

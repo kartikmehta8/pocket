@@ -39,10 +39,15 @@ export default async function SetupPage() {
   ]);
 
   // Newest first, so the guide follows the agent most recently registered.
-  const agents = [...(agentsResult.ok ? agentsResult.data.agents : [])].sort(newestFirst);
-  const newest = agents[0] ?? null;
+  const agents = agentsResult.ok ? [...agentsResult.data.agents].sort(newestFirst) : null;
+  const newest = agents?.[0] ?? null;
 
-  const restartAt = readRestartAt(store.get(RESTART_COOKIE)?.value, Date.now());
+  // A failed listing is not an empty one. Treating it as empty would let a
+  // transient API error read as "no agent registered since the restart" and
+  // silently reopen a fresh run over an organization that has been set up for
+  // weeks — with nothing on screen to explain it.
+  const restartAt =
+    agents === null ? null : readRestartAt(store.get(RESTART_COOKIE)?.value, Date.now());
   const restarted = restartInEffect(restartAt, newest?.createdAt ?? null);
 
   // A restart is a blank run: no agent to fetch, and nothing of the last one

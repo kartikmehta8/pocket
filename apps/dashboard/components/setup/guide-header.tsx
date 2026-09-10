@@ -48,12 +48,12 @@ function guidance(restarted: boolean, done: number, total: number): string {
     return 'A fresh run, exactly as it looks the first time. Name an agent below and the guide follows that one. Nothing was deleted — your existing agents and keys are on their own pages, untouched.';
   }
   if (done === 0) {
-    return `${total} steps, in order. Each one ticks itself once the system can see the result, so nothing here is marked done by hand.`;
+    return `${total} steps, in order. The first five tick themselves once the system can see the result; the last two happen in your terminal, so you confirm those.`;
   }
   if (done === total) {
     return 'Your agent has paid for its own data. Watch what it spends on Payments and Audit, or walk the guide again from the top.';
   }
-  return `${done} of ${total} done, read from live state rather than a remembered click. Pick up at the step marked "Do this next".`;
+  return `${done} of ${total} done. Pick up at the step marked "Do this next".`;
 }
 
 /**
@@ -76,11 +76,7 @@ export function GuideHeader({ done, total, restarted, pending, onRestart }: Guid
 
       {/* Always offered. Somebody who wants to start over halfway through
           wants it more than somebody who has just finished. */}
-      <RestartButton
-        onRestart={onRestart}
-        pending={pending}
-        label="Restart the guide, from the top"
-      />
+      <RestartButton onRestart={onRestart} pending={pending} label="Restart guide, from the top" />
     </CardHeader>
   );
 }

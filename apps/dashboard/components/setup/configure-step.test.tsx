@@ -28,12 +28,18 @@ describe('ConfigureStep', () => {
   });
 
   it('offers a re-read, because the new tab leaves this one stale', () => {
-    expect(text(render('agent_1'))).toContain('I have done this');
+    expect(text(render('agent_1'))).toContain('Check again');
+  });
+
+  it('does not borrow the wording of a step that is confirmed, not checked', () => {
+    // Steps six and seven use "I have done this" and mean it literally. This
+    // one re-reads the record and ticks only if the rules are really saved.
+    expect(text(render('agent_1'))).not.toContain('I have done this');
   });
 
   it('drops the re-check once the rules are saved, rather than nagging forever', () => {
     const html = text(render('agent_1', true));
-    expect(html).not.toContain('I have done this');
+    expect(html).not.toContain('Check again');
     expect(html).toContain('Set a budget for');
   });
 

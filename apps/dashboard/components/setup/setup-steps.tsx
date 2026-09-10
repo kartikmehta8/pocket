@@ -15,7 +15,7 @@ import { InlineCode } from '@/components/ui/inline-code';
 
 /** Props for {@link SetupSteps}. */
 export interface SetupStepsProps {
-  /** The organization's first agent, or `null` before one exists. */
+  /** The agent the guide is following, or `null` before one exists. */
   agent: AgentSummary | null;
   /** That agent's detail, which carries its balance and policy. */
   detail: AgentDetail | null;
@@ -33,15 +33,21 @@ export interface SetupStepsProps {
   total: number;
   /** Called when the operator confirms the runtime is attached. */
   onConnected: () => void;
-  /** Called when they confirm the first purchase. */
+  /**
+   * Called when they confirm the first purchase.
+   *
+   * @remarks Marks connecting the runtime done as well. A settled purchase
+   * could not have happened without it, and leaving step six outstanding
+   * behind a finished step seven reads as a bug.
+   */
   onPurchased: () => void;
 }
 
 /**
  * The seven steps, in the order they have to happen.
  *
- * @remarks Separated from the page so that one fetches and decides while this
- * one only draws. Nothing here reads state of its own.
+ * @remarks Separated from the guide so that one owns the state while this one
+ * only draws. Nothing here reads state of its own.
  */
 export function SetupSteps({
   agent,

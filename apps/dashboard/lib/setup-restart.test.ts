@@ -16,8 +16,10 @@ describe('readRestartAt', () => {
     expect(readRestartAt(undefined, NOW)).toBeNull();
   });
 
-  it('refuses an instant in the future, which would hide every future agent', () => {
-    expect(readRestartAt(String(NOW + 1000), NOW)).toBeNull();
+  it('clamps a browser clock running fast, rather than refusing the restart', () => {
+    // The browser stamps this and the server reads it. Refusing a skewed
+    // instant made the button do nothing at all, with no error to see.
+    expect(readRestartAt(String(NOW + 60_000), NOW)).toBe(NOW);
   });
 
   it.each(['', '1', 'now', '-5', '12.5', '1e9', ' 123'])('refuses %o', (raw) => {
@@ -39,11 +41,12 @@ describe('restartInEffect', () => {
     expect(restartInEffect(NOW, BEFORE)).toBe(true);
   });
 
-  it('survives a reload, because it is decided from the cookie every time', () => {
-    // Nothing here is remembered between calls; the same two inputs give the
-    // same answer on the tenth render as on the first.
-    const answers = Array.from({ length: 10 }, () => restartInEffect(NOW, BEFORE));
-    expect(answers.every(Boolean)).toBe(true);
+  it('round-trips what the button writes', () => {
+    // The browser builds the cookie value and the server parses it. Nothing
+    // else ties the two halves together, so a format change would otherwise
+    // break the restart with every check still green.
+    const written = String(NOW);
+    expect(restartInEffect(readRestartAt(written, NOW), BEFORE)).toBe(true);
   });
 
   it('is spent the moment an agent is registered after it', () => {

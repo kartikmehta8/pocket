@@ -69,13 +69,13 @@ export function ConfigureStep({ agentId, agentName, kind, done }: ConfigureStepP
                 <span className="sr-only">(opens in a new tab)</span>
               </Link>
             </Button>
-            {done ? null : <RecheckButton label="I have done this" />}
+            {done ? null : <RecheckButton label="Check again" />}
           </div>
           {done ? null : (
             <p className="text-text-muted text-xs leading-relaxed">
               Opens in a new tab. Come back and press{' '}
-              <strong className="text-text-secondary font-medium">I have done this</strong> to
-              re-read the agent — the step ticks only if the rules are actually saved.
+              <strong className="text-text-secondary font-medium">Check again</strong> to re-read
+              the agent — the step ticks only if the rules are actually saved.
             </p>
           )}
         </>
