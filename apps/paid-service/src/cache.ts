@@ -14,6 +14,8 @@
  * honest `asOf`, which is what every commercial data API does.
  */
 
+import { setTimeout as sleep } from 'node:timers/promises';
+
 import type { DataSource } from './sources/types.js';
 
 /** A cached payload and when it was fetched. */
@@ -43,24 +45,45 @@ export class SourceCache {
   }
 
   /**
-   * Fetches feeds once, in the order given.
+   * Loads every feed, one stage at a time, before anything is offered for sale.
    *
-   * @param stages - Groups of feeds. Each group is fetched in parallel, and
-   *   groups run in sequence, so a composed feed can be warmed after the raw
-   *   feeds it reads.
-   * @returns The sources that loaded. Only these may be sold.
+   * @param stages - Feeds in dependency order. A composed feed reads the raw
+   *   snapshots, so it cannot be warmed in the same stage as its inputs.
+   * @param options - How many times to try each feed, and how long to wait
+   *   between attempts.
+   * @returns The feeds that loaded, in declaration order.
    * @remarks Never rejects: one dead upstream must not stop the seller from
    *   offering the feeds that do work.
+   *
+   *   Retried rather than attempted once. A feed that fails here is not
+   *   registered for sale at all, and routes are fixed when the port binds, so
+   *   one slow upstream at the wrong moment used to cost that feed for the
+   *   lifetime of the process — and every composed feed that reads it with it.
    */
-  public async warm(stages: ReadonlyArray<readonly DataSource[]>): Promise<DataSource[]> {
-    const loaded: DataSource[] = [];
+  public async warm(
+    stages: ReadonlyArray<readonly DataSource[]>,
+    options: { attempts?: number; retryDelayMs?: number } = {},
+  ): Promise<DataSource[]> {
+    const attempts = Math.max(1, options.attempts ?? 3);
+    const retryDelayMs = options.retryDelayMs ?? 2_000;
+    const warmed = new Set<string>();
+
     for (const stage of stages) {
-      const results = await Promise.all(
-        stage.map(async (source) => ((await this.#refresh(source)) ? source : null)),
-      );
-      loaded.push(...results.filter((source): source is DataSource => source !== null));
+      let pending = [...stage];
+      for (let attempt = 1; attempt <= attempts && pending.length > 0; attempt += 1) {
+        if (attempt > 1) await sleep(retryDelayMs);
+        const results = await Promise.all(
+          pending.map(async (source) => ({ source, ok: await this.#refresh(source) })),
+        );
+        for (const { source, ok } of results) if (ok) warmed.add(source.id);
+        pending = results.filter(({ ok }) => !ok).map(({ source }) => source);
+      }
     }
-    return loaded;
+
+    // Declaration order, not the order they happened to succeed in: the
+    // catalog is read by people, and a feed should not move because its
+    // upstream was slow the first time.
+    return stages.flat().filter((source) => warmed.has(source.id));
   }
 
   /**
