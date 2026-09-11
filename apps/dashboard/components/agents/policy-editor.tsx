@@ -8,6 +8,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Field, Input } from '@/components/ui/field';
 import { Segmented } from '@/components/ui/segmented';
+import { Switch } from '@/components/ui/switch';
 import { TokenList } from '@/components/ui/token-list';
 import { IDLE_ACTION, type ActionState } from '@/lib/action-state';
 import { setPolicyAction } from '@/lib/actions';
@@ -142,8 +143,16 @@ export function PolicyEditor({ agentId, policy }: PolicyEditorProps) {
               />
             </Field>
 
-            <Field htmlFor="policy-threshold" label="Approval threshold">
-              <div className="flex items-center gap-2">
+            <Field
+              htmlFor="policy-threshold"
+              label="Approval threshold"
+              hint={
+                thresholdOn
+                  ? 'Anything at or above this waits for a person.'
+                  : 'Off: nothing is held for approval.'
+              }
+            >
+              <div className="flex items-center gap-2.5">
                 <Input
                   id="policy-threshold"
                   inputMode="decimal"
@@ -153,15 +162,12 @@ export function PolicyEditor({ agentId, policy }: PolicyEditorProps) {
                   placeholder={thresholdOn ? '0.00' : 'No threshold'}
                   onChange={(event) => patch({ approvalThreshold: event.target.value })}
                 />
-                <label className="text-text-secondary flex shrink-0 cursor-pointer items-center gap-1.5 text-xs">
-                  <input
-                    type="checkbox"
-                    checked={thresholdOn}
-                    onChange={(event) => setThresholdOn(event.target.checked)}
-                    className="accent-accent-600 size-3.5"
-                  />
-                  On
-                </label>
+                <Switch
+                  id="policy-threshold-on"
+                  checked={thresholdOn}
+                  onCheckedChange={setThresholdOn}
+                  label="Hold payments above a threshold for approval"
+                />
               </div>
             </Field>
 
