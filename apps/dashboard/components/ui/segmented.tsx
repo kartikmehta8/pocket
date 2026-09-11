@@ -18,6 +18,11 @@ export interface SegmentedProps<T extends string> {
   options: ReadonlyArray<SegmentedOption<T>>;
   onValueChange: (value: T) => void;
   className?: string;
+  /**
+   * Extra classes for each item, for a surface the theme's palette does not
+   * suit — the blue agent header, for instance.
+   */
+  itemClassName?: string;
 }
 
 /**
@@ -30,6 +35,7 @@ export function Segmented<T extends string>({
   options,
   onValueChange,
   className,
+  itemClassName,
 }: SegmentedProps<T>) {
   return (
     <ToggleGroup.Root
@@ -52,6 +58,7 @@ export function Segmented<T extends string>({
             'text-text-secondary cursor-pointer rounded-sm px-2.5 py-1 text-xs font-medium',
             'hover:text-text transition-colors duration-(--duration-fast) ease-(--ease-brand)',
             'data-[state=on]:bg-surface data-[state=on]:text-text data-[state=on]:shadow-e1',
+            itemClassName,
           )}
         >
           {option.label}

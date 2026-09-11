@@ -1,15 +1,16 @@
 import type { Metadata } from 'next';
+import { ArrowUpRight } from 'lucide-react';
+import Link from 'next/link';
 import { notFound } from 'next/navigation';
 
 import { AgentHeader } from '@/components/agents/agent-header';
 import { BudgetEditor } from '@/components/agents/budget-editor';
-import { PaymentPreview } from '@/components/agents/payment-preview';
 import { PolicyEditor } from '@/components/agents/policy-editor';
 import { TaskBudgets } from '@/components/agents/task-budgets';
 import { PaymentsTable } from '@/components/payments/payments-table';
 import { ApiErrorState } from '@/components/ui/api-error';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { getAgent, listPayments } from '@/lib/api';
+import { Button } from '@/components/ui/button';
+import { getAgent, listAgents, listPayments } from '@/lib/api';
 
 /** Agent detail reflects live budget and policy state on every request. */
 export const dynamic = 'force-dynamic';
@@ -32,13 +33,14 @@ export async function generateMetadata({ params }: RouteProps): Promise<Metadata
 
 /**
  * Agent detail: status, wallet and balance, budget, the full policy document,
- * task budgets, a policy dry-run, and this agent's payment history.
+ * task budgets, and this agent's payment history.
  */
 export default async function AgentDetailPage({ params }: RouteProps) {
   const { id } = await params;
-  const [detailResult, paymentsResult] = await Promise.all([
+  const [detailResult, paymentsResult, agentsResult] = await Promise.all([
     getAgent(id),
-    listPayments({ agentId: id, limit: 100 }),
+    listPayments({ agentId: id, limit: 30 }),
+    listAgents(),
   ]);
 
   if (!detailResult.ok) {
@@ -52,49 +54,67 @@ export default async function AgentDetailPage({ params }: RouteProps) {
   // An agent with no policy row cannot spend at all: the engine denies by
   // default. The editor renders empty so an operator can set the first one.
   const asset = detail.agent.budget?.asset ?? detail.policy?.allowedAssets[0] ?? 'USDC';
-  const chain = detail.agent.wallet?.chain ?? detail.policy?.allowedChains[0] ?? 'hedera-testnet';
+  // Somewhere to move funds to before this agent is deleted. Revoked agents
+  // are left out: money moved into one is stranded just as surely. A failed
+  // listing is not an empty one, but it reads as one here, and the dialog then
+  // says there is nowhere to move to — the safe thing to be wrong about.
+  const others = (agentsResult.ok ? agentsResult.data.agents : []).filter(
+    (other) => other.id !== detail.agent.id && other.status !== 'revoked',
+  );
 
   return (
     <>
-      <AgentHeader detail={detail} />
+      <AgentHeader detail={detail} others={others} />
 
-      <div className="grid gap-4 xl:grid-cols-[minmax(0,2fr)_minmax(0,1fr)]">
-        <div className="flex flex-col gap-4">
+      <div className="grid items-start gap-6 xl:grid-cols-[minmax(0,1fr)_22rem]">
+        <div className="flex min-w-0 flex-col gap-6">
           <BudgetEditor agentId={detail.agent.id} budget={detail.agent.budget} />
           <PolicyEditor agentId={detail.agent.id} policy={detail.policy} />
         </div>
-        <TaskBudgets
-          agentId={detail.agent.id}
-          taskBudgets={detail.taskBudgets}
-          defaultAsset={asset}
-        />
+        {/* Follows a long policy form down the page rather than leaving a
+            column of empty space beside it. */}
+        <div className="xl:sticky xl:top-20">
+          <TaskBudgets
+            agentId={detail.agent.id}
+            taskBudgets={detail.taskBudgets}
+            defaultAsset={asset}
+          />
+        </div>
       </div>
 
-      <PaymentPreview agentId={detail.agent.id} defaultAsset={asset} defaultChain={chain} />
-
-      <Card>
-        <CardHeader>
-          <div>
-            <CardTitle>Payments</CardTitle>
-            <CardDescription>Every payment this agent has attempted, newest first.</CardDescription>
-          </div>
-        </CardHeader>
-        <CardContent className="px-0 pb-0">
-          {paymentsResult.ok ? (
+      <section className="flex flex-col gap-3">
+        <div>
+          <h2 className="text-text text-md font-semibold tracking-tight">Payments</h2>
+          <p className="text-text-muted mt-0.5 text-sm">
+            This agent&rsquo;s most recent attempts, including the ones policy stopped.
+          </p>
+        </div>
+        {paymentsResult.ok ? (
+          <div className="bg-surface border-border overflow-hidden rounded-lg border">
             <PaymentsTable
               payments={paymentsResult.data.payments}
               showAgent={false}
               emptyTitle="This agent has not attempted a payment"
             />
-          ) : (
-            <ApiErrorState
-              subject="payments"
-              code={paymentsResult.code}
-              message={paymentsResult.message}
-            />
-          )}
-        </CardContent>
-      </Card>
+            {paymentsResult.data.nextCursor === null ? null : (
+              <div className="border-divider flex justify-end border-t px-4 py-3">
+                <Button asChild size="sm">
+                  <Link href={`/payments?agentId=${encodeURIComponent(detail.agent.id)}`}>
+                    All payments
+                    <ArrowUpRight aria-hidden className="size-3.5" strokeWidth={2} />
+                  </Link>
+                </Button>
+              </div>
+            )}
+          </div>
+        ) : (
+          <ApiErrorState
+            subject="payments"
+            code={paymentsResult.code}
+            message={paymentsResult.message}
+          />
+        )}
+      </section>
     </>
   );
 }
