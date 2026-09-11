@@ -7,8 +7,8 @@ import type { ApiResult } from './http';
 import type {
   AgentDetail,
   AgentSummary,
+  AgentTransfer,
   AuditEvent,
-  Decision,
   Health,
   Payment,
   PaymentStats,
@@ -107,6 +107,34 @@ export function patchAgent(
   });
 }
 
+/**
+ * `POST /v1/agents/:id/transfer` — move an agent's whole balance to another.
+ *
+ * @param id The agent being emptied.
+ * @param body The agent to receive the funds, and optionally the asset.
+ */
+export function transferAgentFunds(
+  id: string,
+  body: { toAgentId: string; asset?: string },
+): Promise<ApiResult<{ transfer: AgentTransfer }>> {
+  return request<{ transfer: AgentTransfer }>(
+    'POST',
+    `/v1/agents/${encodeURIComponent(id)}/transfer`,
+    { body },
+  );
+}
+
+/**
+ * `DELETE /v1/agents/:id` — retire an agent.
+ *
+ * @param id The agent to delete.
+ * @remarks Refused while the wallet still holds funds. The payments it made
+ * stay in the ledger; only the agent stops being offered anywhere.
+ */
+export function deleteAgent(id: string): Promise<ApiResult<Record<string, never>>> {
+  return request<Record<string, never>>('DELETE', `/v1/agents/${encodeURIComponent(id)}`);
+}
+
 /** `PUT /v1/agents/:id/budget` — replace the daily and per-transaction limits. */
 export function putBudget(
   id: string,
@@ -161,20 +189,6 @@ export function rejectPayment(id: string, note?: string): Promise<ApiResult<{ pa
   return request<{ payment: Payment }>('POST', `/v1/payments/${encodeURIComponent(id)}/reject`, {
     body: { note },
   });
-}
-
-/** `POST /v1/payments/preview` — evaluate a payment without spending. */
-export function previewPayment(body: {
-  agentId: string;
-  amount: string;
-  asset: string;
-  chain: string;
-  recipient: string;
-  category: string;
-  reason: string;
-  initiatedBy: 'agent' | 'human';
-}): Promise<ApiResult<{ decision: Decision }>> {
-  return request<{ decision: Decision }>('POST', '/v1/payments/preview', { body });
 }
 
 /**

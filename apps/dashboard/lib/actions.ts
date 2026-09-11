@@ -6,13 +6,14 @@ import {
   approvePayment,
   closeTaskBudget,
   createTaskBudget,
+  deleteAgent,
   patchAgent,
-  previewPayment,
   putBudget,
   putPolicy,
   rejectPayment,
+  transferAgentFunds,
 } from './api';
-import type { ActionState, PreviewState } from './action-state';
+import type { ActionState } from './action-state';
 import type { ApiResult } from './http';
 import type { AgentStatus, Policy } from './types';
 
@@ -45,6 +46,43 @@ export async function setAgentStatusAction(
   const result = await patchAgent(agentId, { status });
   if (result.ok) revalidateAll(agentId);
   return toState(result, `Agent is now ${status}.`);
+}
+
+/**
+ * Move an agent's whole balance to another agent.
+ *
+ * @param agentId The agent being emptied.
+ * @param toAgentId The agent receiving the funds.
+ * @returns What moved, or why nothing did.
+ * @remarks A treasury movement between two wallets the organization already
+ * custodies. No policy governs it and no budget is drawn down, so it lands in
+ * the audit trail rather than the payment ledger.
+ */
+export async function transferAgentFundsAction(
+  agentId: string,
+  toAgentId: string,
+): Promise<ActionState> {
+  const result = await transferAgentFunds(agentId, { toAgentId });
+  if (!result.ok) return toState(result, '');
+  revalidateAll(agentId);
+  revalidatePath(`/agents/${toAgentId}`);
+  const { amount, asset } = result.data.transfer;
+  return { status: 'success', message: `Moved ${amount} ${asset}.` };
+}
+
+/**
+ * Retire an agent.
+ *
+ * @param agentId The agent to delete.
+ * @returns Success, or the reason it was refused.
+ * @remarks The API refuses while the wallet still holds funds, which is why
+ * the dialog offers to move them first. Payments the agent made stay in the
+ * ledger; only the agent stops being offered anywhere.
+ */
+export async function deleteAgentAction(agentId: string): Promise<ActionState> {
+  const result = await deleteAgent(agentId);
+  if (result.ok) revalidateAll(agentId);
+  return toState(result, 'Agent deleted.');
 }
 
 /**
@@ -126,42 +164,4 @@ export async function rejectPaymentAction(paymentId: string, note?: string): Pro
   const result = await rejectPayment(paymentId, note);
   if (result.ok) revalidateAll(result.data.payment.agentId);
   return toState(result, 'Payment rejected.');
-}
-
-/**
- * Evaluate a proposed payment against an agent's policy without spending.
- *
- * @param previous Prior state, used to bump the reveal revision counter.
- * @param formData Fields from the preview form.
- */
-export async function previewPaymentAction(
-  previous: PreviewState,
-  formData: FormData,
-): Promise<PreviewState> {
-  const read = (key: string): string => {
-    const value = formData.get(key);
-    return typeof value === 'string' ? value.trim() : '';
-  };
-
-  const result = await previewPayment({
-    agentId: read('agentId'),
-    amount: read('amount'),
-    asset: read('asset'),
-    chain: read('chain'),
-    recipient: read('recipient'),
-    category: read('category'),
-    reason: read('reason'),
-    initiatedBy: 'human',
-  });
-
-  const revision = previous.revision + 1;
-  if (!result.ok) {
-    return {
-      status: 'error',
-      message: `${result.code}: ${result.message}`,
-      decision: null,
-      revision,
-    };
-  }
-  return { status: 'success', message: '', decision: result.data.decision, revision };
 }

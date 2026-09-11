@@ -172,6 +172,16 @@ export interface PaymentStats {
 }
 
 /** Detail bundle from `GET /v1/agents/:id`. */
+/** What moving an agent's balance to another agent reports back. */
+export interface AgentTransfer {
+  /** Decimal amount moved. */
+  amount: string;
+  asset: string;
+  txHash: string;
+  /** Where the transaction can be read on chain, when the chain has an explorer. */
+  explorerUrl: string | null;
+}
+
 export interface AgentDetail {
   agent: AgentSummary;
   /** `null` until a policy is configured. An agent without one cannot spend. */

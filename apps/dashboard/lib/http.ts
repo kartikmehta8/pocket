@@ -86,6 +86,9 @@ export async function request<T>(
       cache: 'no-store',
     });
 
+    // No content is an answer, not a malformed one. A delete says so this way.
+    if (response.status === 204) return { ok: true, data: {} as T };
+
     const body: unknown = await response.json().catch(() => null);
     if (!response.ok) return readError(body, response.status);
 
