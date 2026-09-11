@@ -19,8 +19,6 @@ export interface KpiRowProps {
   dailyLimit: string;
   settledCount: number;
   blockedCount: number;
-  /** Change against the previous window, already formatted. */
-  spendDelta?: { text: string; tone: Tone };
 }
 
 /**
@@ -34,7 +32,6 @@ export function KpiRow({
   dailyLimit,
   settledCount,
   blockedCount,
-  spendDelta,
 }: KpiRowProps) {
   // The meter plots the share consumed, so its severity escalates as headroom
   // runs out; the tile's own value states what is left.
@@ -49,7 +46,6 @@ export function KpiRow({
           unit={asset}
           icon={Coins}
           hint="Settled payments across every agent since midnight UTC, when daily budgets reset."
-          {...(spendDelta ? { delta: spendDelta } : {})}
         />
       </StaggerItem>
       <StaggerItem>

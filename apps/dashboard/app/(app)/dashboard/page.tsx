@@ -1,12 +1,15 @@
-import { BarChart3, Unplug } from 'lucide-react';
+import { ArrowUpRight, BarChart3, Unplug } from 'lucide-react';
+import Link from 'next/link';
 
 import { CategorySplit } from '@/components/charts/category-split';
 import { SpendAreaChart } from '@/components/charts/spend-area-chart';
 import { AnomaliesPanel } from '@/components/overview/anomalies-panel';
 import { KpiRow } from '@/components/overview/kpi-row';
 import { OnboardingBanner } from '@/components/overview/onboarding-banner';
+import { OverviewHeader } from '@/components/overview/overview-header';
 import { PaymentsTable } from '@/components/payments/payments-table';
 import { ApiErrorState } from '@/components/ui/api-error';
+import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { EmptyState } from '@/components/ui/empty-state';
 import { PageHeader } from '@/components/ui/page-header';
@@ -17,7 +20,7 @@ import {
   listAgents,
   listPayments,
 } from '@/lib/api';
-import { formatAmount, formatPercentDelta, hasAmount, sumMoney } from '@/lib/format';
+import { hasAmount, sumMoney } from '@/lib/format';
 
 /** Overview reads live state on every request; nothing here is prerendered. */
 export const dynamic = 'force-dynamic';
@@ -25,14 +28,18 @@ export const dynamic = 'force-dynamic';
 /**
  * The reporting window every panel on this page shares.
  *
- * @remarks One window, stated once, so the reader never has to work out which
- * figure covers which span. The series used to run over fourteen days while
- * every counter beside it ran over seven.
+ * @remarks One window, stated once in the header, so the reader never has to
+ * work out which figure covers which span.
  */
 const WINDOW_DAYS = 7;
 
-/** How many recent payments fill the table below. Counters do not use this. */
-const RECENT_LIMIT = 50;
+/**
+ * How many recent payments the table below holds.
+ *
+ * @remarks A preview, not a page of history: ten fills the card without
+ * turning the overview into a second Payments page, which is one click away.
+ */
+const RECENT_LIMIT = 10;
 
 /**
  * What a panel shows when its own fetch failed, as opposed to coming back
@@ -64,7 +71,6 @@ export default async function OverviewPage() {
     return (
       <>
         <PageHeader
-          eyebrow="Organization"
           title="Overview"
           description={`Spend, policy outcomes and agent activity across the last ${WINDOW_DAYS} days.`}
         />
@@ -90,10 +96,15 @@ export default async function OverviewPage() {
 
   return (
     <>
-      <PageHeader
-        eyebrow="Organization"
-        title="Overview"
-        description={`Spend, policy outcomes and agent activity across the last ${WINDOW_DAYS} days.`}
+      <OverviewHeader
+        days={WINDOW_DAYS}
+        asset={asset}
+        periodSpend={summary?.periodSpend ?? '0'}
+        increasePercent={summary?.increasePercent ?? null}
+        paymentCount={stats?.total ?? 0}
+        agentCount={agents.length}
+        activeCount={agents.filter((agent) => agent.status === 'active').length}
+        largestCategory={summary?.largestCategory ?? null}
       />
 
       <OnboardingBanner
@@ -109,14 +120,6 @@ export default async function OverviewPage() {
         dailyLimit={dailyLimit}
         settledCount={stats?.settled ?? 0}
         blockedCount={stats?.blocked ?? 0}
-        {...(summary && Number.isFinite(summary.increasePercent)
-          ? {
-              spendDelta: {
-                text: `${formatPercentDelta(summary.increasePercent)} vs previous ${WINDOW_DAYS} days`,
-                tone: summary.increasePercent > 0 ? ('warning' as const) : ('success' as const),
-              },
-            }
-          : {})}
       />
 
       <div className="grid grid-cols-[minmax(0,1fr)] gap-4 xl:grid-cols-[minmax(0,3fr)_minmax(0,2fr)]">
@@ -180,21 +183,31 @@ export default async function OverviewPage() {
         </CardContent>
       </Card>
 
-      <Card>
-        <CardHeader>
-          <div>
-            <CardTitle>Recent payments</CardTitle>
-            <CardDescription>
-              {payments.length > 0
-                ? `${payments.length} most recent · ${formatAmount(sumMoney(payments.map((p) => p.amount)), asset)} attempted`
-                : 'Nothing has been attempted yet'}
-            </CardDescription>
-          </div>
-        </CardHeader>
-        <CardContent className="px-0 pb-0">
-          <PaymentsTable payments={payments.slice(0, 12)} />
-        </CardContent>
-      </Card>
+      {/* Heading outside the frame, table and footer inside it: the same
+          shape Payments, Audit and an agent's own history carry. */}
+      <section className="flex flex-col gap-3">
+        <div>
+          <h2 className="text-text text-md font-semibold tracking-tight">Recent payments</h2>
+          <p className="text-text-muted mt-0.5 text-sm">
+            {payments.length > 0
+              ? `The last ${payments.length} attempts across every agent.`
+              : 'Nothing has been attempted yet.'}
+          </p>
+        </div>
+        <div className="bg-surface border-border overflow-hidden rounded-lg border">
+          <PaymentsTable payments={payments} />
+          {payments.length === 0 ? null : (
+            <div className="border-divider flex justify-end border-t px-4 py-3">
+              <Button asChild size="sm">
+                <Link href="/payments">
+                  All payments
+                  <ArrowUpRight aria-hidden className="size-3.5" strokeWidth={2} />
+                </Link>
+              </Button>
+            </div>
+          )}
+        </div>
+      </section>
     </>
   );
 }
