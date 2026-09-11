@@ -227,7 +227,9 @@ export function PaymentsTable({
             <TH>Category</TH>
             <TH>Recipient</TH>
             <TH>Status</TH>
-            <TH className="sr-only">Expand</TH>
+            <TH>
+              <span className="sr-only">Expand</span>
+            </TH>
           </THead>
           <TBody>
             {payments.map((payment) => (

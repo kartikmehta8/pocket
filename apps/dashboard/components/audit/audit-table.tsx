@@ -284,7 +284,9 @@ export function AuditTable({ events, agents, emptyTitle = 'No audit events' }: A
             <TH>Action</TH>
             <TH>Agent</TH>
             <TH>Details</TH>
-            <TH className="sr-only">Expand</TH>
+            <TH>
+              <span className="sr-only">Expand</span>
+            </TH>
           </THead>
           <TBody>
             {events.map((event) => (

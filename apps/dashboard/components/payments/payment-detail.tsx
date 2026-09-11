@@ -3,25 +3,12 @@ import type { ReactNode } from 'react';
 
 import { Badge } from '@/components/ui/badge';
 import { CopyButton } from '@/components/ui/copy-button';
+import { Fact } from '@/components/ui/fact';
 import { categoryLabel } from '@/lib/catalog';
 import { formatDateTime, humanize, truncateAddress } from '@/lib/format';
 import type { Payment } from '@/lib/types';
 
 import { PaymentApproval } from './payment-approval';
-
-/** One row of the detail table: a label and its value. */
-function Row({ label, children }: { label: string; children: ReactNode }) {
-  return (
-    <div className="flex items-baseline gap-4 py-2">
-      <dt className="text-text-muted w-24 shrink-0 text-xs font-medium">{label}</dt>
-      {/* `anywhere` rather than `break-word`: only the former lets a long
-          address or URL shrink to its column instead of stretching the table. */}
-      <dd className="text-text min-w-0 flex-1 text-sm leading-snug [overflow-wrap:anywhere]">
-        {children}
-      </dd>
-    </div>
-  );
-}
 
 /** A hash or address: shortened, exact on hover, copied in full. */
 function Mono({ value, label }: { value: string; label: string }) {
@@ -88,8 +75,8 @@ export function PaymentDetail({ payment }: { payment: Payment }) {
 
       <div className="grid gap-x-8 md:grid-cols-2">
         <dl className="divide-divider divide-y">
-          <Row label="Reason">{payment.reason}</Row>
-          <Row label="Resource">
+          <Fact label="Reason">{payment.reason}</Fact>
+          <Fact label="Resource">
             {payment.resource ? (
               <External href={payment.resource}>
                 {payment.resource.replace(/^https?:\/\//, '')}
@@ -97,24 +84,24 @@ export function PaymentDetail({ payment }: { payment: Payment }) {
             ) : (
               <None />
             )}
-          </Row>
-          <Row label="Recipient">
+          </Fact>
+          <Fact label="Recipient">
             <Mono value={payment.recipient} label="recipient address" />
-          </Row>
-          <Row label="Network">{humanize(payment.chain)}</Row>
+          </Fact>
+          <Fact label="Network">{humanize(payment.chain)}</Fact>
         </dl>
         {/* The divider the first list ends on continues here at phone width,
             where the two lists stack into one. */}
         <dl className="divide-divider border-divider divide-y border-t md:border-t-0">
-          <Row label="Category">{categoryLabel(payment.category)}</Row>
-          <Row label="Task budget">
+          <Fact label="Category">{categoryLabel(payment.category)}</Fact>
+          <Fact label="Task budget">
             {payment.taskBudgetId ? (
               <span className="figures font-mono text-xs">{payment.taskBudgetId}</span>
             ) : (
               <None />
             )}
-          </Row>
-          <Row label="Transaction">
+          </Fact>
+          <Fact label="Transaction">
             {payment.txHash ? (
               <span className="inline-flex min-w-0 flex-wrap items-center gap-x-3 gap-y-1">
                 <Mono value={payment.txHash} label="transaction hash" />
@@ -125,8 +112,8 @@ export function PaymentDetail({ payment }: { payment: Payment }) {
             ) : (
               <None>None yet</None>
             )}
-          </Row>
-          <Row label="Refused">
+          </Fact>
+          <Fact label="Refused">
             {payment.denialCode ? (
               <Badge tone="danger">
                 <span className="font-mono">{payment.denialCode}</span>
@@ -134,7 +121,7 @@ export function PaymentDetail({ payment }: { payment: Payment }) {
             ) : (
               <None>No</None>
             )}
-          </Row>
+          </Fact>
         </dl>
       </div>
 

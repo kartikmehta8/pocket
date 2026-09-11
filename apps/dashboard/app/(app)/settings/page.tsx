@@ -1,15 +1,16 @@
 import type { Metadata } from 'next';
-import { KeyRound } from 'lucide-react';
 
 import { getOrg, listApiKeys } from '@/lib/api';
+import { formatDateTime } from '@/lib/format';
 import { serviceUrls } from '@/lib/urls';
-import { ApiKeyRow } from '@/components/settings/api-key-row';
+import { ApiKeysTable } from '@/components/settings/api-keys-table';
 import { OrgForm } from '@/components/settings/org-form';
 import { ApiKeyMinter } from '@/components/setup/api-key-minter';
 import { ApiErrorState } from '@/components/ui/api-error';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { CodeBlock } from '@/components/ui/code-block';
-import { EmptyState } from '@/components/ui/empty-state';
+import { CopyButton } from '@/components/ui/copy-button';
+import { Fact } from '@/components/ui/fact';
 import { InlineCode } from '@/components/ui/inline-code';
 import { PageHeader } from '@/components/ui/page-header';
 
@@ -20,26 +21,27 @@ export const metadata: Metadata = { title: 'Settings' };
 export const dynamic = 'force-dynamic';
 
 /**
- * Settings: the organization name, its credentials, and where agents connect.
+ * Settings: the organization, its credentials, and where agents connect.
  *
- * @remarks Held to a reading measure rather than the full content column. These
- * are short forms and two addresses, and stretched across a wide screen a
- * single-line input reads as a mistake. Adapter wiring is not repeated here;
- * it lives in the sidebar, on every page.
+ * @remarks The full content column, as on every other page. The organization
+ * card anchors the top: the rename form on one side, the facts about the
+ * account on the other. Below it the keys sit in a table, with creating a
+ * key and the endpoints parked in the column the table does not need.
+ * Adapter wiring is not repeated here; it lives in the sidebar, on every page.
  */
 export default async function SettingsPage() {
   const [accountResult, keysResult] = await Promise.all([getOrg(), listApiKeys()]);
 
   if (!accountResult.ok) {
     return (
-      <div className="gap-section flex w-full max-w-3xl flex-col">
+      <>
         <PageHeader title="Settings" />
         <ApiErrorState
           subject="your settings"
           code={accountResult.code}
           message={accountResult.message}
         />
-      </div>
+      </>
     );
   }
 
@@ -50,92 +52,99 @@ export default async function SettingsPage() {
   const urls = serviceUrls();
 
   return (
-    <div className="gap-section flex w-full max-w-5xl flex-col">
+    <>
       <PageHeader
         title="Settings"
         description="Rename your organization, manage the keys your agents authenticate with, and copy the addresses they connect to."
       />
 
-      <div className="grid items-start gap-6 lg:grid-cols-[minmax(0,1fr)_19rem]">
-        <div className="flex min-w-0 flex-col gap-6">
-          <Card>
+      <Card pop>
+        <CardContent className="grid gap-x-10 gap-y-6 pt-5 lg:grid-cols-2">
+          <div className="flex flex-col gap-4">
+            <div>
+              <h2 className="text-text text-md font-semibold tracking-tight">Organization</h2>
+              <p className="text-text-muted mt-0.5 text-sm">
+                {user?.email
+                  ? `Signed in as ${user.email}`
+                  : machine
+                    ? 'Authenticated with an API key'
+                    : 'Signed in'}
+              </p>
+            </div>
+            <OrgForm name={org.name} disabled={machine} />
+          </div>
+
+          <dl className="divide-divider border-divider divide-y border-t pt-1 lg:border-t-0 lg:pt-0">
+            <Fact label="Organization id">
+              <span className="figures inline-flex items-center gap-1 font-mono text-xs">
+                {org.id}
+                <CopyButton value={org.id} label="organization id" />
+              </span>
+            </Fact>
+            <Fact label="Members">{org.members}</Fact>
+            <Fact label="Created">
+              <time dateTime={org.createdAt}>{formatDateTime(org.createdAt)}</time>
+            </Fact>
+            <Fact label="Live keys">
+              {keysResult.ok ? liveKeys : <span className="text-text-muted">Not visible here</span>}
+            </Fact>
+          </dl>
+        </CardContent>
+      </Card>
+
+      <div className="grid items-start gap-6 lg:grid-cols-[minmax(0,1fr)_22rem]">
+        <section className="flex flex-col gap-3">
+          <div>
+            <h2 className="text-text text-md font-semibold tracking-tight">API keys</h2>
+            <p className="text-text-muted mt-0.5 text-sm">
+              Presented by your MCP server and any agent runtime that calls Pocket directly.
+            </p>
+          </div>
+          <div className="bg-surface border-border overflow-hidden rounded-lg border">
+            {keysResult.ok ? (
+              <ApiKeysTable keys={keys} />
+            ) : (
+              <p className="text-text-secondary px-5 py-4 text-sm leading-relaxed">
+                This dashboard is authenticated with <InlineCode>POCKET_API_KEY</InlineCode> rather
+                than a signed-in account, so it cannot manage credentials. Remove that variable and
+                sign in to use key management.
+              </p>
+            )}
+          </div>
+        </section>
+
+        <div className="flex flex-col gap-6">
+          {keysResult.ok ? (
+            <Card pop>
+              <CardHeader>
+                <div>
+                  <CardTitle>Create a key</CardTitle>
+                  <CardDescription>Shown once. Only a hash is kept.</CardDescription>
+                </div>
+              </CardHeader>
+              <CardContent>
+                <ApiKeyMinter existing={liveKeys} />
+              </CardContent>
+            </Card>
+          ) : null}
+
+          <Card pop>
             <CardHeader>
               <div>
-                <CardTitle>Organization</CardTitle>
-                <CardDescription>
-                  {user?.email
-                    ? `Signed in as ${user.email}`
-                    : machine
-                      ? 'Authenticated with an API key'
-                      : 'Signed in'}
-                </CardDescription>
+                <CardTitle>Endpoints</CardTitle>
+                <CardDescription>Where your agent runtime connects.</CardDescription>
               </div>
             </CardHeader>
-            <CardContent>
-              <OrgForm name={org.name} disabled={machine} />
+            <CardContent className="flex flex-col gap-3">
+              {/* Wrapped, not scrolled: this column is narrow and a production
+                  URL runs past its edge, where a scrollbar hides the tail of
+                  the very value the card exists to show. */}
+              <CodeBlock wrap code={urls.mcp} label="MCP endpoint" caption="MCP server" />
+              <CodeBlock wrap code={urls.api} label="API base URL" caption="Pocket API" />
             </CardContent>
           </Card>
-
-          <Card>
-            <CardHeader>
-              <div>
-                <CardTitle>API keys</CardTitle>
-                <CardDescription>
-                  Presented by your MCP server and any agent runtime that calls Pocket directly.
-                </CardDescription>
-              </div>
-            </CardHeader>
-
-            {keysResult.ok ? (
-              <>
-                {keys.length === 0 ? (
-                  <CardContent>
-                    <EmptyState
-                      icon={KeyRound}
-                      title="No keys yet"
-                      description="Create one so your MCP server can authenticate."
-                    />
-                  </CardContent>
-                ) : (
-                  <ul className="border-divider border-t">
-                    {keys.map((key) => (
-                      <ApiKeyRow key={key.id} apiKey={key} canRevoke={liveKeys > 1} />
-                    ))}
-                  </ul>
-                )}
-                <CardContent className="border-divider border-t pt-4">
-                  <ApiKeyMinter existing={liveKeys} />
-                </CardContent>
-              </>
-            ) : (
-              <CardContent>
-                <p className="text-text-secondary text-sm leading-relaxed">
-                  This dashboard is authenticated with <InlineCode>POCKET_API_KEY</InlineCode>{' '}
-                  rather than a signed-in account, so it cannot manage credentials. Remove that
-                  variable and sign in to use key management.
-                </p>
-              </CardContent>
-            )}
-          </Card>
         </div>
-
-        {/* Reference, not a form: parked in the column the forms do not need. */}
-        <Card pop className="lg:sticky lg:top-20">
-          <CardHeader>
-            <div>
-              <CardTitle>Endpoints</CardTitle>
-              <CardDescription>Where your agent runtime connects.</CardDescription>
-            </div>
-          </CardHeader>
-          <CardContent className="flex flex-col gap-3">
-            {/* Wrapped, not scrolled: this column is narrow and a production
-                URL runs past its edge, where a scrollbar hides the tail of the
-                very value the card exists to show. */}
-            <CodeBlock wrap code={urls.mcp} label="MCP endpoint" caption="MCP server" />
-            <CodeBlock wrap code={urls.api} label="API base URL" caption="Pocket API" />
-          </CardContent>
-        </Card>
       </div>
-    </div>
+    </>
   );
 }
