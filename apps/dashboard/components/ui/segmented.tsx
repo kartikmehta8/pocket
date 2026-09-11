@@ -55,7 +55,7 @@ export function Segmented<T extends string>({
           key={option.value}
           value={option.value}
           className={cn(
-            'text-text-secondary cursor-pointer rounded-sm px-2.5 py-1 text-xs font-medium',
+            'text-text-secondary inline-flex cursor-pointer items-center rounded-sm px-2.5 py-1 text-xs font-medium',
             'hover:text-text transition-colors duration-(--duration-fast) ease-(--ease-brand)',
             'data-[state=on]:bg-surface data-[state=on]:text-text data-[state=on]:shadow-e1',
             itemClassName,

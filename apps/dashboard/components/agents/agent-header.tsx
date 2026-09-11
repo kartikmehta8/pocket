@@ -63,7 +63,7 @@ export function AgentHeader({ detail, others }: AgentHeaderProps) {
             {/* Left-aligned under the description on a phone, where wrapping
                 a right-aligned column leaves the status control and the
                 buttons on different edges. */}
-            <div className="flex shrink-0 flex-col items-start gap-2 sm:items-end">
+            <div className="flex shrink-0 flex-col items-stretch gap-2 sm:items-end">
               <AgentStatusControl agentId={agent.id} status={agent.status} />
               <div className="-ml-2.5 flex items-center gap-1 sm:ml-0">
                 <Button
@@ -88,11 +88,19 @@ export function AgentHeader({ detail, others }: AgentHeaderProps) {
             </div>
           </div>
 
-          <div className="flex flex-wrap items-center gap-2 text-xs text-white/75">
-            <Wallet aria-hidden className="size-3.5 shrink-0" strokeWidth={1.75} />
-            {agent.wallet ? (
-              <>
-                <span className="figures font-mono" title={agent.wallet.address}>
+          {agent.wallet === null ? (
+            <p className="flex items-center gap-2 text-xs text-white/75">
+              <Wallet aria-hidden className="size-3.5 shrink-0" strokeWidth={1.75} />
+              No wallet provisioned
+            </p>
+          ) : (
+            // Separators lead their item rather than trailing the one before,
+            // so a line that wraps takes its separator with it instead of
+            // leaving a stranded dot at the end.
+            <ul className="flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-white/75 [&>li+li]:before:mr-2 [&>li+li]:before:text-white/50 [&>li+li]:before:content-['·']">
+              <li className="flex min-w-0 items-center gap-1.5">
+                <Wallet aria-hidden className="size-3.5 shrink-0" strokeWidth={1.75} />
+                <span className="figures truncate font-mono" title={agent.wallet.address}>
                   {truncateAddress(agent.wallet.address, 10, 8)}
                 </span>
                 <CopyButton
@@ -100,19 +108,13 @@ export function AgentHeader({ detail, others }: AgentHeaderProps) {
                   label="wallet address"
                   className="text-white/60 hover:bg-white/10 hover:text-white"
                 />
-                <span className="text-white/50">·</span>
-                <span>{agent.wallet.chain}</span>
-                {detail.accountId ? (
-                  <>
-                    <span className="text-white/50">·</span>
-                    <span className="figures font-mono">{detail.accountId}</span>
-                  </>
-                ) : null}
-              </>
-            ) : (
-              <span>No wallet provisioned</span>
-            )}
-          </div>
+              </li>
+              <li>{agent.wallet.chain}</li>
+              {detail.accountId === null ? null : (
+                <li className="figures font-mono">{detail.accountId}</li>
+              )}
+            </ul>
+          )}
         </div>
 
         <div className="grid grid-cols-2 gap-4 border-t border-white/20 bg-white/5 p-5 sm:grid-cols-4 sm:px-6">

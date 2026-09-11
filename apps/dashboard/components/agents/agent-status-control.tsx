@@ -44,8 +44,9 @@ export function AgentStatusControl({ agentId, status }: { agentId: string; statu
         label="Agent status"
         value={value}
         options={OPTIONS}
-        className="border border-white/25 bg-white/10 ring-0"
-        itemClassName="text-white/70 hover:text-white data-[state=on]:bg-white data-[state=on]:text-accent-700"
+        className="flex w-full border border-white/25 bg-white/10 ring-0 sm:w-auto"
+        itemClassName="flex-1 justify-center text-white/70 hover:text-white data-[state=on]:bg-white data-[state=on]:text-accent-700 sm:flex-none"
+
         onValueChange={(next) => {
           const previous = value;
           setValue(next);
