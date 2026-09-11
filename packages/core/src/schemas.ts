@@ -65,6 +65,7 @@ export const createAgentSchema = z.object({
 
 /** Body accepted when updating an agent's operational state. */
 export const updateAgentSchema = z.object({
+  name: z.string().min(1).max(120).optional(),
   status: z.enum(AGENT_STATUSES).optional(),
   description: z.string().max(500).optional(),
   metadata: z.record(z.string(), z.string()).optional(),

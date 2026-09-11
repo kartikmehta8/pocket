@@ -110,6 +110,13 @@ does not have to guess.
 | `pocket_list_payments`      | Recent purchases, refusals included      | No     |
 | `pocket_audit_trail`        | The full record                          | No     |
 
+## Renaming
+
+**Edit**, on the agent's page, changes its name and description. The name is
+not a label kept alongside the record: it is the agent's name, so every payment
+and every audit entry reads back under the new one. There is one agent, and it
+is now called this.
+
 ## Pausing and revoking
 
 On the agent's page you can **pause** it, which refuses everything until you
@@ -125,10 +132,15 @@ What it does not do is erase what the agent spent. Its payments stay on
 **Payments** and **Audit** under the name it had, refusals included. Deleting an
 agent hides the agent, never the record.
 
-If the wallet still holds money, Pocket will not let you delete until it has
-somewhere to go. The dialog asks which of your other agents should have it,
-moves the whole balance in one transaction, and then retires the agent. There
-is no way to strand funds behind a page you can no longer open.
+If the wallet still holds money, Pocket asks where it should go before letting
+you delete. Pick one of your other agents and the whole balance moves in one
+transaction, then the agent is retired.
+
+Sometimes it cannot move. The wallet pays the fee for that transfer itself, so
+one holding no HBAR cannot send, and a lone agent has nowhere to send to. The
+dialog then offers to delete and leave the balance where it is. Privy still
+custodies it, and the amount and the address go into the audit trail, so
+nothing is lost quietly.
 
 ## Getting good behaviour
 

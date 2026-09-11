@@ -44,6 +44,65 @@ function walletOf(bundle: AgentBundle, role: string) {
 }
 
 /**
+ * Refuses before broadcasting when the sender cannot pay for the transaction.
+ *
+ * @param ctx - Application context.
+ * @param name - The sending agent, for the message.
+ * @param address - Its wallet address.
+ * @throws {PocketError} `CONFLICT` when the wallet holds no gas.
+ * @remarks An agent wallet routinely holds no HBAR. Purchases go through the
+ * x402 facilitator, which pays the gas, which is the whole reason an agent
+ * needs no native token to transact. A direct wallet-to-wallet transfer has no
+ * facilitator behind it, so the sender pays, and a wallet with nothing to pay
+ * with fails inside Privy as `transaction_broadcast_failure` — which tells an
+ * operator nothing they can act on. The shortfall is named here instead.
+ *
+ * Only a definite zero refuses. A balance that could not be read is not a
+ * balance of nothing, and blocking on an unreachable node would turn a chain
+ * hiccup into an agent that cannot be retired.
+ */
+async function assertCanSend(ctx: AppContext, name: string, address: string): Promise<void> {
+  const gas = await ctx.chain.getBalance(address, 'HBAR').catch(() => null);
+  if (gas !== 0n) return;
+  throw new PocketError(
+    'CONFLICT',
+    `${name} has no HBAR to pay for the transfer. Send a little to its wallet and try again — it is only for the transaction fee, and the agent never spends it.`,
+    { address },
+  );
+}
+
+/**
+ * Refuses before broadcasting when the recipient cannot hold the asset.
+ *
+ * @param ctx - Application context.
+ * @param name - The receiving agent, for the message.
+ * @param address - Its wallet address.
+ * @param asset - The asset being moved.
+ * @throws {PocketError} `TOKEN_NOT_ASSOCIATED` when the wallet has not opted
+ *   into the token.
+ * @remarks Hedera accounts opt into every token they hold, and a transfer to
+ * one that has not opted in reverts. An agent that has never been funded has
+ * no account at all, which reads the same way here.
+ *
+ * `null` means the question does not apply to this chain, and an unreadable
+ * answer is not a refusal, so only an explicit `false` stops the transfer.
+ */
+async function assertCanReceive(
+  ctx: AppContext,
+  name: string,
+  address: string,
+  asset: AssetId,
+): Promise<void> {
+  const associated = await ctx.chain.isTokenAssociated(address, asset).catch(() => null);
+  if (associated !== false) return;
+  throw new PocketError(
+    'TOKEN_NOT_ASSOCIATED',
+    `${name} cannot hold ${asset} yet. Fund that agent once, which opts its wallet into the token, then move the balance.`,
+    { address, asset },
+  );
+}
+
+/**
  * Moves an agent's entire balance of one asset to another agent's wallet.
  *
  * @param ctx - Application context.
@@ -81,6 +140,9 @@ export async function transferAgentFunds(
       { agentId: from.agent.id, asset },
     );
   }
+
+  await assertCanSend(ctx, from.agent.name, source.address);
+  await assertCanReceive(ctx, to.agent.name, target.address, asset);
 
   const submitted = await ctx.wallet.sendPayment({
     providerWalletId: source.providerWalletId,

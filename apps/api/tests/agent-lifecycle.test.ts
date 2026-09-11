@@ -161,6 +161,67 @@ describe('DELETE /v1/agents/:id', () => {
     expect(ids).toContain(paymentId);
   });
 
+  it('refuses to send from a wallet with no gas, and says what is missing', async () => {
+    const from = await register('Gasless');
+    const to = await register('Ready');
+    h.chain.setBalance(from.address, 'USDC', 1_000_000n);
+    // A wallet seeded by Pocket holds only USDC: purchases go through the
+    // facilitator, which pays the gas. A direct transfer has no facilitator.
+    h.chain.setBalance(from.address, 'HBAR', 0n);
+
+    const response = await h.app.inject({
+      method: 'POST',
+      url: `/v1/agents/${from.id}/transfer`,
+      headers: h.auth,
+      payload: { toAgentId: to.id },
+    });
+
+    expect(response.statusCode).toBe(409);
+    expect(response.json().error.message).toContain('no HBAR');
+  });
+
+  it('refuses to send to a wallet that cannot hold the asset', async () => {
+    const from = await register('Holder');
+    const to = await register('Unopted');
+    h.chain.setBalance(from.address, 'USDC', 1_000_000n);
+    h.chain.setAssociated(to.address, 'USDC', false);
+
+    const response = await h.app.inject({
+      method: 'POST',
+      url: `/v1/agents/${from.id}/transfer`,
+      headers: h.auth,
+      payload: { toAgentId: to.id },
+    });
+
+    expect(response.statusCode).toBe(409);
+    expect(response.json().error.code).toBe('TOKEN_NOT_ASSOCIATED');
+  });
+
+  it('deletes a funded agent when forced, recording what was left', async () => {
+    // The escape hatch: a wallet with no gas cannot send, so refusing outright
+    // would leave the agent undeletable.
+    const agent = await register('Stuck');
+    h.chain.setBalance(agent.address, 'USDC', 10_000n);
+
+    const forced = await h.app.inject({
+      method: 'DELETE',
+      url: `/v1/agents/${agent.id}?force=true`,
+      headers: h.auth,
+    });
+    expect(forced.statusCode).toBe(204);
+
+    const audit = await h.app.inject({
+      method: 'GET',
+      url: '/v1/audit?action=agent&limit=5',
+      headers: h.auth,
+    });
+    const event = audit
+      .json()
+      .events.find((row: { action: string; subjectId: string }) => row.subjectId === agent.id);
+    expect(event.payload.fundsLeft).toBe('0.01 USDC');
+    expect(event.payload.walletAddress).toBe(agent.address);
+  });
+
   it('cannot be deleted twice', async () => {
     const agent = await register('Gone');
     empty(agent.address);
@@ -190,5 +251,65 @@ describe('DELETE /v1/agents/:id', () => {
       payload: paymentBody(agentId),
     });
     expect(response.statusCode).toBe(404);
+  });
+});
+
+describe('PATCH /v1/agents/:id', () => {
+  it('renames an agent, and the new name follows its payments', async () => {
+    const agentId = await createFundedAgent(h);
+    const paid = await h.app.inject({
+      method: 'POST',
+      url: '/v1/payments',
+      headers: { ...h.auth, 'idempotency-key': randomUUID() },
+      payload: paymentBody(agentId),
+    });
+    expect(paid.statusCode).toBe(200);
+
+    const renamed = await h.app.inject({
+      method: 'PATCH',
+      url: `/v1/agents/${agentId}`,
+      headers: h.auth,
+      payload: { name: 'Renamed', description: 'Now does something else.' },
+    });
+    expect(renamed.statusCode).toBe(200);
+    expect(renamed.json().agent.name).toBe('Renamed');
+    expect(renamed.json().agent.description).toBe('Now does something else.');
+
+    // One agent, one name. The ledger reads back under whatever it is called
+    // now rather than keeping a copy of what it used to be.
+    const payments = await h.app.inject({
+      method: 'GET',
+      url: `/v1/payments?agentId=${agentId}`,
+      headers: h.auth,
+    });
+    expect(payments.json().payments[0].agentName).toBe('Renamed');
+  });
+
+  it('refuses an empty name', async () => {
+    const agent = await register('Named');
+    const response = await h.app.inject({
+      method: 'PATCH',
+      url: `/v1/agents/${agent.id}`,
+      headers: h.auth,
+      payload: { name: '' },
+    });
+    expect(response.statusCode).toBe(400);
+  });
+
+  it('clears a description when given an empty one', async () => {
+    const agent = await register('Described');
+    await h.app.inject({
+      method: 'PATCH',
+      url: `/v1/agents/${agent.id}`,
+      headers: h.auth,
+      payload: { description: 'Something' },
+    });
+    const cleared = await h.app.inject({
+      method: 'PATCH',
+      url: `/v1/agents/${agent.id}`,
+      headers: h.auth,
+      payload: { description: '' },
+    });
+    expect(cleared.json().agent.description).toBe('');
   });
 });

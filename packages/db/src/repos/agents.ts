@@ -97,6 +97,7 @@ export async function getAgentBundle(
 
 /** Fields that may be changed after registration. */
 export interface AgentUpdate {
+  name?: string | undefined;
   status?: AgentStatus | undefined;
   description?: string | undefined;
   metadata?: Record<string, string> | undefined;
@@ -118,6 +119,7 @@ export async function updateAgent(
   update: AgentUpdate,
 ): Promise<Agent | null> {
   const patch: Record<string, unknown> = {};
+  if (update.name !== undefined) patch['name'] = update.name;
   if (update.status !== undefined) patch['status'] = update.status;
   if (update.description !== undefined) patch['description'] = update.description;
   if (update.metadata !== undefined) patch['metadata'] = update.metadata;

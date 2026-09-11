@@ -161,35 +161,50 @@ export function registerAgentRoutes(app: FastifyInstance, ctx: AppContext): void
     return { transfer };
   });
 
-  app.delete<{ Params: { id: string } }>('/v1/agents/:id', async (request, reply) => {
-    const bundle = await requireAgent(ctx, request.orgId, request.params.id);
+  app.delete<{ Params: { id: string }; Querystring: { force?: string } }>(
+    '/v1/agents/:id',
+    async (request, reply) => {
+      const bundle = await requireAgent(ctx, request.orgId, request.params.id);
 
-    // Read before deleting, not after: once the agent is a tombstone there is
-    // nothing on screen that would lead anyone back to the wallet holding it.
-    const asset = bundle.budget?.asset ?? 'USDC';
-    const balance = await readBalance(ctx, bundle.wallet, asset);
-    if (balance !== null && hasFunds(balance.amount)) {
-      throw new PocketError(
-        'CONFLICT',
-        `${bundle.agent.name} still holds ${balance.amount} ${balance.asset}. Move the funds to another agent first.`,
-        { agentId: bundle.agent.id, balance },
-      );
-    }
+      // Read before deleting, not after: once the agent is a tombstone there
+      // is nothing on screen that would lead anyone back to the wallet.
+      const asset = bundle.budget?.asset ?? 'USDC';
+      const balance = await readBalance(ctx, bundle.wallet, asset);
+      const funded = balance !== null && hasFunds(balance.amount);
 
-    const agent = await softDeleteAgent(ctx.db, request.orgId, request.params.id);
-    if (agent === null) throw new PocketError('NOT_FOUND', 'Agent not found.');
+      // `force` exists because moving the balance is not always possible: a
+      // wallet with no gas cannot send, and a lone agent has nowhere to send
+      // to. Refusing outright would leave such an agent undeletable forever,
+      // so the operator may say "leave it", and what was left is recorded.
+      if (funded && request.query.force !== 'true') {
+        throw new PocketError(
+          'CONFLICT',
+          `${bundle.agent.name} still holds ${balance.amount} ${balance.asset}. Move the funds to another agent first.`,
+          { agentId: bundle.agent.id, balance },
+        );
+      }
 
-    await appendAuditEvent(ctx.db, {
-      orgId: request.orgId,
-      actorType: 'human',
-      action: 'agent.deleted',
-      subjectType: 'agent',
-      subjectId: agent.id,
-      payload: { name: agent.name, walletAddress: bundle.wallet?.address ?? null },
-    });
+      const agent = await softDeleteAgent(ctx.db, request.orgId, request.params.id);
+      if (agent === null) throw new PocketError('NOT_FOUND', 'Agent not found.');
 
-    return reply.code(204).send();
-  });
+      await appendAuditEvent(ctx.db, {
+        orgId: request.orgId,
+        actorType: 'human',
+        action: 'agent.deleted',
+        subjectType: 'agent',
+        subjectId: agent.id,
+        payload: {
+          name: agent.name,
+          walletAddress: bundle.wallet?.address ?? null,
+          // Named, not implied. The custody does not change, so the only way
+          // anyone finds this money later is by reading it here.
+          ...(funded ? { fundsLeft: `${balance.amount} ${balance.asset}` } : {}),
+        },
+      });
+
+      return reply.code(204).send();
+    },
+  );
 
   app.put<{ Params: { id: string } }>('/v1/agents/:id/budget', async (request) => {
     const body = setBudgetSchema.parse(request.body);
