@@ -98,3 +98,56 @@ export async function resolveHederaAccount(
     publicKey: PublicKey.fromStringECDSA(keyHex),
   };
 }
+
+/** What the mirror node knows about an account, without judging it. */
+export interface HederaAccountState {
+  /** The `0.0.x` entity id. */
+  accountId: string;
+  /**
+   * Whether the account has published its public key.
+   *
+   * @remarks `false` means hollow: created by a transfer to an address that
+   * has never signed anything. Pocket can still pay from one, because it holds
+   * the key from provisioning, but an outside party reading the account sees
+   * no key at all — and at least one faucet refuses to send to such an
+   * account, which is what strands an operator at the funding step.
+   */
+  keyPublished: boolean;
+}
+
+/**
+ * Reads an account's id and whether it has published a key.
+ *
+ * @param mirrorNodeUrl - Mirror node base URL.
+ * @param evmAddress - The wallet's `0x` address.
+ * @returns The account's state, or `null` when no account exists yet.
+ * @throws When the mirror node answers with anything other than success or a
+ *   404. An outage is not the same fact as an absent account, and collapsing
+ *   the two tells an operator to go and fund a wallet that is already funded.
+ * @remarks Deliberately does not throw for a hollow account, unlike
+ * {@link resolveHederaAccount}. That one answers "can this be signed for",
+ * where hollow plus a known key is fine; this one answers "what does the rest
+ * of the world see", where it is not.
+ */
+export async function readHederaAccountState(
+  mirrorNodeUrl: string,
+  evmAddress: string,
+): Promise<HederaAccountState | null> {
+  const response = await fetch(
+    `${mirrorNodeUrl.replace(/\/$/, '')}/api/v1/accounts/${evmAddress}`,
+    { signal: AbortSignal.timeout(15_000) },
+  );
+  if (response.status === 404) return null;
+  if (!response.ok) {
+    throw new PocketError('UPSTREAM_UNAVAILABLE', 'The mirror node could not be read.', {
+      evmAddress,
+      status: response.status,
+    });
+  }
+  const body = (await response.json()) as MirrorAccount;
+  if (typeof body.account !== 'string') return null;
+  return {
+    accountId: body.account,
+    keyPublished: body.key !== null && body.key !== undefined && body.key._type !== undefined,
+  };
+}

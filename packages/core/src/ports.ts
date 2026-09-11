@@ -83,6 +83,24 @@ export interface WalletProvider {
    * without the concept should resolve without broadcasting anything.
    */
   associateToken(input: AssociateTokenInput): Promise<SubmittedTransaction | null>;
+  /**
+   * Publishes the wallet's public key on chain.
+   *
+   * @remarks Hedera-specific. An account created by an incoming transfer is
+   * "hollow" — it holds a balance but carries no key until it signs something,
+   * and outside parties reading it, faucets included, may refuse it on that
+   * basis. Any signature completes it, so implementations should move no
+   * money. Chains without the concept should resolve to `null`.
+   */
+  completeAccount(input: CompleteAccountInput): Promise<SubmittedTransaction | null>;
+}
+
+/** Instruction to publish a managed wallet's key on chain. */
+export interface CompleteAccountInput {
+  providerWalletId: string;
+  address: string;
+  chain: ChainId;
+  idempotencyKey: string;
 }
 
 /** Instruction to opt a managed wallet into holding a token. */

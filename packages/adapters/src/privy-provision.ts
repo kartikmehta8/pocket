@@ -82,3 +82,34 @@ export async function sendPrivyTransaction(
     );
   }
 }
+
+/**
+ * Signs a 32-byte digest with a wallet's secp256k1 key.
+ *
+ * @param privy - Privy client.
+ * @param walletId - Provider wallet identifier.
+ * @param digest - `0x`-prefixed 32-byte hash to sign.
+ * @returns The `0x`-prefixed signature. 65 bytes: r, s and the recovery byte.
+ * @throws {PocketError} `PAYMENT_FAILED` when Privy refuses, which includes a
+ *   wallet policy denying the signing method.
+ * @remarks The primitive that lets a Privy-custodied wallet sign for chains
+ * Privy has no native integration with. The caller supplies the digest, so the
+ * hashing rule stays with whoever knows the target chain.
+ */
+export async function signPrivyDigest(
+  privy: PrivyClient,
+  walletId: string,
+  digest: `0x${string}`,
+): Promise<string> {
+  try {
+    const result = await privy.walletApi.ethereum.secp256k1Sign({ walletId, hash: digest });
+    return result.signature;
+  } catch (cause) {
+    throw new PocketError(
+      'PAYMENT_FAILED',
+      'Privy refused to sign the digest.',
+      { walletId },
+      cause,
+    );
+  }
+}

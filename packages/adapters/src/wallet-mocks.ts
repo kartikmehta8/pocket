@@ -11,6 +11,7 @@ import type {
   AssetId,
   AssociateTokenInput,
   ChainId,
+  CompleteAccountInput,
   ProvisionedWallet,
   SendPaymentInput,
   SubmittedTransaction,
@@ -37,6 +38,7 @@ export class MockWalletProvider implements WalletProvider {
   public readonly name = 'mock';
   readonly #sent: SendPaymentInput[] = [];
   readonly #associated = new Set<string>();
+  readonly #completed = new Set<string>();
 
   /**
    * Returns a deterministic address for the agent.
@@ -99,6 +101,24 @@ export class MockWalletProvider implements WalletProvider {
   /** Whether this provider was asked to associate an address with an asset. */
   public hasAssociated(address: string, asset: AssetId): boolean {
     return this.#associated.has(`${address.toLowerCase()}:${asset}`);
+  }
+
+  /**
+   * Records a completion and returns a synthetic hash.
+   *
+   * @param input - Wallet and chain.
+   * @returns A synthetic transaction.
+   */
+  public completeAccount(input: CompleteAccountInput): Promise<SubmittedTransaction | null> {
+    this.#completed.add(input.address.toLowerCase());
+    return Promise.resolve({
+      txHash: `0x${createHash('sha256').update(`complete:${input.idempotencyKey}`).digest('hex')}`,
+    });
+  }
+
+  /** Whether this provider was asked to publish an address's key. */
+  public hasCompleted(address: string): boolean {
+    return this.#completed.has(address.toLowerCase());
   }
 
   /** Every transfer this provider was asked to make, for assertions in tests. */

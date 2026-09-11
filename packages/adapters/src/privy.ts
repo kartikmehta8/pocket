@@ -10,18 +10,23 @@
 
 import { PrivyClient } from '@privy-io/server-auth';
 import {
-  PocketError,
   type AssociateTokenInput,
+  type CompleteAccountInput,
   type ProvisionedWallet,
   type SendPaymentInput,
   type SubmittedTransaction,
   type WalletProvider,
   type ChainId,
 } from '@pocket/core';
+import { chainConfig } from './chains.js';
 import { createWalletPolicy } from './privy-policy.js';
 import { publicKeyForWallet } from './secp256k1-key.js';
-import { provisionPrivyWallet, sendPrivyTransaction } from './privy-provision.js';
-import { buildAssociateTransaction, buildTransferTransaction } from './privy-transactions.js';
+import { provisionPrivyWallet, sendPrivyTransaction, signPrivyDigest } from './privy-provision.js';
+import {
+  buildAssociateTransaction,
+  buildCompleteAccountTransaction,
+  buildTransferTransaction,
+} from './privy-transactions.js';
 
 /** Options for {@link PrivyWalletProvider}. */
 export interface PrivyOptions {
@@ -112,7 +117,7 @@ export class PrivyWalletProvider implements WalletProvider {
    */
   public publicKeyFor(input: { providerWalletId: string; address: string }): Promise<string> {
     return publicKeyForWallet(
-      (digest) => this.signDigest(input.providerWalletId, digest),
+      (digest) => signPrivyDigest(this.#privy, input.providerWalletId, digest),
       input.address,
     );
   }
@@ -123,24 +128,11 @@ export class PrivyWalletProvider implements WalletProvider {
    * @param walletId - Provider wallet identifier.
    * @param digest - `0x`-prefixed 32-byte hash to sign.
    * @returns The `0x`-prefixed signature. 65 bytes: r, s and the recovery byte.
-   * @throws {PocketError} `PAYMENT_FAILED` when Privy refuses, which includes a
-   *   wallet policy denying the signing method.
-   * @remarks This is the primitive that lets a Privy-custodied wallet sign for
-   *   chains Privy has no native integration with. The caller supplies the
-   *   digest, so the hashing rule stays with whoever knows the target chain.
+   * @remarks Part of the provider's surface because the x402 signer reaches
+   *   for it through the wallet port, not only through this class.
    */
-  public async signDigest(walletId: string, digest: `0x${string}`): Promise<string> {
-    try {
-      const result = await this.#privy.walletApi.ethereum.secp256k1Sign({ walletId, hash: digest });
-      return result.signature;
-    } catch (cause) {
-      throw new PocketError(
-        'PAYMENT_FAILED',
-        'Privy refused to sign the digest.',
-        { walletId },
-        cause,
-      );
-    }
+  public signDigest(walletId: string, digest: `0x${string}`): Promise<string> {
+    return signPrivyDigest(this.#privy, walletId, digest);
   }
 
   /**
@@ -176,6 +168,26 @@ export class PrivyWalletProvider implements WalletProvider {
       ...input,
       transaction: buildTransferTransaction(input),
       refusal: 'Privy rejected the transaction.',
+    });
+  }
+
+  /**
+   * Publishes the wallet's key on chain by signing a transfer of nothing.
+   *
+   * @param input - Wallet and chain.
+   * @returns The broadcast transaction.
+   * @throws {PocketError} `PAYMENT_FAILED` when Privy rejects the call, which
+   *   for this transaction almost always means the wallet has no HBAR to pay
+   *   the gas with.
+   */
+  public async completeAccount(input: CompleteAccountInput): Promise<SubmittedTransaction | null> {
+    return await sendPrivyTransaction(this.#privy, {
+      ...input,
+      // Nothing is being moved, but the send helper labels every transaction
+      // with an asset for its error reporting. The gas asset is the honest one.
+      asset: chainConfig(input.chain).nativeAsset,
+      transaction: buildCompleteAccountTransaction(input),
+      refusal: 'Privy rejected the account completion.',
     });
   }
 }
