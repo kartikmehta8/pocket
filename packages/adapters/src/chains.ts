@@ -21,6 +21,17 @@ export interface ChainConfig {
   readonly explorerBase: string;
   /** The chain's gas asset, transferred as native value rather than a token. */
   readonly nativeAsset: AssetId;
+  /**
+   * Wei per one base unit of {@link nativeAsset}.
+   *
+   * @remarks An EVM `value` field is always denominated in wei, eighteen
+   * decimals, whatever the chain's own accounting uses. Hedera keeps HBAR in
+   * tinybars at eight, so the two differ by ten orders of magnitude and a
+   * transfer that skips the conversion moves a ten-billionth of what it meant
+   * to. Named rather than inlined because that is not a mistake anyone spots
+   * in a hex literal.
+   */
+  readonly weiPerNativeUnit: bigint;
 }
 
 /** Static configuration per supported chain. */
@@ -32,6 +43,7 @@ export const CHAIN_CONFIGS: Readonly<Record<ChainId, ChainConfig>> = {
     rpcUrl: process.env['HEDERA_RPC_URL'] ?? 'https://testnet.hashio.io/api',
     explorerBase: 'https://hashscan.io/testnet/transaction',
     nativeAsset: 'HBAR',
+    weiPerNativeUnit: 10_000_000_000n,
   },
   'hedera-mainnet': {
     chain: 'hedera-mainnet',
@@ -40,6 +52,7 @@ export const CHAIN_CONFIGS: Readonly<Record<ChainId, ChainConfig>> = {
     rpcUrl: process.env['HEDERA_MAINNET_RPC_URL'] ?? 'https://mainnet.hashio.io/api',
     explorerBase: 'https://hashscan.io/mainnet/transaction',
     nativeAsset: 'HBAR',
+    weiPerNativeUnit: 10_000_000_000n,
   },
 };
 
