@@ -22,6 +22,11 @@ import { SourceCache } from './cache.js';
 import { catalogStages, toBaseUnits } from './catalog.js';
 import { loadSellerConfig } from './config.js';
 import type { DataSource } from './sources/types.js';
+import { loadEnvFile } from '@pocket/core/env';
+
+// Before the first configuration read. `tsx` does not read `.env`, so without
+// this a service keeps whatever environment its shell had when it started.
+loadEnvFile();
 
 const config = loadSellerConfig();
 // Behind a reverse proxy the socket address is the proxy's, so without this

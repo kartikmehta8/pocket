@@ -15,6 +15,11 @@ import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { StreamableHTTPServerTransport } from '@modelcontextprotocol/sdk/server/streamableHttp.js';
 import { PocketClient } from './client.js';
 import { registerTools } from './tools.js';
+import { loadEnvFile } from '@pocket/core/env';
+
+// Before the first configuration read. `tsx` does not read `.env`, so without
+// this a service keeps whatever environment its shell had when it started.
+loadEnvFile();
 
 /**
  * Reads a variable, treating a blank one as unset.
