@@ -50,7 +50,7 @@ export function AgentHeader({ detail, others }: AgentHeaderProps) {
     <>
       <header className="border-border bg-accent-600 shadow-pop overflow-hidden rounded-lg border">
         <div className="flex flex-col gap-5 p-5 sm:p-6">
-          <div className="flex flex-wrap items-start justify-between gap-4">
+          <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
             <div className="min-w-0">
               <p className="text-2xs font-medium tracking-wide text-white/60 uppercase">Agent</p>
               <h1 className="mt-1 text-xl font-bold tracking-tight text-white sm:text-2xl">
@@ -60,9 +60,12 @@ export function AgentHeader({ detail, others }: AgentHeaderProps) {
                 {agent.description ?? 'No description'}
               </p>
             </div>
-            <div className="flex flex-col items-end gap-2">
+            {/* Left-aligned under the description on a phone, where wrapping
+                a right-aligned column leaves the status control and the
+                buttons on different edges. */}
+            <div className="flex shrink-0 flex-col items-start gap-2 sm:items-end">
               <AgentStatusControl agentId={agent.id} status={agent.status} />
-              <div className="flex items-center gap-1">
+              <div className="-ml-2.5 flex items-center gap-1 sm:ml-0">
                 <Button
                   variant="ghost"
                   size="sm"

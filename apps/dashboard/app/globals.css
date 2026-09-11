@@ -421,6 +421,22 @@
   animation: pocket-shimmer 1.6s linear infinite;
 }
 
+/*
+ * Radix overlays — every select, dialog and popover — lock the page behind
+ * `react-remove-scroll`, which hides the scrollbar and adds a margin the width
+ * of the one it hid. `scrollbar-gutter: stable` on the root already reserves
+ * that room permanently, so the margin is a second gap: the page narrows and
+ * its content slides sideways every time a menu opens.
+ *
+ * Both `!important` and `html` on the front: theirs is injected into the head
+ * at runtime, so it comes later in document order, and an equally specific
+ * rule would lose to it.
+ */
+html body[data-scroll-locked] {
+  margin-right: 0 !important;
+  padding-right: 0 !important;
+}
+
 @media (prefers-reduced-motion: reduce) {
   *,
   ::before,

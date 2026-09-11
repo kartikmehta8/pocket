@@ -73,7 +73,7 @@ export function PaymentDetail({ payment }: { payment: Payment }) {
         </span>
       </div>
 
-      <div className="grid gap-x-8 md:grid-cols-2">
+      <div className="grid grid-cols-[minmax(0,1fr)] gap-x-8 md:grid-cols-2">
         <dl className="divide-divider divide-y">
           <Fact label="Reason">{payment.reason}</Fact>
           <Fact label="Resource">

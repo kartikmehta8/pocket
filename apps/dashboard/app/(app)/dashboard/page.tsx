@@ -99,7 +99,7 @@ export default async function OverviewPage() {
           : {})}
       />
 
-      <div className="grid gap-4 xl:grid-cols-[minmax(0,3fr)_minmax(0,2fr)]">
+      <div className="grid grid-cols-[minmax(0,1fr)] gap-4 xl:grid-cols-[minmax(0,3fr)_minmax(0,2fr)]">
         <ChartFrame
           title="Spend over time"
           subtitle={`Daily settled spend in ${seriesResult.ok ? seriesResult.data.asset : asset}, last 14 days`}

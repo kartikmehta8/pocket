@@ -67,7 +67,7 @@ function Payer({
 
   return (
     <Card pop>
-      <CardContent className="grid items-end gap-4 pt-4 md:grid-cols-[minmax(0,18rem)_minmax(0,1fr)]">
+      <CardContent className="grid grid-cols-[minmax(0,1fr)] items-end gap-4 pt-4 md:grid-cols-[minmax(0,18rem)_minmax(0,1fr)]">
         <Field htmlFor={id} label="Pay from">
           <Select
             id={id}
@@ -135,7 +135,7 @@ export function Marketplace({
     <>
       <Payer agents={payers} agentId={agentId} onChange={setChosen} />
 
-      <Stagger className="grid gap-4 md:grid-cols-2">
+      <Stagger className="grid grid-cols-[minmax(0,1fr)] gap-4 md:grid-cols-2">
         {resources.map((resource) => (
           <StaggerItem key={resource.path}>
             <ResourceCard resource={resource} agentId={agentId} />

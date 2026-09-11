@@ -51,7 +51,7 @@ export default async function CapabilitiesPage() {
           </p>
         </div>
 
-        <Stagger className="grid gap-3 md:grid-cols-2">
+        <Stagger className="grid grid-cols-[minmax(0,1fr)] gap-3 md:grid-cols-2">
           {CAPABILITIES.map((capability) => (
             <StaggerItem key={capability.tool}>
               <Card className="h-full">
@@ -100,7 +100,7 @@ export default async function CapabilitiesPage() {
           </p>
         </div>
 
-        <Stagger className="grid gap-3 sm:grid-cols-3">
+        <Stagger className="grid grid-cols-[minmax(0,1fr)] gap-3 sm:grid-cols-3">
           {INTEGRATIONS.map((integration) => (
             <StaggerItem key={integration.name}>
               <Card className="h-full">

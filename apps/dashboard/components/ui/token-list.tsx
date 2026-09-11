@@ -78,9 +78,20 @@ export function TokenList({
                 animate={reduced ? { opacity: 1 } : { opacity: 1, scale: 1 }}
                 exit={{ opacity: 0 }}
                 transition={{ duration: DURATION.fast, ease: EASE }}
-                className="bg-ash-50 text-text ring-border inline-flex items-center gap-1 rounded-full py-0.5 pr-1 pl-2.5 text-xs ring-1 ring-inset"
+                className="bg-ash-50 text-text ring-border inline-flex max-w-full items-center gap-1 rounded-full py-0.5 pr-1 pl-2.5 text-xs ring-1 ring-inset"
               >
-                <span className={mono ? 'figures text-2xs font-mono' : undefined}>{value}</span>
+                {/* A wallet address is longer than a phone is wide, and a pill
+                    cannot wrap mid-word, so it is truncated with the whole
+                    value on hover. Without `min-w-0` the flex child refuses to
+                    shrink and takes the page sideways with it. */}
+                <span
+                  title={value}
+                  className={
+                    mono ? 'figures text-2xs min-w-0 truncate font-mono' : 'min-w-0 truncate'
+                  }
+                >
+                  {value}
+                </span>
                 <button
                   type="button"
                   onClick={() => onChange(values.filter((entry) => entry !== value))}
