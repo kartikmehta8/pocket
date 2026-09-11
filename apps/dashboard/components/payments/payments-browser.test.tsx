@@ -60,7 +60,6 @@ const render = (props: Partial<PaymentsBrowserProps> = {}) =>
         agentId=""
         status=""
         nextCursor={null}
-        page={1}
         {...props}
       />
     </TooltipProvider>,
@@ -78,21 +77,21 @@ describe('PaymentsBrowser', () => {
   it('shows no paging on a single page', () => {
     const html = text(render());
     expect(html).not.toContain('Older');
-    expect(html).not.toContain('page 1');
+    expect(html).not.toContain('on this page');
   });
 
   it('links to the older page with the cursor, keeping the filters', () => {
     search = 'status=blocked';
     const html = render({ status: 'blocked', nextCursor: '2026-09-10 12:00:00+00|pay_2' });
     expect(html).toContain(
-      'href="/payments?status=blocked&amp;cursor=2026-09-10+12%3A00%3A00%2B00%7Cpay_2&amp;page=2"',
+      'href="/payments?status=blocked&amp;cursor=2026-09-10+12%3A00%3A00%2B00%7Cpay_2"',
     );
     search = '';
   });
 
   it('offers the way back to the newest page, and says when the record ends', () => {
-    search = 'cursor=x&page=2';
-    const html = render({ page: 2 });
+    search = 'cursor=x';
+    const html = render();
     expect(html).toContain('href="/payments"');
     expect(text(html)).toContain('Start of the record');
     search = '';

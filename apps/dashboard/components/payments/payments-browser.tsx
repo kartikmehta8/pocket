@@ -22,8 +22,6 @@ export interface PaymentsBrowserProps {
   status: string;
   /** Cursor for the page after this one, or `null` on the last page. */
   nextCursor: string | null;
-  /** Which page this is, counting from one. */
-  page: number;
 }
 
 /** Sentinel used for "no filter" — Radix Select treats `''` as unset. */
@@ -48,10 +46,9 @@ export function PaymentsBrowser({
   agentId,
   status,
   nextCursor,
-  page,
 }: PaymentsBrowserProps) {
   const { apply, pageLinks, pending } = useSearchNavigation('/payments');
-  const { newest, older } = pageLinks(nextCursor, page);
+  const { onFirstPage, newest, older } = pageLinks(nextCursor);
 
   const agentOptions = useMemo(
     () => [
@@ -88,7 +85,7 @@ export function PaymentsBrowser({
         </div>
         <p className="figures text-text-muted pb-2.5 text-xs">
           {payments.length} {payments.length === 1 ? 'payment' : 'payments'}
-          {page > 1 || older !== null ? ` · page ${page}` : ''}
+          {onFirstPage ? '' : ' on this page'}
         </p>
       </div>
 
@@ -102,12 +99,17 @@ export function PaymentsBrowser({
         <PaymentsTable
           payments={payments}
           emptyTitle={
-            agentId === '' && status === '' && page === 1
+            agentId === '' && status === '' && onFirstPage
               ? 'No payments yet'
               : 'No payments match these filters'
           }
         />
-        <Pager page={page} newest={newest} older={older} />
+        <Pager
+          onFirstPage={onFirstPage}
+          newest={newest}
+          older={older}
+          className="border-divider border-t px-4 py-3"
+        />
       </div>
     </div>
   );

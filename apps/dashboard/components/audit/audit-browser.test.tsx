@@ -49,7 +49,6 @@ const render = (props: Partial<Omit<AuditBrowserProps, 'agents'>> = {}) =>
         action=""
         actorType=""
         nextCursor={null}
-        page={1}
         {...props}
         agents={{ agent_1: 'Hermes' }}
       />
@@ -81,23 +80,23 @@ describe('AuditBrowser', () => {
     const html = text(render());
     expect(html).not.toContain('Older');
     expect(html).not.toContain('Newest');
-    expect(html).not.toContain('page 1');
+    expect(html).not.toContain('on this page');
   });
 
   it('links to the older page with the cursor, keeping the filters', () => {
     search = 'action=payment';
     const html = render({ action: 'payment', nextCursor: '41' });
-    expect(html).toContain('href="/audit?action=payment&amp;cursor=41&amp;page=2"');
+    expect(html).toContain('href="/audit?action=payment&amp;cursor=41"');
     expect(text(html)).not.toContain('Newest');
     search = '';
   });
 
   it('offers the way back to the newest page, and says when the record ends', () => {
-    search = 'cursor=41&page=2';
-    const html = render({ page: 2 });
+    search = 'cursor=41';
+    const html = render();
     expect(html).toContain('href="/audit"');
     expect(text(html)).toContain('Start of the record');
-    expect(text(html)).toContain('page 2');
+    expect(text(html)).toContain('on this page');
     search = '';
   });
 

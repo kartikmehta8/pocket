@@ -4,6 +4,7 @@ import { Suspense } from 'react';
 import { PaymentsBrowser } from '@/components/payments/payments-browser';
 import { ApiErrorState } from '@/components/ui/api-error';
 import { PageHeader } from '@/components/ui/page-header';
+import { readParam, type SearchParams } from '@/lib/search-params';
 import { listAgents, listPayments } from '@/lib/api';
 import { PAYMENT_STATUSES } from '@/lib/catalog';
 import type { PaymentStatus } from '@/lib/types';
@@ -17,20 +18,9 @@ export const metadata: Metadata = { title: 'Payments' };
 /** How many payments one page of the table holds. */
 const PAGE_LIMIT = 30;
 
-/** Read a single search param as a string, ignoring repeats. */
-function readParam(value: string | string[] | undefined): string {
-  if (Array.isArray(value)) return value[0] ?? '';
-  return value ?? '';
-}
-
 /** Narrow a raw query value to a contract payment status. */
 function readStatus(value: string): PaymentStatus | undefined {
   return PAYMENT_STATUSES.find((status) => status === value);
-}
-
-/** Read the page number, counting from one. Anything odd is page one. */
-function readPage(value: string): number {
-  return /^[1-9]\d{0,4}$/.test(value) ? Number(value) : 1;
 }
 
 /**
@@ -43,13 +33,12 @@ function readPage(value: string): number {
 export default async function PaymentsPage({
   searchParams,
 }: {
-  searchParams: Promise<Record<string, string | string[] | undefined>>;
+  searchParams: Promise<SearchParams>;
 }) {
   const params = await searchParams;
   const agentId = readParam(params['agentId']);
   const status = readStatus(readParam(params['status']));
   const cursor = readParam(params['cursor']);
-  const page = cursor === '' ? 1 : readPage(readParam(params['page']));
 
   const [paymentsResult, agentsResult] = await Promise.all([
     listPayments({
@@ -81,7 +70,6 @@ export default async function PaymentsPage({
             agentId={agentId}
             status={status ?? ''}
             nextCursor={paymentsResult.data.nextCursor ?? null}
-            page={page}
           />
         </Suspense>
       )}

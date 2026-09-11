@@ -21,8 +21,6 @@ export interface AuditBrowserProps {
   actorType: string;
   /** Cursor for the page after this one, or `null` on the last page. */
   nextCursor: string | null;
-  /** Which page this is, counting from one. */
-  page: number;
 }
 
 /** Sentinel used for "no filter" — Radix Select treats `''` as unset. */
@@ -43,16 +41,9 @@ const ACTOR_OPTIONS = [
  * again from the newest event: a cursor from one view means nothing in another.
  *
  */
-export function AuditBrowser({
-  events,
-  agents,
-  action,
-  actorType,
-  nextCursor,
-  page,
-}: AuditBrowserProps) {
+export function AuditBrowser({ events, agents, action, actorType, nextCursor }: AuditBrowserProps) {
   const { apply, pageLinks, pending } = useSearchNavigation('/audit');
-  const { newest, older } = pageLinks(nextCursor, page);
+  const { onFirstPage, newest, older } = pageLinks(nextCursor);
 
   return (
     <div className="flex flex-col gap-4">
@@ -81,7 +72,7 @@ export function AuditBrowser({
         </div>
         <p className="figures text-text-muted pb-2.5 text-xs">
           {events.length} {events.length === 1 ? 'event' : 'events'}
-          {page > 1 || older !== null ? ` · page ${page}` : ''}
+          {onFirstPage ? '' : ' on this page'}
         </p>
       </div>
 
@@ -96,13 +87,18 @@ export function AuditBrowser({
           events={events}
           agents={agents}
           emptyTitle={
-            action === '' && actorType === '' && page === 1
+            action === '' && actorType === '' && onFirstPage
               ? 'No audit events'
               : 'No events match these filters'
           }
         />
 
-        <Pager page={page} newest={newest} older={older} />
+        <Pager
+          onFirstPage={onFirstPage}
+          newest={newest}
+          older={older}
+          className="border-divider border-t px-4 py-3"
+        />
       </div>
     </div>
   );

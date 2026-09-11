@@ -3,8 +3,8 @@
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useTransition } from 'react';
 
-/** Query keys that belong to a position in a list, not to a view of it. */
-const POSITION_KEYS = ['cursor', 'page'] as const;
+/** The query key that says where in a list the reader is, rather than which. */
+const POSITION_KEY = 'cursor';
 
 /**
  * Filters and paging carried in the URL, for a list that the API pages.
@@ -39,7 +39,7 @@ export function useSearchNavigation(basePath: string) {
     const target = href((params) => {
       if (value === any) params.delete(key);
       else params.set(key, value);
-      for (const position of POSITION_KEYS) params.delete(position);
+      params.delete(POSITION_KEY);
     });
     startTransition(() => router.replace(target));
   };
@@ -48,19 +48,18 @@ export function useSearchNavigation(basePath: string) {
    * Where "Newest" and "Older" lead from the current page.
    *
    * @param nextCursor Cursor for the page after this one, or `null` at the end.
-   * @param page The current page, counting from one.
+   * @returns Both links, and whether this is the first page.
+   * @remarks The cursor is the whole position. A page number alongside it
+   * would be a second copy of the same fact, one that a hand-edited link can
+   * contradict, and it buys only a label.
    */
-  const pageLinks = (nextCursor: string | null, page: number) => ({
+  const pageLinks = (nextCursor: string | null) => ({
+    /** Whether the reader is on the first page, which has no cursor. */
+    onFirstPage: !searchParams.has(POSITION_KEY),
     newest: href((params) => {
-      for (const position of POSITION_KEYS) params.delete(position);
+      params.delete(POSITION_KEY);
     }),
-    older:
-      nextCursor === null
-        ? null
-        : href((params) => {
-            params.set('cursor', nextCursor);
-            params.set('page', String(page + 1));
-          }),
+    older: nextCursor === null ? null : href((params) => params.set(POSITION_KEY, nextCursor)),
   });
 
   return { apply, pageLinks, pending };

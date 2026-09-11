@@ -4,6 +4,7 @@ import { Suspense } from 'react';
 import { AuditBrowser } from '@/components/audit/audit-browser';
 import { ApiErrorState } from '@/components/ui/api-error';
 import { PageHeader } from '@/components/ui/page-header';
+import { readParam, type SearchParams } from '@/lib/search-params';
 import { listAgents, listAudit } from '@/lib/api';
 import { AUDIT_ACTIVITIES, AUDIT_ACTORS } from '@/lib/catalog';
 import type { AuditEvent } from '@/lib/types';
@@ -17,12 +18,6 @@ export const metadata: Metadata = { title: 'Audit' };
 /** Events per page. */
 const PAGE_LIMIT = 30;
 
-/** Read a single search param as a string, ignoring repeats. */
-function readParam(value: string | string[] | undefined): string {
-  if (Array.isArray(value)) return value[0] ?? '';
-  return value ?? '';
-}
-
 /** Narrow a raw query value to an action family the filter offers. */
 function readActivity(value: string): string {
   return AUDIT_ACTIVITIES.some((activity) => activity.value === value) ? value : '';
@@ -33,11 +28,6 @@ function readActor(value: string): AuditEvent['actorType'] | undefined {
   return AUDIT_ACTORS.find((actor) => actor === value);
 }
 
-/** Read the page number, counting from one. Anything odd is page one. */
-function readPage(value: string): number {
-  return /^[1-9]\d{0,4}$/.test(value) ? Number(value) : 1;
-}
-
 /**
  * Audit trail: every actor, action and payload, newest first.
  *
@@ -46,14 +36,9 @@ function readPage(value: string): number {
  * ignored rather than forwarded: the API would refuse them, and a stale link
  * should show the trail, not an error.
  */
-export default async function AuditPage({
-  searchParams,
-}: {
-  searchParams: Promise<Record<string, string | string[] | undefined>>;
-}) {
+export default async function AuditPage({ searchParams }: { searchParams: Promise<SearchParams> }) {
   const params = await searchParams;
   const cursor = readParam(params['cursor']);
-  const page = cursor === '' ? 1 : readPage(readParam(params['page']));
   const action = readActivity(readParam(params['action']));
   const actorType = readActor(readParam(params['actorType']));
 
@@ -88,7 +73,6 @@ export default async function AuditPage({
             action={action}
             actorType={actorType ?? ''}
             nextCursor={result.data.nextCursor ?? null}
-            page={page}
           />
         </Suspense>
       )}
