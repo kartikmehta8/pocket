@@ -2,9 +2,10 @@
  * Agent, wallet, budget and policy persistence.
  */
 
-import { and, eq, isNull } from 'drizzle-orm';
+import { and, desc, eq, ilike, isNull, or, sql } from 'drizzle-orm';
 import { newId, type Agent, type AgentStatus, type Budget, type Wallet } from '@pocket/core';
 import type { Database } from '../client.js';
+import { nextCursor, readCursor } from '../cursor.js';
 import { agents, budgets, policies, wallets } from '../schema/index.js';
 
 /** An agent with the rows that constrain it, as the API returns them together. */
@@ -46,19 +47,94 @@ export async function createAgent(db: Database, input: NewAgent): Promise<Agent>
   return row as Agent;
 }
 
+/** Narrows a page of agents. */
+export interface AgentFilter {
+  /** Page size. Omit for every agent, which is what a picker needs. */
+  limit?: number | undefined;
+  /** Opaque cursor from a previous page's `nextCursor`. */
+  cursor?: string | undefined;
+  status?: AgentStatus | undefined;
+  /** Matched against the name, the description and the wallet address. */
+  search?: string | undefined;
+}
+
+/** One page of agents plus the cursor that follows it. */
+export interface AgentsPage {
+  agents: Agent[];
+  nextCursor: string | null;
+}
+
 /**
- * Lists every agent in an organization.
+ * Lists an organization's agents, newest first.
  *
  * @param db - Database handle.
  * @param orgId - Tenant scope. Never omit; it is the tenancy boundary.
- * @returns Agents ordered by creation time.
+ * @param filter - Optional page size, cursor, status and search term.
+ * @returns A page of agents, and the cursor for the page after them.
+ * @remarks Unpaged by default. Most callers are pickers — where to move funds,
+ * which agent pays — and a picker showing the first page of a list is a picker
+ * that silently hides the answer. Only the agents index asks for a limit.
+ *
+ * Filtering happens here rather than in the browser for the same reason it
+ * does on Payments: a page narrowed after it arrives is a page missing the
+ * matches that fell on the other side of the cut.
  */
-export async function listAgents(db: Database, orgId: string): Promise<Agent[]> {
-  const rows = await db
-    .select()
+export async function listAgents(
+  db: Database,
+  orgId: string,
+  filter: AgentFilter = {},
+): Promise<AgentsPage> {
+  const conditions = [eq(agents.orgId, orgId), isNull(agents.deletedAt)];
+  if (filter.status !== undefined) conditions.push(eq(agents.status, filter.status));
+
+  const search = filter.search?.trim() ?? '';
+  if (search !== '') {
+    // Escaped, so a `%` typed into the search box matches a literal percent
+    // rather than everything.
+    const term = `%${search.replace(/[\\%_]/g, '\\$&')}%`;
+    const matches = or(
+      ilike(agents.name, term),
+      ilike(agents.description, term),
+      ilike(wallets.address, term),
+    );
+    if (matches !== undefined) conditions.push(matches);
+  }
+
+  const cursor = readCursor(filter.cursor);
+  if (cursor !== null) {
+    conditions.push(
+      sql`(${agents.createdAt}, ${agents.id}) < (${cursor.createdAt}::timestamptz, ${cursor.id})`,
+    );
+  }
+
+  // No limit means every agent, so nothing is cut and no cursor is produced.
+  const limit = filter.limit === undefined ? null : Math.min(filter.limit, 200);
+
+  const query = db
+    .select({ agent: agents, createdAtText: sql<string>`${agents.createdAt}::text` })
     .from(agents)
-    .where(and(eq(agents.orgId, orgId), isNull(agents.deletedAt)));
-  return rows as Agent[];
+    // Exactly one wallet per agent, enforced by a unique index, so this cannot
+    // duplicate a row. It is here for the address search.
+    .leftJoin(wallets, eq(wallets.agentId, agents.id))
+    .where(and(...conditions))
+    .orderBy(desc(agents.createdAt), desc(agents.id));
+
+  const rows = await (limit === null ? query : query.limit(limit + 1));
+  const page = limit === null ? rows : rows.slice(0, limit);
+  const last = page[page.length - 1];
+
+  return {
+    agents: page.map((row) => row.agent as Agent),
+    nextCursor:
+      limit === null
+        ? null
+        : nextCursor(
+            last === undefined
+              ? undefined
+              : { createdAtText: last.createdAtText, id: last.agent.id },
+            rows.length > limit,
+          ),
+  };
 }
 
 /**

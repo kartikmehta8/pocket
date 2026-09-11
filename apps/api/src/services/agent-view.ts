@@ -12,6 +12,7 @@ import {
   getAgentBundle,
   listAgents,
   sumSpendToday,
+  type AgentFilter,
   type Database,
 } from '@pocket/db';
 
@@ -86,7 +87,14 @@ export async function summariseAgent(
  * @param orgId - Tenant scope.
  * @returns Summaries in creation order.
  */
-export async function summariseAllAgents(db: Database, orgId: string): Promise<AgentSummaryJson[]> {
-  const agents = await listAgents(db, orgId);
-  return Promise.all(agents.map((agent) => summariseAgent(db, orgId, agent)));
+export async function summariseAllAgents(
+  db: Database,
+  orgId: string,
+  filter: AgentFilter = {},
+): Promise<{ agents: AgentSummaryJson[]; nextCursor: string | null }> {
+  const page = await listAgents(db, orgId, filter);
+  return {
+    agents: await Promise.all(page.agents.map((agent) => summariseAgent(db, orgId, agent))),
+    nextCursor: page.nextCursor,
+  };
 }

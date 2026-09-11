@@ -3,7 +3,9 @@
  */
 
 import type { FastifyInstance } from 'fastify';
+import { z } from 'zod';
 import {
+  AGENT_STATUSES,
   PocketError,
   createAgentSchema,
   isAssetId,
@@ -34,6 +36,20 @@ import { transferAgentFunds } from '../services/agent-transfer.js';
 import { summariseAgent, summariseAllAgents } from '../services/agent-view.js';
 import { taskBudgetToJson } from '../serialize.js';
 import { policyToJson } from '../serialize-policy.js';
+
+/**
+ * What narrows the agent list.
+ *
+ * @remarks Every field is optional, and without `limit` the whole list comes
+ * back. Pickers elsewhere in the product need all of it, and a picker showing
+ * only the first page is one that hides the answer.
+ */
+const listAgentsQuerySchema = z.object({
+  limit: z.coerce.number().int().positive().max(200).optional(),
+  cursor: z.string().max(128).optional(),
+  status: z.enum(AGENT_STATUSES).optional(),
+  q: z.string().max(120).optional(),
+});
 
 /**
  * Loads an agent or fails with a tenant-safe not-found.
@@ -106,9 +122,15 @@ export function registerAgentRoutes(app: FastifyInstance, ctx: AppContext): void
     };
   });
 
-  app.get('/v1/agents', async (request) => ({
-    agents: await summariseAllAgents(ctx.db, request.orgId),
-  }));
+  app.get('/v1/agents', async (request) => {
+    const query = listAgentsQuerySchema.parse(request.query);
+    return await summariseAllAgents(ctx.db, request.orgId, {
+      limit: query.limit,
+      cursor: query.cursor,
+      status: query.status,
+      search: query.q,
+    });
+  });
 
   app.get<{ Params: { id: string } }>('/v1/agents/:id', async (request) => {
     const bundle = await requireAgent(ctx, request.orgId, request.params.id);

@@ -7,6 +7,7 @@
  */
 
 export * from './client.js';
+export * from './cursor.js';
 export * as schema from './schema/index.js';
 export * from './repos/agents.js';
 export * from './repos/api-keys.js';

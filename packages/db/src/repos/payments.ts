@@ -12,6 +12,7 @@
 import { and, desc, eq, inArray, sql } from 'drizzle-orm';
 import { PocketError, type Payment, type PaymentStatus } from '@pocket/core';
 import type { Database, Transaction } from '../client.js';
+import { nextCursor, readCursor } from '../cursor.js';
 import { agents, payments, taskBudgets } from '../schema/index.js';
 
 /** Fields required to persist a payment attempt. */
@@ -148,13 +149,6 @@ export interface PaymentsPage {
 }
 
 /**
- * The shape of a cursor: the row's `created_at` as Postgres prints it, then
- * its id, separated by a bar. Anything else is ignored and reads as page one.
- */
-const CURSOR =
-  /^(\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}(?:\.\d{1,6})?[+-]\d{2}(?::\d{2})?)\|([A-Za-z0-9_-]+)$/;
-
-/**
  * Lists payments for an organization, newest first, one page at a time.
  *
  * @param db - Database handle.
@@ -177,11 +171,10 @@ export async function listPayments(
   const conditions = [eq(payments.orgId, orgId)];
   if (filter.agentId !== undefined) conditions.push(eq(payments.agentId, filter.agentId));
   if (filter.status !== undefined) conditions.push(eq(payments.status, filter.status));
-  const cursor = filter.cursor === undefined ? null : CURSOR.exec(filter.cursor);
+  const cursor = readCursor(filter.cursor);
   if (cursor !== null) {
-    const [, createdAt, id] = cursor;
     conditions.push(
-      sql`(${payments.createdAt}, ${payments.id}) < (${createdAt}::timestamptz, ${id})`,
+      sql`(${payments.createdAt}, ${payments.id}) < (${cursor.createdAt}::timestamptz, ${cursor.id})`,
     );
   }
 
@@ -199,11 +192,12 @@ export async function listPayments(
 
   const page = rows.slice(0, limit);
   const last = page[page.length - 1];
-  const nextCursor =
-    rows.length > limit && last !== undefined ? `${last.createdAtText}|${last.payment.id}` : null;
   return {
     payments: page.map((row) => ({ ...(row.payment as Payment), agentName: row.agentName })),
-    nextCursor,
+    nextCursor: nextCursor(
+      last === undefined ? undefined : { createdAtText: last.createdAtText, id: last.payment.id },
+      rows.length > limit,
+    ),
   };
 }
 

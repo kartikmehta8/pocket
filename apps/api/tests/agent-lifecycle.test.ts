@@ -313,3 +313,89 @@ describe('PATCH /v1/agents/:id', () => {
     expect(cleared.json().agent.description).toBe('');
   });
 });
+
+describe('GET /v1/agents paging', () => {
+  it('returns every agent when no limit is asked for', async () => {
+    const response = await h.app.inject({ method: 'GET', url: '/v1/agents', headers: h.auth });
+    expect(response.statusCode).toBe(200);
+    const body = response.json();
+    expect(body.agents.length).toBeGreaterThan(3);
+    // Pickers elsewhere read this, and a cursor would mean the list they show
+    // is only the first page of the answer.
+    expect(body.nextCursor).toBeNull();
+  });
+
+  it('walks every agent exactly once, newest first', async () => {
+    const all = await h.app.inject({ method: 'GET', url: '/v1/agents', headers: h.auth });
+    const expected = all.json().agents.map((agent: { id: string }) => agent.id);
+
+    const seen: string[] = [];
+    let cursor: string | null = null;
+    do {
+      const url = `/v1/agents?limit=2${cursor === null ? '' : `&cursor=${encodeURIComponent(cursor)}`}`;
+      const page = await h.app.inject({ method: 'GET', url, headers: h.auth });
+      const body = page.json();
+      expect(body.agents.length).toBeLessThanOrEqual(2);
+      seen.push(...body.agents.map((agent: { id: string }) => agent.id));
+      cursor = body.nextCursor;
+    } while (cursor !== null);
+
+    expect(seen).toEqual(expected);
+  });
+
+  it('narrows by status, across pages rather than within one', async () => {
+    const agent = await register('Pausable');
+    await h.app.inject({
+      method: 'PATCH',
+      url: `/v1/agents/${agent.id}`,
+      headers: h.auth,
+      payload: { status: 'paused' },
+    });
+
+    const response = await h.app.inject({
+      method: 'GET',
+      url: '/v1/agents?status=paused&limit=50',
+      headers: h.auth,
+    });
+    const ids = response.json().agents.map((row: { id: string }) => row.id);
+    expect(ids).toContain(agent.id);
+    for (const row of response.json().agents) expect(row.status).toBe('paused');
+  });
+
+  it('searches the name and the wallet address', async () => {
+    const agent = await register('Findable Marker');
+
+    const byName = await h.app.inject({
+      method: 'GET',
+      url: '/v1/agents?q=findable',
+      headers: h.auth,
+    });
+    expect(byName.json().agents.map((row: { id: string }) => row.id)).toEqual([agent.id]);
+
+    const byWallet = await h.app.inject({
+      method: 'GET',
+      url: `/v1/agents?q=${agent.address.slice(2, 12)}`,
+      headers: h.auth,
+    });
+    expect(byWallet.json().agents.map((row: { id: string }) => row.id)).toEqual([agent.id]);
+  });
+
+  it('reads a wildcard in the search as a literal, not as everything', async () => {
+    const response = await h.app.inject({
+      method: 'GET',
+      url: '/v1/agents?q=%25',
+      headers: h.auth,
+    });
+    expect(response.json().agents).toHaveLength(0);
+  });
+
+  it('reads an unrecognisable cursor as the first page rather than failing', async () => {
+    const response = await h.app.inject({
+      method: 'GET',
+      url: '/v1/agents?limit=2&cursor=not-a-cursor',
+      headers: h.auth,
+    });
+    expect(response.statusCode).toBe(200);
+    expect(response.json().agents).toHaveLength(2);
+  });
+});
