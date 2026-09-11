@@ -36,9 +36,21 @@ export const getHealth = cache((): Promise<ApiResult<Health>> =>
   request<Health>('GET', '/v1/health'),
 );
 
-/** `GET /v1/agents` — every agent in the organization. */
-export function listAgents(): Promise<ApiResult<{ agents: AgentSummary[] }>> {
-  return request<{ agents: AgentSummary[] }>('GET', '/v1/agents');
+/**
+ * `GET /v1/agents` — every agent, or one page of them.
+ *
+ * @param params Page size, cursor, status and search term. All optional.
+ * @remarks Without a limit the whole list comes back and `nextCursor` is
+ * `null`. That is what the pickers want: an agent missing from a dropdown
+ * because it fell on page two is worse than a long dropdown.
+ */
+export function listAgents(
+  params: { limit?: number; cursor?: string; status?: AgentSummary['status']; q?: string } = {},
+): Promise<ApiResult<{ agents: AgentSummary[]; nextCursor: string | null }>> {
+  return request<{ agents: AgentSummary[]; nextCursor: string | null }>(
+    'GET',
+    `/v1/agents${query(params)}`,
+  );
 }
 
 /** `GET /v1/agents/:id` — agent, policy, task budgets and wallet balance. */

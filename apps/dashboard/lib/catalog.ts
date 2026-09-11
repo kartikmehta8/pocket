@@ -1,5 +1,11 @@
 import { humanize } from './format';
-import type { AuditEvent, Category, PaymentStatus, UnknownRecipientBehaviour } from './types';
+import type {
+  AgentStatus,
+  AuditEvent,
+  Category,
+  PaymentStatus,
+  UnknownRecipientBehaviour,
+} from './types';
 
 /** Every spend category in the contract, in contract order. */
 export const CATEGORIES: readonly Category[] = [
@@ -12,6 +18,9 @@ export const CATEGORIES: readonly Category[] = [
   'agent-service',
   'other',
 ];
+
+/** Every agent status in the contract, in lifecycle order. */
+export const AGENT_STATUSES: readonly AgentStatus[] = ['active', 'paused', 'revoked'];
 
 /** Every payment status in the contract, in lifecycle order. */
 export const PAYMENT_STATUSES: readonly PaymentStatus[] = [
