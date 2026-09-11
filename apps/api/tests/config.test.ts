@@ -72,3 +72,51 @@ describe('the private-host guard', () => {
     expect(config.ALLOW_PRIVATE_RESOURCE_HOSTS).toBe(true);
   });
 });
+
+describe('treasury configuration', () => {
+  const base = { DATABASE_URL: 'postgres://localhost/x' };
+
+  it('accepts neither half', () => {
+    expect(() => loadConfig({ ...base })).not.toThrow();
+  });
+
+  it('accepts both halves', () => {
+    expect(() =>
+      loadConfig({
+        ...base,
+        TREASURY_WALLET_ID: 'w_1',
+        TREASURY_ADDRESS: '0x1111111111111111111111111111111111111111',
+      }),
+    ).not.toThrow();
+  });
+
+  it.each([
+    [
+      'an address with no wallet id',
+      { TREASURY_ADDRESS: '0x1111111111111111111111111111111111111111' },
+    ],
+    ['a wallet id with no address', { TREASURY_WALLET_ID: 'w_1' }],
+  ])('refuses %s', (_case, half) => {
+    // Half a treasury pays nobody and explains nothing: the operator is told
+    // their agent "arrived empty" and cannot tell a typo from a switch.
+    expect(() => loadConfig({ ...base, ...half })).toThrow(/TREASURY_ADDRESS/);
+  });
+
+  it('refuses more precision than USDC has', () => {
+    // It would throw at the moment of the transfer instead, after an agent
+    // has been created and cannot be un-created.
+    expect(() => loadConfig({ ...base, AGENT_SEED_AMOUNT: '0.0000001' })).toThrow(
+      /AGENT_SEED_AMOUNT/,
+    );
+  });
+
+  it('refuses a seed large enough to drain a treasury', () => {
+    expect(() => loadConfig({ ...base, AGENT_SEED_AMOUNT: '1000000' })).toThrow(
+      /AGENT_SEED_AMOUNT/,
+    );
+  });
+
+  it('accepts the default', () => {
+    expect(loadConfig({ ...base }).AGENT_SEED_AMOUNT).toBe('0.02');
+  });
+});

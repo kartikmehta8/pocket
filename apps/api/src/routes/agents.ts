@@ -14,7 +14,6 @@ import {
 } from '@pocket/core';
 import {
   appendAuditEvent,
-  attachWallet,
   createAgent,
   getAgentBundle,
   listTaskBudgets,
@@ -23,7 +22,9 @@ import {
   upsertPolicy,
 } from '@pocket/db';
 import type { AppContext } from '../context.js';
-import { readAccountId, readBalance } from '../services/agent-chain.js';
+import { readAccount, readBalance } from '../services/agent-chain.js';
+import { provisionAgentWallet } from '../services/agent-provision.js';
+import { seedAgentWallet } from '../services/agent-seed.js';
 import { summariseAgent, summariseAllAgents } from '../services/agent-view.js';
 import { taskBudgetToJson } from '../serialize.js';
 import { policyToJson } from '../serialize-policy.js';
@@ -56,36 +57,19 @@ export function registerAgentRoutes(app: FastifyInstance, ctx: AppContext): void
     const body = createAgentSchema.parse(request.body);
     const agent = await createAgent(ctx.db, { orgId: request.orgId, ...body });
 
-    const chain = ctx.config.CHAIN;
-    const provisioned = await ctx.wallet.createWallet({
-      orgId: request.orgId,
-      agentId: agent.id,
-      chain,
-    });
-    const wallet = await attachWallet(ctx.db, {
-      orgId: request.orgId,
-      agentId: agent.id,
-      provider: ctx.wallet.name,
-      providerWalletId: provisioned.providerWalletId,
-      address: provisioned.address,
-      publicKey: provisioned.publicKey,
-      chain,
-    });
+    const wallet = await provisionAgentWallet(ctx, request.orgId, request.userId, agent);
 
-    await appendAuditEvent(ctx.db, {
-      orgId: request.orgId,
-      actorType: 'human',
-      actorId: request.userId,
-      action: 'agent.created',
-      subjectType: 'agent',
-      subjectId: agent.id,
-      payload: { name: agent.name, walletAddress: wallet.address, provider: ctx.wallet.name },
-    });
+    // After the agent exists, and never able to undo it: a treasury that
+    // cannot pay is an operational fact, not a reason to lose the operator's
+    // work. The transfer also creates the Hedera account and associates the
+    // token, so a seeded agent can pay immediately.
+    const seed = await seedAgentWallet(ctx, request.orgId, agent.id, wallet, request.log);
 
     reply.status(201);
     return {
       agent: await summariseAgent(ctx.db, request.orgId, agent),
-      wallet: { address: wallet.address, chain },
+      wallet: { address: wallet.address, chain: wallet.chain },
+      seed,
     };
   });
 
@@ -100,9 +84,9 @@ export function registerAgentRoutes(app: FastifyInstance, ctx: AppContext): void
       listTaskBudgets(ctx.db, bundle.agent.id),
     ]);
 
-    const [balance, accountId] = await Promise.all([
+    const [balance, account] = await Promise.all([
       readBalance(ctx, bundle.wallet, bundle.budget?.asset),
-      readAccountId(ctx, bundle.wallet),
+      readAccount(ctx, bundle.wallet),
     ]);
 
     return {
@@ -110,7 +94,11 @@ export function registerAgentRoutes(app: FastifyInstance, ctx: AppContext): void
       policy: bundle.policy === null ? null : policyToJson(bundle.policy),
       taskBudgets: taskBudgets.map(taskBudgetToJson),
       balance,
-      accountId,
+      accountId: account?.accountId ?? null,
+      // Null when there is no account to judge, not false: "we cannot see one"
+      // and "we can see one and it is unusable" send a reader to different
+      // places.
+      accountHollow: account === null ? null : !account.keyPublished,
     };
   });
 

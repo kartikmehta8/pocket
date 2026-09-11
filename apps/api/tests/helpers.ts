@@ -15,7 +15,7 @@ import {
 } from '@pocket/adapters';
 import { getDb, createOrganization, issueApiKey } from '@pocket/db';
 import type { FastifyInstance } from 'fastify';
-import { loadConfig } from '../src/config.js';
+import { loadConfig, type Config } from '../src/config.js';
 import { buildServer } from '../src/server.js';
 
 /** A running app plus a fresh tenant to exercise it with. */
@@ -27,6 +27,14 @@ export interface Harness {
   chain: MockChainProvider;
   market: StubMarketDataProvider;
   auth: { authorization: string };
+  /**
+   * The live configuration this server is running on.
+   *
+   * @remarks Mutable on purpose, so a test can turn a deployment-shaped
+   * setting such as the treasury on and off without standing up a server for
+   * each case.
+   */
+  config: Config;
 }
 
 /**
@@ -45,6 +53,12 @@ export async function createHarness(): Promise<Harness> {
     // them would prove nothing about the row lock and everything about the
     // rate limiter, which has tests of its own.
     RATE_LIMIT_MAX: '100000',
+    // Cleared rather than inherited. A developer with a treasury in their
+    // shell would otherwise have every suite that registers an agent quietly
+    // spend real testnet money, and the results would depend on whose machine
+    // ran them. `agent-seed.test.ts` opts back in through `h.config`.
+    TREASURY_WALLET_ID: '',
+    TREASURY_ADDRESS: '',
   });
 
   const db = getDb(config.DATABASE_URL);
@@ -79,6 +93,7 @@ export async function createHarness(): Promise<Harness> {
     chain,
     market,
     auth: { authorization: `Bearer ${apiKey}` },
+    config,
   };
 }
 
