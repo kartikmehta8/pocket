@@ -49,6 +49,16 @@ export const agents = pgTable(
     status: text('status').notNull().default('active'),
     metadata: jsonb('metadata').$type<Record<string, string>>().notNull().default({}),
     createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+    /**
+     * When the agent was deleted, or null while it is still in use.
+     *
+     * @remarks Deletion is a tombstone rather than a `DELETE`. Payments and
+     * task budgets cascade from this row, so removing it would erase the very
+     * history the product exists to keep — including the refusals. A deleted
+     * agent disappears from every listing and can no longer spend; its
+     * payments stay in the ledger under the name it had.
+     */
+    deletedAt: timestamp('deleted_at', { withTimezone: true }),
   },
   (table) => [index('agents_org_idx').on(table.orgId)],
 );

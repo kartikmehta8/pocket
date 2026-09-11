@@ -6,17 +6,22 @@ import type { FastifyInstance } from 'fastify';
 import {
   PocketError,
   createAgentSchema,
+  isAssetId,
+  type AssetId,
   decimalsOf,
   parseAmount,
   setBudgetSchema,
   setPolicySchema,
+  transferAgentFundsSchema,
   updateAgentSchema,
 } from '@pocket/core';
 import {
   appendAuditEvent,
   createAgent,
   getAgentBundle,
+  type AgentBundle,
   listTaskBudgets,
+  softDeleteAgent,
   updateAgent,
   upsertBudget,
   upsertPolicy,
@@ -25,6 +30,7 @@ import type { AppContext } from '../context.js';
 import { readAccount, readBalance } from '../services/agent-chain.js';
 import { provisionAgentWallet } from '../services/agent-provision.js';
 import { seedAgentWallet } from '../services/agent-seed.js';
+import { transferAgentFunds } from '../services/agent-transfer.js';
 import { summariseAgent, summariseAllAgents } from '../services/agent-view.js';
 import { taskBudgetToJson } from '../serialize.js';
 import { policyToJson } from '../serialize-policy.js';
@@ -44,6 +50,33 @@ async function requireAgent(ctx: AppContext, orgId: string, agentId: string) {
   const bundle = await getAgentBundle(ctx.db, orgId, agentId);
   if (bundle === null) throw new PocketError('NOT_FOUND', 'Agent not found.', { agentId });
   return bundle;
+}
+
+/**
+ * Which asset to move, in order of what the caller knows.
+ *
+ * @param body - The parsed request body.
+ * @param from - The agent being emptied.
+ * @returns The named asset, else the one its budget is denominated in, else
+ *   USDC. A budget in an asset the contract does not recognise is ignored
+ *   rather than passed on to the chain.
+ */
+function assetOf(body: { asset?: AssetId | undefined }, from: AgentBundle): AssetId {
+  if (body.asset !== undefined) return body.asset;
+  const budgeted = from.budget?.asset ?? '';
+  return isAssetId(budgeted) ? budgeted : 'USDC';
+}
+
+/**
+ * Whether a formatted balance is greater than zero.
+ *
+ * @param amount - Decimal string such as `"0.00"` or `"19.99"`.
+ * @returns `true` when any digit is non-zero.
+ * @remarks Character inspection rather than arithmetic, so no money value is
+ *   routed through a binary float to answer a yes-or-no question.
+ */
+function hasFunds(amount: string): boolean {
+  return /[1-9]/.test(amount);
 }
 
 /**
@@ -116,6 +149,46 @@ export function registerAgentRoutes(app: FastifyInstance, ctx: AppContext): void
       payload: { ...body },
     });
     return { agent: await summariseAgent(ctx.db, request.orgId, agent) };
+  });
+
+  app.post<{ Params: { id: string } }>('/v1/agents/:id/transfer', async (request) => {
+    const body = transferAgentFundsSchema.parse(request.body);
+    const [from, to] = await Promise.all([
+      requireAgent(ctx, request.orgId, request.params.id),
+      requireAgent(ctx, request.orgId, body.toAgentId),
+    ]);
+    const transfer = await transferAgentFunds(ctx, request.orgId, from, to, assetOf(body, from));
+    return { transfer };
+  });
+
+  app.delete<{ Params: { id: string } }>('/v1/agents/:id', async (request, reply) => {
+    const bundle = await requireAgent(ctx, request.orgId, request.params.id);
+
+    // Read before deleting, not after: once the agent is a tombstone there is
+    // nothing on screen that would lead anyone back to the wallet holding it.
+    const asset = bundle.budget?.asset ?? 'USDC';
+    const balance = await readBalance(ctx, bundle.wallet, asset);
+    if (balance !== null && hasFunds(balance.amount)) {
+      throw new PocketError(
+        'CONFLICT',
+        `${bundle.agent.name} still holds ${balance.amount} ${balance.asset}. Move the funds to another agent first.`,
+        { agentId: bundle.agent.id, balance },
+      );
+    }
+
+    const agent = await softDeleteAgent(ctx.db, request.orgId, request.params.id);
+    if (agent === null) throw new PocketError('NOT_FOUND', 'Agent not found.');
+
+    await appendAuditEvent(ctx.db, {
+      orgId: request.orgId,
+      actorType: 'human',
+      action: 'agent.deleted',
+      subjectType: 'agent',
+      subjectId: agent.id,
+      payload: { name: agent.name, walletAddress: bundle.wallet?.address ?? null },
+    });
+
+    return reply.code(204).send();
   });
 
   app.put<{ Params: { id: string } }>('/v1/agents/:id/budget', async (request) => {

@@ -70,6 +70,18 @@ export const updateAgentSchema = z.object({
   metadata: z.record(z.string(), z.string()).optional(),
 });
 
+/**
+ * Body accepted when moving an agent's balance to another agent.
+ *
+ * @remarks The whole balance, never a part of it. This exists so an agent can
+ * be retired without stranding its funds, and "move what is left" is the only
+ * question that has a right answer at that moment.
+ */
+export const transferAgentFundsSchema = z.object({
+  toAgentId: z.string().min(1).max(64),
+  asset: assetSchema.optional(),
+});
+
 /** Body accepted when setting an agent's spending envelope. */
 export const setBudgetSchema = z.object({
   asset: assetSchema,

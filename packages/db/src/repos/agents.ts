@@ -2,7 +2,7 @@
  * Agent, wallet, budget and policy persistence.
  */
 
-import { and, eq } from 'drizzle-orm';
+import { and, eq, isNull } from 'drizzle-orm';
 import { newId, type Agent, type AgentStatus, type Budget, type Wallet } from '@pocket/core';
 import type { Database } from '../client.js';
 import { agents, budgets, policies, wallets } from '../schema/index.js';
@@ -54,7 +54,10 @@ export async function createAgent(db: Database, input: NewAgent): Promise<Agent>
  * @returns Agents ordered by creation time.
  */
 export async function listAgents(db: Database, orgId: string): Promise<Agent[]> {
-  const rows = await db.select().from(agents).where(eq(agents.orgId, orgId));
+  const rows = await db
+    .select()
+    .from(agents)
+    .where(and(eq(agents.orgId, orgId), isNull(agents.deletedAt)));
   return rows as Agent[];
 }
 
@@ -65,6 +68,9 @@ export async function listAgents(db: Database, orgId: string): Promise<Agent[]> 
  * @param orgId - Tenant scope.
  * @param agentId - Agent identifier.
  * @returns The bundle, or `null` when the agent does not belong to the org.
+ * @remarks A deleted agent reads as absent, so nothing can be paid from it and
+ * no route has to remember to check. Its payments are read from the payments
+ * table directly and are unaffected.
  */
 export async function getAgentBundle(
   db: Database,
@@ -77,7 +83,7 @@ export async function getAgentBundle(
     .leftJoin(wallets, eq(wallets.agentId, agents.id))
     .leftJoin(budgets, eq(budgets.agentId, agents.id))
     .leftJoin(policies, eq(policies.agentId, agents.id))
-    .where(and(eq(agents.id, agentId), eq(agents.orgId, orgId)))
+    .where(and(eq(agents.id, agentId), eq(agents.orgId, orgId), isNull(agents.deletedAt)))
     .limit(1);
   const row = rows[0];
   if (row === undefined) return null;
@@ -122,7 +128,32 @@ export async function updateAgent(
   const [row] = await db
     .update(agents)
     .set(patch)
-    .where(and(eq(agents.id, agentId), eq(agents.orgId, orgId)))
+    .where(and(eq(agents.id, agentId), eq(agents.orgId, orgId), isNull(agents.deletedAt)))
+    .returning();
+  return (row as Agent | undefined) ?? null;
+}
+
+/**
+ * Marks an agent deleted.
+ *
+ * @param db - Database handle.
+ * @param orgId - Tenant scope.
+ * @param agentId - Agent identifier.
+ * @returns The tombstoned agent, or `null` when it was not there to delete.
+ * @remarks A tombstone, never a `DELETE`. Payments, task budgets, approvals
+ * and the wallet row all cascade from this row, so removing it would take the
+ * ledger with it. Deleting twice is not an error: the second call finds
+ * nothing to update and answers `null`, which the route reads as not found.
+ */
+export async function softDeleteAgent(
+  db: Database,
+  orgId: string,
+  agentId: string,
+): Promise<Agent | null> {
+  const [row] = await db
+    .update(agents)
+    .set({ deletedAt: new Date(), status: 'revoked' })
+    .where(and(eq(agents.id, agentId), eq(agents.orgId, orgId), isNull(agents.deletedAt)))
     .returning();
   return (row as Agent | undefined) ?? null;
 }

@@ -116,6 +116,20 @@ On the agent's page you can **pause** it, which refuses everything until you
 resume, or **revoke** it, which is permanent. A revoked agent keeps its history
 and can never spend again.
 
+## Deleting an agent
+
+**Delete agent**, on the agent's page, retires it for good. It stops being
+offered anywhere and can never spend again.
+
+What it does not do is erase what the agent spent. Its payments stay on
+**Payments** and **Audit** under the name it had, refusals included. Deleting an
+agent hides the agent, never the record.
+
+If the wallet still holds money, Pocket will not let you delete until it has
+somewhere to go. The dialog asks which of your other agents should have it,
+moves the whole balance in one transaction, and then retires the agent. There
+is no way to strand funds behind a page you can no longer open.
+
 ## Getting good behaviour
 
 Three things make an agent predictable:
