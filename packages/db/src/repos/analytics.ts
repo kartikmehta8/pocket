@@ -146,7 +146,7 @@ export async function spendByRecipient(
  * @param orgId - Tenant scope.
  * @param agentId - Optional single-agent filter.
  * @param from - Inclusive window start.
- * @param to - Exclusive window end.
+ * @param to - Window end, inclusive of the UTC day it falls in.
  * @returns One point per UTC day in the window, including days with no spend,
  *   so a chart shows a flat line rather than closing a gap it should not.
  */
@@ -169,7 +169,11 @@ export async function dailySpendSeries(
 
   const found = new Map(rows.map((row) => [row.day, row]));
   const points: DailyPoint[] = [];
-  for (let day = new Date(from); day < to; day.setUTCDate(day.getUTCDate() + 1)) {
+  // Whole UTC days, from the midnight `from` falls in through the day `to`
+  // falls in. Walking to `to` exclusively would stop a day short and drop
+  // everything spent since midnight, which is the spend most worth seeing.
+  const start = new Date(Date.UTC(from.getUTCFullYear(), from.getUTCMonth(), from.getUTCDate()));
+  for (let day = start; day.getTime() <= to.getTime(); day.setUTCDate(day.getUTCDate() + 1)) {
     const key = day.toISOString().slice(0, 10);
     const row = found.get(key);
     points.push({

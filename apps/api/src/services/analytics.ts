@@ -29,6 +29,22 @@ export interface AnalyticsDeps {
   analytics: AnalyticsProvider;
 }
 
+/**
+ * Midnight UTC of the day `daysBack` days before `now`.
+ *
+ * @param now - Reference instant.
+ * @param daysBack - Whole days to step back; `0` is the day `now` falls in.
+ * @returns The start of that UTC day.
+ * @remarks Budgets reset at midnight UTC and the daily series is grouped the
+ * same way, so a window that starts at an arbitrary clock time cuts its oldest
+ * day in half and reports it as a short one.
+ */
+export function utcDayStart(now: Date, daysBack = 0): Date {
+  const day = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()));
+  day.setUTCDate(day.getUTCDate() - daysBack);
+  return day;
+}
+
 /** Window boundaries for a report and the equivalent preceding window. */
 function windows(days: number, now = new Date()) {
   const span = days * 24 * 60 * 60 * 1000;
@@ -121,6 +137,10 @@ export async function spendSummary(
  * @param options - Agent filter, window length and asset.
  * @returns One point per UTC day, including days with no spend, so a chart
  *   shows a flat line rather than silently closing the gap.
+ * @remarks The window is whole UTC days ending today: asking for seven days
+ *   returns the last seven calendar days, the newest of which is the one in
+ *   progress. A rolling window from this time of day would end at yesterday
+ *   and hide everything spent since midnight.
  */
 export async function spendTimeseries(
   deps: AnalyticsDeps,
@@ -133,8 +153,14 @@ export async function spendTimeseries(
 ) {
   const days = options.days ?? 14;
   const asset: AssetId = isAssetId(options.asset ?? '') ? (options.asset as AssetId) : 'USDC';
-  const { from, to } = windows(days);
-  const points = await dailySpendSeries(deps.db, orgId, options.agentId, from, to);
+  const to = new Date();
+  const points = await dailySpendSeries(
+    deps.db,
+    orgId,
+    options.agentId,
+    utcDayStart(to, days - 1),
+    to,
+  );
   return {
     asset,
     points: points.map((point) => ({
