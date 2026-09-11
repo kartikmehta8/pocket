@@ -32,13 +32,6 @@ export const fade: Variants = {
   shown: { opacity: 1, transition: { duration: DURATION.fast, ease: EASE } },
 };
 
-/** Reveal used for the payment decision panel — scales up a hair as it lands. */
-export const revealPanel: Variants = {
-  hidden: { opacity: 0, y: 6, scale: 0.985 },
-  shown: { opacity: 1, y: 0, scale: 1, transition: { duration: DURATION.slow, ease: EASE } },
-  exit: { opacity: 0, transition: { duration: DURATION.fast, ease: EASE } },
-};
-
 /** Row expansion for payment and audit detail drawers. */
 export const expandRow: Variants = {
   hidden: { opacity: 0, height: 0 },

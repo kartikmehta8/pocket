@@ -136,5 +136,5 @@ export function usageTone(ratio: number): Tone {
   return 'info';
 }
 
-// Decision outcomes and audit actors.
+// Audit actors.
 export * from './status-decision';
