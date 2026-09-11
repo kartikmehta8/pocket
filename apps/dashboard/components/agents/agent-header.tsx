@@ -1,6 +1,6 @@
 'use client';
 
-import { Trash2, Wallet } from 'lucide-react';
+import { Pencil, Trash2, Wallet } from 'lucide-react';
 import { useState } from 'react';
 
 import { Button } from '@/components/ui/button';
@@ -10,6 +10,7 @@ import { cn } from '@/lib/cn';
 import type { AgentDetail, AgentSummary } from '@/lib/types';
 
 import { AgentDeleteDialog } from './agent-delete-dialog';
+import { AgentEditDialog } from './agent-edit-dialog';
 import { AgentStatusControl } from './agent-status-control';
 
 /** One figure in the row beneath the agent's name. */
@@ -41,6 +42,7 @@ export interface AgentHeaderProps {
 export function AgentHeader({ detail, others }: AgentHeaderProps) {
   const { agent, balance } = detail;
   const [deleting, setDeleting] = useState(false);
+  const [editing, setEditing] = useState(false);
   const asset = agent.budget?.asset ?? 'USDC';
   const ratio = usageRatio(agent.spend.today, agent.budget?.dailyLimit);
 
@@ -60,15 +62,26 @@ export function AgentHeader({ detail, others }: AgentHeaderProps) {
             </div>
             <div className="flex flex-col items-end gap-2">
               <AgentStatusControl agentId={agent.id} status={agent.status} />
-              <Button
-                variant="ghost"
-                size="sm"
-                icon={Trash2}
-                onClick={() => setDeleting(true)}
-                className="text-white/70 hover:bg-white/10 hover:text-white"
-              >
-                Delete agent
-              </Button>
+              <div className="flex items-center gap-1">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  icon={Pencil}
+                  onClick={() => setEditing(true)}
+                  className="text-white/70 hover:bg-white/10 hover:text-white"
+                >
+                  Edit
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  icon={Trash2}
+                  onClick={() => setDeleting(true)}
+                  className="text-white/70 hover:bg-white/10 hover:text-white"
+                >
+                  Delete
+                </Button>
+              </div>
             </div>
           </div>
 
@@ -146,6 +159,8 @@ export function AgentHeader({ detail, others }: AgentHeaderProps) {
           )}
         </div>
       </header>
+
+      <AgentEditDialog agent={agent} open={editing} onOpenChange={setEditing} />
 
       <AgentDeleteDialog
         agent={agent}

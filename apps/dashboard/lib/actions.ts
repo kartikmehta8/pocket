@@ -49,6 +49,30 @@ export async function setAgentStatusAction(
 }
 
 /**
+ * Rename an agent, and change what it is for.
+ *
+ * @param agentId Agent to update.
+ * @param fields The new name, and the description.
+ * @returns Success, or the reason it was refused.
+ * @remarks The name travels with every payment the agent makes and with every
+ * audit entry, so renaming one renames it everywhere it has ever appeared.
+ * That is the honest behaviour: there is one agent, and it now has this name.
+ *
+ * An emptied description is sent as an empty string rather than omitted, so
+ * clearing one actually clears it instead of leaving the old text in place.
+ */
+export async function editAgentAction(
+  agentId: string,
+  fields: { name: string; description: string },
+): Promise<ActionState> {
+  const name = fields.name.trim();
+  if (name === '') return { status: 'error', message: 'An agent needs a name.' };
+  const result = await patchAgent(agentId, { name, description: fields.description.trim() });
+  if (result.ok) revalidateAll(agentId);
+  return toState(result, 'Agent updated.');
+}
+
+/**
  * Move an agent's whole balance to another agent.
  *
  * @param agentId The agent being emptied.
@@ -74,13 +98,16 @@ export async function transferAgentFundsAction(
  * Retire an agent.
  *
  * @param agentId The agent to delete.
+ * @param force Delete despite a balance, leaving it in the wallet.
  * @returns Success, or the reason it was refused.
  * @remarks The API refuses while the wallet still holds funds, which is why
- * the dialog offers to move them first. Payments the agent made stay in the
- * ledger; only the agent stops being offered anywhere.
+ * the dialog offers to move them first. Forcing is for when it cannot: a
+ * wallet with no gas cannot send, and a lone agent has nowhere to send to.
+ * What was left behind is recorded in the audit trail either way. Payments
+ * the agent made stay in the ledger; only the agent stops being offered.
  */
-export async function deleteAgentAction(agentId: string): Promise<ActionState> {
-  const result = await deleteAgent(agentId);
+export async function deleteAgentAction(agentId: string, force = false): Promise<ActionState> {
+  const result = await deleteAgent(agentId, { force });
   if (result.ok) revalidateAll(agentId);
   return toState(result, 'Agent deleted.');
 }

@@ -100,7 +100,7 @@ export function listAudit(params: {
 /** `PATCH /v1/agents/:id` — change operational status. */
 export function patchAgent(
   id: string,
-  body: { status?: AgentSummary['status']; description?: string },
+  body: { name?: string; status?: AgentSummary['status']; description?: string },
 ): Promise<ApiResult<{ agent: AgentSummary }>> {
   return request<{ agent: AgentSummary }>('PATCH', `/v1/agents/${encodeURIComponent(id)}`, {
     body,
@@ -128,11 +128,20 @@ export function transferAgentFunds(
  * `DELETE /v1/agents/:id` — retire an agent.
  *
  * @param id The agent to delete.
- * @remarks Refused while the wallet still holds funds. The payments it made
- * stay in the ledger; only the agent stops being offered anywhere.
+ * @param options Pass `force` to delete despite a balance, which is the only
+ *   way out when the funds cannot be moved.
+ * @remarks Refused while the wallet still holds funds, unless forced. The
+ * payments it made stay in the ledger either way; only the agent stops being
+ * offered anywhere.
  */
-export function deleteAgent(id: string): Promise<ApiResult<Record<string, never>>> {
-  return request<Record<string, never>>('DELETE', `/v1/agents/${encodeURIComponent(id)}`);
+export function deleteAgent(
+  id: string,
+  options: { force?: boolean } = {},
+): Promise<ApiResult<Record<string, never>>> {
+  return request<Record<string, never>>(
+    'DELETE',
+    `/v1/agents/${encodeURIComponent(id)}${options.force === true ? '?force=true' : ''}`,
+  );
 }
 
 /** `PUT /v1/agents/:id/budget` — replace the daily and per-transaction limits. */

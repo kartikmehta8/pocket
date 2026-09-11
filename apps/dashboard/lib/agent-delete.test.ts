@@ -26,10 +26,24 @@ describe('planDelete', () => {
     expect(plan.label).toBe('Delete agent');
   });
 
-  it('will not strand funds when there is nowhere to move them', () => {
+  it('will not strand funds by default when there is nowhere to move them', () => {
     const plan = planDelete(FUNDED, [], false);
     expect(plan.stranded).toBe(true);
     expect(plan.canProceed).toBe(false);
+    expect(plan.offerLeaveFunds).toBe(true);
+  });
+
+  it('lets the operator delete and leave the balance, once they say so', () => {
+    // Without this an agent whose wallet has no gas can be neither emptied nor
+    // deleted, which is an agent nobody can ever be rid of.
+    const plan = planDelete(FUNDED, [], false, true);
+    expect(plan.canProceed).toBe(true);
+    expect(plan.moveFirst).toBe(false);
+    expect(plan.label).toBe('Delete agent');
+  });
+
+  it('skips the move when leaving the funds, even with somewhere to move to', () => {
+    expect(planDelete(FUNDED, [OTHER], false, true).moveFirst).toBe(false);
   });
 
   it('finishes the delete after a transfer that already went through', () => {
@@ -45,5 +59,6 @@ describe('planDelete', () => {
     const plan = planDelete(null, [], false);
     expect(plan.moveFirst).toBe(false);
     expect(plan.stranded).toBe(false);
+    expect(plan.offerLeaveFunds).toBe(false);
   });
 });

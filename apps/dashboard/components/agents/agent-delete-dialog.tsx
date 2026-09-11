@@ -9,6 +9,7 @@ import { Button } from '@/components/ui/button';
 import { Dialog } from '@/components/ui/dialog';
 import { Field } from '@/components/ui/field';
 import { Select } from '@/components/ui/select';
+import { Switch } from '@/components/ui/switch';
 import { IDLE_ACTION, type ActionState } from '@/lib/action-state';
 import { deleteAgentAction, transferAgentFundsAction } from '@/lib/actions';
 import { planDelete } from '@/lib/agent-delete';
@@ -41,6 +42,11 @@ export interface AgentDeleteDialogProps {
  * which agent should have it. The move and the delete are one press, and a
  * failed move stops before the delete rather than doing half of it.
  *
+ * Moving is not always possible. A wallet with no HBAR cannot pay for the
+ * transfer, and a lone agent has nowhere to send to, so deleting and leaving
+ * the balance is offered as well. Never as the default, and never silently:
+ * what was left, and where, goes into the audit trail.
+ *
  * The payments the agent made are not deleted. The dialog says so, because
  * "delete" reads as "erase the evidence" in a product whose whole claim is
  * that it keeps the evidence.
@@ -54,6 +60,7 @@ export function AgentDeleteDialog({
 }: AgentDeleteDialogProps) {
   const router = useRouter();
   const selectId = useId();
+  const leaveId = useId();
   const [destination, setDestination] = useState(others[0]?.id ?? '');
   const [state, setState] = useState<ActionState>(IDLE_ACTION);
   // Whether the balance has already been moved on this visit. The delete can
@@ -61,21 +68,32 @@ export function AgentDeleteDialog({
   // reports the old balance — and pressing again must not send the money a
   // second time, nor fail on a wallet that is now empty.
   const [moved, setMoved] = useState(false);
+  // Whether the operator has chosen to delete without moving the balance.
+  const [leaveFunds, setLeaveFunds] = useState(false);
   const [pending, startTransition] = useTransition();
 
-  const plan = planDelete(balance, others, moved);
+  const plan = planDelete(balance, others, moved, leaveFunds);
 
   const run = () =>
     startTransition(async () => {
+      // Local, not the state variable: `setMoved` does not change what this
+      // closure already captured, and the delete two lines down has to know.
+      let swept = moved;
       if (plan.moveFirst) {
         const transfer = await transferAgentFundsAction(agent.id, destination);
         if (transfer.status === 'error') {
           setState(transfer);
           return;
         }
+        swept = true;
         setMoved(true);
       }
-      const deleted = await deleteAgentAction(agent.id);
+      // Forced after a sweep, because the wallet this just emptied can still
+      // read as funded: the mirror node lags a few seconds behind the
+      // transfer. Without this the delete is refused and the operator has to
+      // press again for no reason they could see. Where the money went is in
+      // the audit trail, one entry above the deletion.
+      const deleted = await deleteAgentAction(agent.id, leaveFunds || swept);
       setState(deleted);
       if (deleted.status === 'error') return;
       onOpenChange(false);
@@ -109,8 +127,8 @@ export function AgentDeleteDialog({
         {plan.moveFirst ? (
           plan.stranded ? (
             <p className="text-warning-ink bg-warning-soft border-border rounded-md border p-3 text-sm leading-relaxed">
-              This is your only agent, so there is nowhere to move the funds. Register another agent
-              first, or spend the balance down.
+              There is no other agent to move the funds to. Register one first, or delete this agent
+              and leave the balance where it is.
             </p>
           ) : (
             <Field
@@ -133,9 +151,35 @@ export function AgentDeleteDialog({
           <p className="text-text-secondary text-sm leading-relaxed">
             {moved
               ? 'The balance has moved. Press again to finish deleting.'
-              : 'The wallet is empty, so nothing has to be moved first.'}
+              : leaveFunds
+                ? 'The balance stays in this wallet. Privy still custodies it, and the address is recorded in the audit trail.'
+                : 'The wallet is empty, so nothing has to be moved first.'}
           </p>
         )}
+
+        {plan.offerLeaveFunds ? (
+          // Offered, never taken by default. Moving is impossible when the
+          // wallet has no gas for the fee, and an agent that can be neither
+          // emptied nor deleted is one nobody can ever be rid of.
+          <label className="text-text-secondary flex cursor-pointer items-start gap-2.5 text-sm">
+            <Switch
+              id={leaveId}
+              checked={leaveFunds}
+              onCheckedChange={(checked) => {
+                setLeaveFunds(checked);
+                // The refusal on screen is about the transfer this just opted
+                // out of. Leaving it up would read as a fresh failure.
+                setState(IDLE_ACTION);
+              }}
+              label="Delete without moving the balance"
+              className="mt-0.5"
+            />
+            <span className="leading-snug">
+              Delete without moving it. For when the transfer cannot go through, such as a wallet
+              with no HBAR for the fee.
+            </span>
+          </label>
+        ) : null}
 
         <p className="text-text-muted text-xs leading-relaxed">
           Its payments stay on Payments and Audit under the name it had. Deleting an agent hides the
