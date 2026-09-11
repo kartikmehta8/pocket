@@ -1,14 +1,6 @@
-import {
-  getPaymentStats,
-  getSpendSummary,
-  getTimeseries,
-  listAgents,
-  listPayments,
-} from '@/lib/api';
-import { formatAmount, formatPercentDelta, sumMoney } from '@/lib/format';
-import { CategoryBarChart } from '@/components/charts/category-bar-chart';
-import { ChartFrame } from '@/components/charts/chart-frame';
-import { ChartTable } from '@/components/charts/chart-table';
+import { BarChart3, Unplug } from 'lucide-react';
+
+import { CategorySplit } from '@/components/charts/category-split';
 import { SpendAreaChart } from '@/components/charts/spend-area-chart';
 import { AnomaliesPanel } from '@/components/overview/anomalies-panel';
 import { KpiRow } from '@/components/overview/kpi-row';
@@ -18,13 +10,41 @@ import { ApiErrorState } from '@/components/ui/api-error';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { EmptyState } from '@/components/ui/empty-state';
 import { PageHeader } from '@/components/ui/page-header';
-import { BarChart3 } from 'lucide-react';
+import {
+  getPaymentStats,
+  getSpendSummary,
+  getTimeseries,
+  listAgents,
+  listPayments,
+} from '@/lib/api';
+import { formatAmount, formatPercentDelta, hasAmount, sumMoney } from '@/lib/format';
 
 /** Overview reads live state on every request; nothing here is prerendered. */
 export const dynamic = 'force-dynamic';
 
+/**
+ * The reporting window every panel on this page shares.
+ *
+ * @remarks One window, stated once, so the reader never has to work out which
+ * figure covers which span. The series used to run over fourteen days while
+ * every counter beside it ran over seven.
+ */
+const WINDOW_DAYS = 7;
+
 /** How many recent payments fill the table below. Counters do not use this. */
 const RECENT_LIMIT = 50;
+
+/**
+ * What a panel shows when its own fetch failed, as opposed to coming back
+ * empty.
+ *
+ * @remarks The distinction matters: "no spend recorded yet" is a different
+ * statement from "the analytics service did not answer", and only one of them
+ * should be made when the service did not answer.
+ */
+function Unavailable({ subject, message }: { subject: string; message: string }) {
+  return <EmptyState icon={Unplug} title={`Could not load ${subject}`} description={message} />;
+}
 
 /**
  * Overview: the organization's headline numbers, spend over time, spend by
@@ -34,10 +54,10 @@ export default async function OverviewPage() {
   const [agentsResult, summaryResult, seriesResult, paymentsResult, statsResult] =
     await Promise.all([
       listAgents(),
-      getSpendSummary({ days: 7 }),
-      getTimeseries({ days: 14 }),
+      getSpendSummary({ days: WINDOW_DAYS }),
+      getTimeseries({ days: WINDOW_DAYS }),
       listPayments({ limit: RECENT_LIMIT }),
-      getPaymentStats({ days: 7 }),
+      getPaymentStats({ days: WINDOW_DAYS }),
     ]);
 
   if (!agentsResult.ok && !summaryResult.ok && !paymentsResult.ok) {
@@ -46,7 +66,7 @@ export default async function OverviewPage() {
         <PageHeader
           eyebrow="Organization"
           title="Overview"
-          description="Spend, policy outcomes and agent activity across the last 14 days."
+          description={`Spend, policy outcomes and agent activity across the last ${WINDOW_DAYS} days.`}
         />
         <ApiErrorState
           subject="the dashboard"
@@ -73,7 +93,7 @@ export default async function OverviewPage() {
       <PageHeader
         eyebrow="Organization"
         title="Overview"
-        description="Spend, policy outcomes and agent activity across the last 14 days."
+        description={`Spend, policy outcomes and agent activity across the last ${WINDOW_DAYS} days.`}
       />
 
       <OnboardingBanner
@@ -92,7 +112,7 @@ export default async function OverviewPage() {
         {...(summary && Number.isFinite(summary.increasePercent)
           ? {
               spendDelta: {
-                text: `${formatPercentDelta(summary.increasePercent)} vs previous 7 days`,
+                text: `${formatPercentDelta(summary.increasePercent)} vs previous ${WINDOW_DAYS} days`,
                 tone: summary.increasePercent > 0 ? ('warning' as const) : ('success' as const),
               },
             }
@@ -100,29 +120,32 @@ export default async function OverviewPage() {
       />
 
       <div className="grid grid-cols-[minmax(0,1fr)] gap-4 xl:grid-cols-[minmax(0,3fr)_minmax(0,2fr)]">
-        <ChartFrame
-          title="Spend over time"
-          subtitle={`Daily settled spend in ${seriesResult.ok ? seriesResult.data.asset : asset}, last 14 days`}
-          table={
-            <ChartTable
-              columns={['Date', `Spend (${asset})`, 'Payments']}
-              rows={(seriesResult.ok ? seriesResult.data.points : []).map((point) => ({
-                key: point.date,
-                cells: [point.date, point.amount, String(point.count)],
-              }))}
-            />
-          }
-        >
-          {seriesResult.ok && seriesResult.data.points.length > 0 ? (
-            <SpendAreaChart points={seriesResult.data.points} asset={seriesResult.data.asset} />
-          ) : (
-            <EmptyState
-              icon={BarChart3}
-              title="No spend recorded yet"
-              description="The series fills in once agents start settling payments."
-            />
-          )}
-        </ChartFrame>
+        <Card>
+          <CardHeader>
+            <div>
+              <CardTitle>Spend over time</CardTitle>
+              <CardDescription>
+                Daily settled spend in {seriesResult.ok ? seriesResult.data.asset : asset}, last{' '}
+                {WINDOW_DAYS} days
+              </CardDescription>
+            </div>
+          </CardHeader>
+          {/* The chart carries its own axis padding, so the body is inset less
+              than a card body would be and the plot keeps its full width. */}
+          <CardContent className="px-2 pb-4">
+            {!seriesResult.ok ? (
+              <Unavailable subject="the spend series" message={seriesResult.message} />
+            ) : seriesResult.data.points.some((point) => hasAmount(point.amount)) ? (
+              <SpendAreaChart points={seriesResult.data.points} asset={seriesResult.data.asset} />
+            ) : (
+              <EmptyState
+                icon={BarChart3}
+                title="No spend recorded yet"
+                description="The series fills in once agents start settling payments."
+              />
+            )}
+          </CardContent>
+        </Card>
 
         <AnomaliesPanel
           anomalies={summary?.anomalies ?? []}
@@ -130,29 +153,32 @@ export default async function OverviewPage() {
         />
       </div>
 
-      <ChartFrame
-        title="Spend by category"
-        subtitle={`Last 7 days${summary?.largestCategory ? ` · largest: ${summary.largestCategory}` : ''}`}
-        table={
-          <ChartTable
-            columns={['Category', `Spend (${asset})`, 'Payments']}
-            rows={(summary?.byCategory ?? []).map((entry) => ({
-              key: entry.category,
-              cells: [entry.category, entry.amount, String(entry.count)],
-            }))}
-          />
-        }
-      >
-        {summary && summary.byCategory.length > 0 ? (
-          <CategoryBarChart byCategory={summary.byCategory} asset={summary.currency} />
-        ) : (
-          <EmptyState
-            icon={BarChart3}
-            title="No categorised spend yet"
-            description="Categories appear once payments settle."
-          />
-        )}
-      </ChartFrame>
+      <Card>
+        <CardHeader>
+          <div>
+            <CardTitle>Spend by category</CardTitle>
+            <CardDescription>
+              How the last {WINDOW_DAYS} days of spend divide across what agents bought
+            </CardDescription>
+          </div>
+        </CardHeader>
+        <CardContent>
+          {!summaryResult.ok ? (
+            <Unavailable subject="the category split" message={summaryResult.message} />
+          ) : summaryResult.data.byCategory.length > 0 ? (
+            <CategorySplit
+              byCategory={summaryResult.data.byCategory}
+              asset={summaryResult.data.currency}
+            />
+          ) : (
+            <EmptyState
+              icon={BarChart3}
+              title="No categorised spend yet"
+              description="Categories appear once payments settle."
+            />
+          )}
+        </CardContent>
+      </Card>
 
       <Card>
         <CardHeader>
