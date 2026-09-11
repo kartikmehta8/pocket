@@ -2,7 +2,7 @@
 
 import { KeyRound, TriangleAlert } from 'lucide-react';
 import { AnimatePresence, motion, useReducedMotion } from 'motion/react';
-import { useActionState, useId } from 'react';
+import { useActionState, useEffect, useId } from 'react';
 
 import { createApiKeyAction } from '@/lib/actions-account';
 import { IDLE_SECRET } from '@/lib/action-state';
@@ -12,17 +12,36 @@ import { Button, SUBMIT_WIDTH } from '@/components/ui/button';
 import { CodeBlock } from '@/components/ui/code-block';
 import { Field, Input } from '@/components/ui/field';
 
+/** Props for {@link ApiKeyMinter}. */
+export interface ApiKeyMinterProps {
+  /** How many live keys exist, used to name the next one sensibly. */
+  existing: number;
+  /**
+   * Called with the plaintext the moment a key is created.
+   *
+   * @remarks The setup guide uses this to fill the key into the connection
+   * command one step down, so nobody has to copy it from one box into another.
+   */
+  onMinted?: (secret: string) => void;
+}
+
 /**
  * Mints an API key and reveals it once.
  *
  * The plaintext exists only in the action's return value. Nothing stores it, so
  * the reveal is emphatic about being the only chance to copy it.
  *
- * @param existing How many live keys the organization already has, used to set
- *   the default label so a second key is not called the same as the first.
+ * @param props How many live keys exist, and where to hand the new one.
  */
-export function ApiKeyMinter({ existing }: { existing: number }) {
+export function ApiKeyMinter({ existing, onMinted }: ApiKeyMinterProps) {
   const [state, submit, pending] = useActionState(createApiKeyAction, IDLE_SECRET);
+
+  useEffect(() => {
+    if (state.secret !== '') onMinted?.(state.secret);
+    // Keyed on the revision, not the secret: two keys are never the same, but
+    // the effect should fire once per creation, not on every re-render.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [state.revision]);
   const labelId = useId();
   const reduced = useReducedMotion();
 

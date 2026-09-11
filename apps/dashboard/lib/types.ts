@@ -186,6 +186,14 @@ export interface AgentDetail {
    * the address.
    */
   accountId: string | null;
+  /**
+   * Whether that account exists but has never published its public key.
+   *
+   * `null` when there is no account to judge. Pocket can still pay from a
+   * hollow account; Circle's faucet refuses to send to one, so the funding
+   * step fixes it rather than handing over an id that is silently rejected.
+   */
+  accountHollow: boolean | null;
 }
 
 // Account, credential and identity shapes.

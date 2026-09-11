@@ -7,6 +7,7 @@ import { RESTART_COOKIE } from '@/lib/setup-restart';
 import type { AgentDetail, AgentSummary } from '@/lib/types';
 import { CompletionDialog } from './completion-dialog';
 import { GuideHeader } from './guide-header';
+import { ProgressRail } from './progress-rail';
 import { RestartButton } from './restart-button';
 import { SetupSteps } from './setup-steps';
 import { type StepState } from './step';
@@ -69,6 +70,9 @@ export function Guide({
   const [pending, startTransition] = useTransition();
   const [connected, setConnected] = useState(false);
   const [purchased, setPurchased] = useState(false);
+  // The plaintext of a key created on this visit, held in memory only so step
+  // six can fill it into the connection command. Never persisted.
+  const [apiKey, setApiKey] = useState<string | null>(null);
   // Separate from `purchased` on purpose. Closing the dialog must not undo
   // the step that opened it, and Radix reports every dismissal — escape, the
   // scrim, the close button, a destination link — through `onOpenChange`.
@@ -79,6 +83,7 @@ export function Guide({
     setConnected(false);
     setPurchased(false);
     setCelebrating(false);
+    setApiKey(null);
     startTransition(() => {
       router.refresh();
     });
@@ -96,51 +101,57 @@ export function Guide({
 
   return (
     <>
-      <Card>
-        <GuideHeader
-          done={done}
-          total={total}
-          restarted={restarted}
-          pending={pending}
-          onRestart={restart}
-        />
-
-        <CardContent>
-          <SetupSteps
-            agent={agent}
-            detail={detail}
-            keysAvailable={keysAvailable}
-            liveKeys={liveKeys}
-            mcpUrl={mcpUrl}
-            resource={resource}
-            stateOf={stateOf}
+      <div className="grid items-start gap-6 lg:grid-cols-[minmax(0,1fr)_22rem]">
+        <Card>
+          <GuideHeader
+            done={done}
             total={total}
-            onConnected={() => {
-              setConnected(true);
-            }}
-            onPurchased={() => {
-              setConnected(true);
-              setPurchased(true);
-              setCelebrating(true);
-            }}
+            restarted={restarted}
+            pending={pending}
+            onRestart={restart}
           />
 
-          {/* Repeated at the foot of a finished run, because that is where the
+          <CardContent>
+            <SetupSteps
+              agent={agent}
+              detail={detail}
+              keysAvailable={keysAvailable}
+              liveKeys={liveKeys}
+              mcpUrl={mcpUrl}
+              resource={resource}
+              stateOf={stateOf}
+              total={total}
+              apiKey={apiKey}
+              onMinted={setApiKey}
+              onConnected={() => {
+                setConnected(true);
+              }}
+              onPurchased={() => {
+                setConnected(true);
+                setPurchased(true);
+                setCelebrating(true);
+              }}
+            />
+
+            {/* Repeated at the foot of a finished run, because that is where the
               reader is when they get to the end of it. */}
-          {finished ? (
-            <div className="border-divider mt-7 flex flex-wrap items-center justify-between gap-3 border-t pt-4">
-              <p className="text-text-muted text-sm">
-                That is the whole flow, end to end. Start it again to walk a new agent through.
-              </p>
-              <RestartButton
-                onRestart={restart}
-                pending={pending}
-                label="Restart guide, from the end"
-              />
-            </div>
-          ) : null}
-        </CardContent>
-      </Card>
+            {finished ? (
+              <div className="border-divider mt-7 flex flex-wrap items-center justify-between gap-3 border-t pt-4">
+                <p className="text-text-muted text-sm">
+                  That is the whole flow, end to end. Start it again to walk a new agent through.
+                </p>
+                <RestartButton
+                  onRestart={restart}
+                  pending={pending}
+                  label="Restart guide, from the end"
+                />
+              </div>
+            ) : null}
+          </CardContent>
+        </Card>
+
+        <ProgressRail reached={reached} docsUrl={docsUrl} />
+      </div>
 
       <CompletionDialog open={celebrating} onOpenChange={setCelebrating} docsUrl={docsUrl} />
     </>

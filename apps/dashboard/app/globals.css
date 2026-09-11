@@ -371,7 +371,17 @@
     opacity: 1;
   }
 
+  /*
+   * Positioned as well as clipped. An absolutely positioned descendant — a
+   * screen-reader announcement, a tooltip anchor — is only clipped by an
+   * overflow ancestor that is also its containing block. Without this, such
+   * an element inside a closed panel still occupied its static position,
+   * which on a long table sat below the page and stretched the document past
+   * the layout, so the sticky sidebar ran out of parent before the scroll
+   * did.
+   */
   & > * {
+    position: relative;
     overflow: hidden;
   }
 }

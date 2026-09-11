@@ -1,6 +1,8 @@
 import { renderToStaticMarkup } from 'react-dom/server';
 import { describe, expect, it, vi } from 'vitest';
 
+import { TooltipProvider } from '@/components/ui/tooltip';
+
 import { Guide } from './guide';
 import type { AgentSummary } from '@/lib/types';
 
@@ -23,20 +25,35 @@ const AGENT: AgentSummary = {
 };
 
 /** Renders the guide for a given completion pattern and strips its tags. */
-function render(derived: boolean[], agent: AgentSummary | null = AGENT): string {
+/** The markup itself, for assertions about attributes rather than words. */
+function markup(derived: boolean[], agent: AgentSummary | null = AGENT): string {
   return renderToStaticMarkup(
-    <Guide
-      derived={derived}
-      restarted={agent === null}
-      agent={agent}
-      detail={null}
-      keysAvailable
-      liveKeys={1}
-      mcpUrl="http://localhost:8081/mcp"
-      resource="http://localhost:8402"
-      docsUrl="http://localhost:3001/docs"
-    />,
-  )
+    <TooltipProvider>
+      <Guide
+        derived={derived}
+        restarted={agent === null}
+        agent={agent}
+        detail={null}
+        keysAvailable
+        liveKeys={1}
+        mcpUrl="http://localhost:8081/mcp"
+        resource="http://localhost:8402"
+        docsUrl="http://localhost:3001/docs"
+      />
+    </TooltipProvider>,
+  );
+}
+
+/** Buttons that confirm a step, with whether each is disabled. */
+function confirmButtons(html: string): boolean[] {
+  return [...html.matchAll(/<button([^>]*)>(?:(?!<\/button>).)*?I have done this/gs)].map((match) =>
+    /\bdisabled=""/.test(match[1] ?? ''),
+  );
+}
+
+/** The words on the page, for assertions about what the reader sees. */
+function render(derived: boolean[], agent: AgentSummary | null = AGENT): string {
+  return markup(derived, agent)
     .replace(/<[^>]*>/g, ' ')
     .replace(/\s+/g, ' ');
 }
@@ -76,8 +93,17 @@ describe('Guide', () => {
       expect(render(ALL).match(/I have done this/g)).toHaveLength(2);
     });
 
-    it('promise nothing about checking a payment', () => {
-      expect(render(ALL)).toContain('Finishes the guide');
+    it('unlock one at a time: six after the key, seven after six', () => {
+      // Every recorded step done: connecting is open, buying still waits on it.
+      expect(confirmButtons(markup(ALL))).toEqual([false, true]);
+      // No key yet: neither terminal step can be confirmed.
+      expect(confirmButtons(markup(PART))).toEqual([true, true]);
+    });
+
+    it('say what unlocks the last one, and promise nothing about checking a payment', () => {
+      const html = render(ALL);
+      expect(html).toContain('Unlocks once step six is done');
+      expect(html).not.toMatch(/check(s|ing)? (the|your|for a) payment/i);
     });
   });
 

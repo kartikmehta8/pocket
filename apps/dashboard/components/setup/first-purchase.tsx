@@ -1,8 +1,6 @@
 import Link from 'next/link';
 
-import { Check } from 'lucide-react';
-
-import { Button } from '@/components/ui/button';
+import { ConfirmStepButton } from './confirm-step-button';
 import { CodeBlock } from '@/components/ui/code-block';
 
 /** Props for {@link FirstPurchase}. */
@@ -11,6 +9,8 @@ export interface FirstPurchaseProps {
   agentId: string | null;
   /** Base URL of the example paid resource, or `null` when none is deployed. */
   resource: string | null;
+  /** Whether the step above is complete, which is what unlocks this one. */
+  ready: boolean;
   /** Whether the operator has already confirmed the purchase. */
   done: boolean;
   /** Called when they confirm it. */
@@ -30,7 +30,7 @@ export interface FirstPurchaseProps {
  * or beyond the window this page reads, all left a finished setup insisting it
  * was unfinished. The ledger is the record — this is a walkthrough.
  */
-export function FirstPurchase({ agentId, resource, done, onDone }: FirstPurchaseProps) {
+export function FirstPurchase({ agentId, resource, ready, done, onDone }: FirstPurchaseProps) {
   const naming = agentId === null ? '' : ` using agent ${agentId}`;
   const prompt =
     resource === null
@@ -78,14 +78,12 @@ export function FirstPurchase({ agentId, resource, done, onDone }: FirstPurchase
       </div>
 
       {done ? null : (
-        <div className="flex flex-wrap items-center gap-2">
-          <Button variant="primary" icon={Check} onClick={onDone}>
-            I have done this
-          </Button>
-          <span className="text-text-muted text-xs">
-            Finishes the guide. The payment itself is on Payments either way.
-          </span>
-        </div>
+        <ConfirmStepButton
+          ready={ready}
+          onDone={onDone}
+          hint="Finishes the guide. The payment itself is on Payments either way."
+          blocked="Unlocks once step six is done."
+        />
       )}
 
       <p className="text-text-muted text-xs leading-relaxed">

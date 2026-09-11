@@ -1,20 +1,18 @@
 'use client';
 
 import * as ToggleGroup from '@radix-ui/react-toggle-group';
-import { Check } from 'lucide-react';
-import { useId, useState } from 'react';
+import { useState } from 'react';
 
 import { cn } from '@/lib/cn';
-import { Button } from '@/components/ui/button';
+import { ConfirmStepButton } from './confirm-step-button';
 import { CodeBlock } from '@/components/ui/code-block';
-import { Field, Input } from '@/components/ui/field';
 
 /** The runtimes an operator is most likely to point at Pocket. */
 const CLIENTS = ['Hermes', 'Claude Code', 'Raw JSON'] as const;
 
 type Client = (typeof CLIENTS)[number];
 
-/** Stand-in shown until a key is pasted, so the shape of one is obvious. */
+/** Stand-in shown until a key is created, so the shape of one is obvious. */
 const KEY_PLACEHOLDER = 'pocket_sk_...';
 
 /**
@@ -58,6 +56,16 @@ function recipe(client: Client, url: string, apiKey: string): { caption: string;
 export interface HermesConnectProps {
   /** The MCP endpoint this organization should connect to. */
   url: string;
+  /**
+   * The key created in the step above, or `null` when this visit has not
+   * created one.
+   *
+   * @remarks A key created on an earlier visit cannot be shown again; only a
+   * hash of it is kept. The command then carries a placeholder and says so.
+   */
+  apiKey: string | null;
+  /** Whether the step above is complete, which is what unlocks this one. */
+  ready: boolean;
   /** Whether the operator has already confirmed the runtime is attached. */
   done: boolean;
   /** Called when they confirm it. */
@@ -77,17 +85,12 @@ export interface HermesConnectProps {
  * Pocket cannot see, so this step is confirmed rather than verified. Guessing
  * from payment records only ever produced false negatives.
  *
- * @param props The MCP endpoint, and whether the step is behind us.
+ * @param props The MCP endpoint, the key from the step above, and whether the
+ *   step is unlocked or behind us.
  */
-export function HermesConnect({ url, done, onDone }: HermesConnectProps) {
+export function HermesConnect({ url, apiKey, ready, done, onDone }: HermesConnectProps) {
   const [client, setClient] = useState<Client>('Claude Code');
-  const [apiKey, setApiKey] = useState('');
-  const keyId = useId();
-  const { caption, code } = recipe(
-    client,
-    url,
-    apiKey.trim() === '' ? KEY_PLACEHOLDER : apiKey.trim(),
-  );
+  const { caption, code } = recipe(client, url, apiKey ?? KEY_PLACEHOLDER);
 
   return (
     <div className="flex flex-col gap-3">
@@ -116,33 +119,24 @@ export function HermesConnect({ url, done, onDone }: HermesConnectProps) {
         ))}
       </ToggleGroup.Root>
 
-      <Field
-        htmlFor={keyId}
-        label="Your API key"
-        hint="Paste the key from the step above to fill it into the command. It is only used here, in your browser."
-      >
-        <Input
-          id={keyId}
-          value={apiKey}
-          onChange={(event) => setApiKey(event.target.value)}
-          placeholder={KEY_PLACEHOLDER}
-          spellCheck={false}
-          autoComplete="off"
-          className="font-mono"
-        />
-      </Field>
-
       <CodeBlock code={code} label={`${client} MCP configuration`} caption={caption} />
 
+      <p className="text-text-muted text-xs leading-relaxed">
+        {apiKey !== null
+          ? 'Your new key is already in the command. Nothing to copy between boxes.'
+          : ready
+            ? `Your key is filled in the moment you create one above. For a key from an earlier visit, put it in place of ${KEY_PLACEHOLDER}; Pocket keeps only a hash and cannot show it again.`
+            : 'Create a key in step five and it is filled in here.'}
+      </p>
+
       {done ? null : (
-        <div className="flex flex-wrap items-center gap-2">
-          <Button variant="secondary" icon={Check} onClick={onDone}>
-            I have done this
-          </Button>
-          <span className="text-text-muted text-xs">
-            Run it in your terminal, then mark the step done.
-          </span>
-        </div>
+        <ConfirmStepButton
+          variant="secondary"
+          ready={ready}
+          onDone={onDone}
+          hint="Run it in your terminal, then mark the step done."
+          blocked="Unlocks once step five is done."
+        />
       )}
     </div>
   );

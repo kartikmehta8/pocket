@@ -4,6 +4,8 @@ import type { ReactNode } from 'react';
 
 import { cn } from '@/lib/cn';
 
+import { stepAnchor } from './steps';
+
 /**
  * How far a step has got.
  *
@@ -76,7 +78,7 @@ export function Step({
   const badge = BADGE[state];
 
   return (
-    <li className="relative flex gap-3.5 pb-7 last:pb-0">
+    <li id={stepAnchor(index)} className="relative flex scroll-mt-20 gap-3.5 pb-7 last:pb-0">
       {/* Geometry, so the connector meets the marker instead of near it: the
           marker is 1.75rem, the rule 1px. Centre is 0.875rem, so the rule sits
           there exactly and starts 0.5rem below the marker's foot. */}

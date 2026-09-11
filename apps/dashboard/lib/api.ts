@@ -176,3 +176,24 @@ export function previewPayment(body: {
 }): Promise<ApiResult<{ decision: Decision }>> {
   return request<{ decision: Decision }>('POST', '/v1/payments/preview', { body });
 }
+
+/**
+ * `POST /v1/agents/:id/wallet/activate` — publish a wallet's key on chain.
+ *
+ * @param agentId Agent whose wallet should sign.
+ * @returns The account id, and whether this call was what published the key.
+ * @remarks Costs the wallet gas and moves no money. Safe to call twice: an
+ *   account that has already published its key is left alone.
+ */
+export function activateWallet(agentId: string): Promise<
+  ApiResult<{
+    accountId: string;
+    activated: boolean;
+    txHash: string | null;
+    alreadyActive: boolean;
+    /** Whether a mirror node could already see the published key. */
+    confirmed: boolean;
+  }>
+> {
+  return request('POST', `/v1/agents/${agentId}/wallet/activate`, { body: {} });
+}

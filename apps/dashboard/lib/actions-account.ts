@@ -2,7 +2,7 @@
 
 import { revalidatePath } from 'next/cache';
 
-import { createAgent, createApiKey, renameOrg, revokeApiKey } from './api';
+import { activateWallet, createAgent, createApiKey, renameOrg, revokeApiKey } from './api';
 import type { ActionState, SecretState } from './action-state';
 
 /**
@@ -93,5 +93,33 @@ export async function createAgentAction(
   return {
     status: 'success',
     message: `${result.data.agent.name} is ready at ${result.data.wallet.address}. Set a budget and policy before it can spend.`,
+  };
+}
+
+/**
+ * Publish an agent wallet's key on chain.
+ *
+ * @param agentId Agent whose wallet should sign.
+ * @returns What happened, for the funding step to report.
+ * @remarks Exists because a Hedera account created by a transfer carries no
+ * key until it signs something, and Circle's faucet refuses to send to one.
+ * Moves no money: the wallet signs a transfer of nothing to itself and pays
+ * only the gas.
+ */
+export async function activateWalletAction(agentId: string): Promise<ActionState> {
+  const result = await activateWallet(agentId);
+  if (!result.ok) return { status: 'error', message: result.message };
+  revalidatePath('/setup');
+  revalidatePath(`/agents/${agentId}`);
+  if (result.data.alreadyActive) {
+    return { status: 'success', message: 'This wallet had already published its key.' };
+  }
+  // The signature is on chain either way. Only the confirmation can be late,
+  // and saying so beats claiming a result the next read will contradict.
+  return {
+    status: 'success',
+    message: result.data.confirmed
+      ? 'Key published. Circle will accept this account now.'
+      : 'Key published. The network has not caught up yet — reload in a moment.',
   };
 }

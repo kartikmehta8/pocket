@@ -63,7 +63,7 @@ export default async function SetupPage() {
   const urls = serviceUrls();
 
   return (
-    <div className="gap-section flex w-full max-w-3xl flex-col">
+    <>
       <PageHeader
         title="Connect an agent"
         description="Seven steps from an empty organization to an agent that has paid for its own data."
@@ -88,6 +88,6 @@ export default async function SetupPage() {
         resource={urls.paidService}
         docsUrl={urls.docs}
       />
-    </div>
+    </>
   );
 }

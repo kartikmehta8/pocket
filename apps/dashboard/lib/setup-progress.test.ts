@@ -53,6 +53,7 @@ function detailFixture(): AgentDetail {
     },
     taskBudgets: [],
     accountId: '0.0.1',
+    accountHollow: false,
   };
 }
 

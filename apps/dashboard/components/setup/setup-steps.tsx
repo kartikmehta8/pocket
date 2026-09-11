@@ -1,7 +1,5 @@
 'use client';
 
-import { Bot, Coins, Gauge, KeyRound, PlugZap, ShieldHalf, ShoppingCart } from 'lucide-react';
-
 import type { AgentDetail, AgentSummary } from '@/lib/types';
 import { ApiKeyMinter } from './api-key-minter';
 import { ConfigureStep } from './configure-step';
@@ -9,6 +7,7 @@ import { FirstPurchase } from './first-purchase';
 import { FundStep } from './fund-step';
 import { HermesConnect } from './hermes-connect';
 import { Step, type StepState } from './step';
+import { STEPS } from './steps';
 import { AgentCreateForm } from '@/components/agents/agent-create-form';
 import { CodeBlock } from '@/components/ui/code-block';
 import { InlineCode } from '@/components/ui/inline-code';
@@ -31,6 +30,10 @@ export interface SetupStepsProps {
   stateOf: (position: number) => StepState;
   /** How many steps there are. */
   total: number;
+  /** The key created in step five on this visit, or `null`. */
+  apiKey: string | null;
+  /** Called with the plaintext when step five creates a key. */
+  onMinted: (secret: string) => void;
   /** Called when the operator confirms the runtime is attached. */
   onConnected: () => void;
   /**
@@ -58,6 +61,8 @@ export function SetupSteps({
   resource,
   stateOf,
   total,
+  apiKey,
+  onMinted,
   onConnected,
   onPurchased,
 }: SetupStepsProps) {
@@ -66,6 +71,7 @@ export function SetupSteps({
   const fund = stateOf(1);
   const budget = stateOf(2);
   const policy = stateOf(3);
+  const key = stateOf(4);
   const connect = stateOf(5);
   const purchase = stateOf(6);
 
@@ -74,8 +80,7 @@ export function SetupSteps({
       <Step
         index={1}
         total={total}
-        icon={Bot}
-        title="Register an agent"
+        {...STEPS[0]}
         summary="Pocket provisions a Privy-custodied wallet and records its public key. No private key reaches Pocket, your server, or the model."
         state={stateOf(0)}
       >
@@ -93,14 +98,15 @@ export function SetupSteps({
       <Step
         index={2}
         total={total}
-        icon={Coins}
-        title="Fund its wallet with USDC"
-        summary="The only funding step. An agent needs the asset it spends and nothing else."
+        {...STEPS[1]}
+        summary="Pocket funds a new agent from its own treasury, so this is usually already done. Top it up only if you want to test at length."
         state={fund}
       >
         <FundStep
           address={agent?.wallet?.address ?? null}
           accountId={detail?.accountId ?? null}
+          accountHollow={detail?.accountHollow ?? null}
+          agentId={agent?.id ?? null}
           balance={detail?.balance?.amount ?? null}
           funded={fund === 'done'}
         />
@@ -109,8 +115,7 @@ export function SetupSteps({
       <Step
         index={3}
         total={total}
-        icon={Gauge}
-        title="Set a daily budget"
+        {...STEPS[2]}
         summary="A daily ceiling and a per-transaction ceiling. This is how much, not what for."
         state={budget}
       >
@@ -125,8 +130,7 @@ export function SetupSteps({
       <Step
         index={4}
         total={total}
-        icon={ShieldHalf}
-        title="Write a spending policy"
+        {...STEPS[3]}
         summary="What it may buy, in which asset, from whom. Without one the agent is refused even with money in the wallet."
         state={policy}
       >
@@ -141,13 +145,12 @@ export function SetupSteps({
       <Step
         index={5}
         total={total}
-        icon={KeyRound}
-        title="Create an API key"
+        {...STEPS[4]}
         summary="Your runtime presents this to the MCP server. It travels in a transport header, so the model never sees it and cannot leak it in a completion."
-        state={stateOf(4)}
+        state={key}
       >
         {keysAvailable ? (
-          <ApiKeyMinter existing={liveKeys} />
+          <ApiKeyMinter existing={liveKeys} onMinted={onMinted} />
         ) : (
           <p className="text-text-secondary text-sm leading-relaxed">
             This dashboard is running with <InlineCode>POCKET_API_KEY</InlineCode> set, so it is
@@ -159,19 +162,23 @@ export function SetupSteps({
       <Step
         index={6}
         total={total}
-        icon={PlugZap}
-        title="Connect your agent runtime"
+        {...STEPS[5]}
         summary="One command. Eight tools reach your agent: one that can spend, and seven so it does not have to guess."
         state={connect}
       >
-        <HermesConnect url={mcpUrl} done={connect === 'done'} onDone={onConnected} />
+        <HermesConnect
+          url={mcpUrl}
+          apiKey={apiKey}
+          ready={key === 'done'}
+          done={connect === 'done'}
+          onDone={onConnected}
+        />
       </Step>
 
       <Step
         index={7}
         total={total}
-        icon={ShoppingCart}
-        title="Make the first purchase"
+        {...STEPS[6]}
         summary="Ask for something behind a paywall. Pocket decides before anything is signed."
         state={purchase}
         last
@@ -179,6 +186,7 @@ export function SetupSteps({
         <FirstPurchase
           agentId={agent?.id ?? null}
           resource={resource}
+          ready={connect === 'done'}
           done={purchase === 'done'}
           onDone={onPurchased}
         />
