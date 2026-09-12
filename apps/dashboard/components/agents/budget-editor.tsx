@@ -49,7 +49,11 @@ export function BudgetEditor({ agentId, budget }: BudgetEditorProps) {
           }}
         >
           <div className="grid gap-4 sm:grid-cols-3">
-            <Field htmlFor="budget-asset" label="Asset">
+            <Field
+              htmlFor="budget-asset"
+              label="Asset"
+              info="The one asset this agent may spend. A payment in anything else is refused before it reaches the policy."
+            >
               <Input
                 id="budget-asset"
                 value={asset}
@@ -57,7 +61,12 @@ export function BudgetEditor({ agentId, budget }: BudgetEditorProps) {
                 autoComplete="off"
               />
             </Field>
-            <Field htmlFor="budget-daily" label="Daily limit" hint="Resets at UTC midnight.">
+            <Field
+              htmlFor="budget-daily"
+              label="Daily limit"
+              hint="Resets at UTC midnight."
+              info="The most this agent may settle in a day. A payment that would take today's spend past it is refused, so the limit holds even when several are in flight at once."
+            >
               <Input
                 id="budget-daily"
                 inputMode="decimal"
@@ -66,7 +75,11 @@ export function BudgetEditor({ agentId, budget }: BudgetEditorProps) {
                 onChange={(event) => setDailyLimit(event.target.value)}
               />
             </Field>
-            <Field htmlFor="budget-per-tx" label="Per transaction">
+            <Field
+              htmlFor="budget-per-tx"
+              label="Per transaction"
+              info="The most this agent may spend in one payment. The policy sets a ceiling of its own; whichever is lower is the one that stops a payment."
+            >
               <Input
                 id="budget-per-tx"
                 inputMode="decimal"

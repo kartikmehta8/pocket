@@ -9,6 +9,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { EmptyState } from '@/components/ui/empty-state';
+import { InfoHint } from '@/components/ui/info-hint';
 import { Meter } from '@/components/ui/meter';
 import { IDLE_ACTION, type ActionState } from '@/lib/action-state';
 import { closeTaskBudgetAction } from '@/lib/actions';
@@ -39,7 +40,13 @@ export function TaskBudgets({ agentId, taskBudgets, defaultAsset }: TaskBudgetsP
     <Card className="self-start">
       <CardHeader>
         <div>
-          <CardTitle>Task budgets</CardTitle>
+          <CardTitle>
+            Task budgets{' '}
+            <InfoHint
+              subject="task budgets"
+              label="A pot for one job, on top of the daily limit rather than instead of it. The agent names the budget when it pays; once the pot is empty or closed, those payments stop while the rest carry on."
+            />
+          </CardTitle>
           <CardDescription>Ring-fenced allowances scoped to a single task.</CardDescription>
         </div>
         <Button size="sm" icon={Plus} onClick={() => setDialogOpen(true)}>

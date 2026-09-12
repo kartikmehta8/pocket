@@ -1,12 +1,12 @@
-import { Info, type LucideIcon } from 'lucide-react';
+import type { LucideIcon } from 'lucide-react';
 import type { ReactNode } from 'react';
 
 import { cn } from '@/lib/cn';
 import type { Tone } from '@/lib/status';
 
+import { InfoHint } from './info-hint';
 import { NumberRoll } from './number-roll';
 import { TONE_INK } from './tones';
-import { Hint } from './tooltip';
 
 /** Props for {@link StatTile}. */
 export interface StatTileProps {
@@ -61,14 +61,7 @@ export function StatTile({
       <div className="flex items-start justify-between gap-2">
         <p className="eyebrow flex items-center gap-1">
           {label}
-          {hint === undefined ? null : (
-            <Hint label={hint}>
-              <span className="text-ash-400 hover:text-text-secondary inline-flex cursor-help transition-colors duration-(--duration-fast)">
-                <Info aria-hidden className="size-3" strokeWidth={2.25} />
-                <span className="sr-only">About {label}</span>
-              </span>
-            </Hint>
-          )}
+          {hint === undefined ? null : <InfoHint label={hint} subject={label.toLowerCase()} />}
         </p>
         {Icon ? (
           <Icon

@@ -7,6 +7,7 @@ import { ActionFeedback } from '@/components/ui/action-feedback';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Field, Input } from '@/components/ui/field';
+import { InfoHint } from '@/components/ui/info-hint';
 import { Segmented } from '@/components/ui/segmented';
 import { Switch } from '@/components/ui/switch';
 import { TokenList } from '@/components/ui/token-list';
@@ -89,7 +90,11 @@ export function PolicyEditor({ agentId, policy }: PolicyEditorProps) {
           }}
         >
           <div className="grid gap-5 lg:grid-cols-2">
-            <Field htmlFor="policy-assets" label="Allowed assets">
+            <Field
+              htmlFor="policy-assets"
+              label="Allowed assets"
+              info="Tickers this agent may pay in. A payment in anything not listed is refused."
+            >
               <TokenList
                 id="policy-assets"
                 values={draft.allowedAssets}
@@ -98,7 +103,11 @@ export function PolicyEditor({ agentId, policy }: PolicyEditorProps) {
                 itemNoun="asset"
               />
             </Field>
-            <Field htmlFor="policy-chains" label="Allowed chains">
+            <Field
+              htmlFor="policy-chains"
+              label="Allowed chains"
+              info="Networks the payment may settle on, such as hedera-testnet. A seller quoting a price on any other chain is refused."
+            >
               <TokenList
                 id="policy-chains"
                 values={draft.allowedChains}
@@ -110,7 +119,13 @@ export function PolicyEditor({ agentId, policy }: PolicyEditorProps) {
           </div>
 
           <div>
-            <p className="eyebrow mb-2">Allowed categories</p>
+            <p className="eyebrow mb-2 flex items-center gap-1">
+              Allowed categories
+              <InfoHint
+                subject="allowed categories"
+                label="The kinds of purchase this agent may make. The agent states a category when it pays, and one that is not selected here is refused — so an agent cleared for research data cannot quietly buy compute."
+              />
+            </p>
             <CategoryPicker
               selected={draft.allowedCategories}
               onChange={(values) => patch({ allowedCategories: values })}
@@ -121,6 +136,7 @@ export function PolicyEditor({ agentId, policy }: PolicyEditorProps) {
             htmlFor="policy-recipients"
             label="Trusted recipients"
             hint="Addresses on this list bypass the unknown-recipient rule."
+            info="Sellers this agent may always pay. An address it has already paid once counts as known too; anything else falls to the unknown-recipient rule."
           >
             <TokenList
               id="policy-recipients"
@@ -133,7 +149,11 @@ export function PolicyEditor({ agentId, policy }: PolicyEditorProps) {
           </Field>
 
           <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
-            <Field htmlFor="policy-max" label="Max transaction amount">
+            <Field
+              htmlFor="policy-max"
+              label="Max transaction amount"
+              info="The policy's ceiling for a single payment. The budget sets one too, and the lower of the two is what stops a payment."
+            >
               <Input
                 id="policy-max"
                 inputMode="decimal"
@@ -145,6 +165,7 @@ export function PolicyEditor({ agentId, policy }: PolicyEditorProps) {
 
             <Field
               htmlFor="policy-threshold"
+              info="Payments at or above this amount are held for a person instead of settling. Everything below it goes through untouched."
               label="Approval threshold"
               hint={
                 thresholdOn
@@ -172,7 +193,13 @@ export function PolicyEditor({ agentId, policy }: PolicyEditorProps) {
             </Field>
 
             <div className="flex flex-col gap-1.5">
-              <p className="eyebrow">Unknown recipient</p>
+              <p className="eyebrow flex items-center gap-1">
+                Unknown recipient
+                <InfoHint
+                  subject="the unknown recipient rule"
+                  label="What happens when a seller is neither on the trusted list nor one this agent has paid before: refuse it, hold it for a person, or let it through."
+                />
+              </p>
               <Segmented
                 label="Behaviour for an unknown recipient"
                 value={draft.unknownRecipientBehaviour}
