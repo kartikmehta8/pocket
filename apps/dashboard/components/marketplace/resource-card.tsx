@@ -1,4 +1,4 @@
-import { ArrowUpRight, Clock } from 'lucide-react';
+import { ArrowUpRight, Clock, Link2 } from 'lucide-react';
 import Image from 'next/image';
 
 import { formatDateTime } from '@/lib/format';
@@ -7,6 +7,7 @@ import { providerMarks } from '@/lib/providers';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent } from '@/components/ui/card';
 import { CopyButton } from '@/components/ui/copy-button';
+import { InfoHint } from '@/components/ui/info-hint';
 import { Hint } from '@/components/ui/tooltip';
 import { BuyForm } from './buy-form';
 
@@ -116,20 +117,31 @@ export function ResourceCard({
 
         <p className="text-text-muted text-xs leading-relaxed">{resource.useCase}</p>
 
-        {/* The address an agent actually pays. Opening it in a browser shows
-            the seller's 402 and its terms, which is the whole handshake in one
-            click. */}
-        <div className="border-divider mt-auto flex items-center gap-1 border-t pt-3">
-          <a
-            href={resource.url}
-            target="_blank"
-            rel="noreferrer noopener"
-            className="text-text-secondary hover:text-text inline-flex min-w-0 items-center gap-1 rounded-sm font-mono text-xs"
-          >
-            <span className="truncate">{endpoint}</span>
-            <ArrowUpRight aria-hidden className="text-ash-400 size-3 shrink-0" strokeWidth={2} />
-          </a>
-          <CopyButton value={resource.url} label={`${resource.title} URL`} />
+        {/* The address an agent actually pays, given a surface of its own: it
+            is the one thing on the card a reader might take somewhere else.
+            Opening it in a browser shows the seller's 402 and its terms, which
+            is the whole handshake in one click. */}
+        <div className="mt-auto pt-1">
+          <p className="eyebrow mb-1.5 flex items-center gap-1">
+            Paid endpoint
+            <InfoHint
+              subject="the paid endpoint"
+              label="The URL your agent buys from. Opening it in a browser returns the seller's 402 with its price and terms, because nothing has paid for it yet."
+            />
+          </p>
+          <div className="border-border bg-ash-25 flex items-center gap-1.5 rounded-md border px-2 py-1.5">
+            <Link2 aria-hidden className="text-ash-400 size-3.5 shrink-0" strokeWidth={2} />
+            <a
+              href={resource.url}
+              target="_blank"
+              rel="noreferrer noopener"
+              className="text-text hover:text-accent-700 inline-flex min-w-0 flex-1 items-center gap-1 rounded-sm font-mono text-xs font-medium"
+            >
+              <span className="truncate">{endpoint}</span>
+              <ArrowUpRight aria-hidden className="size-3 shrink-0 opacity-60" strokeWidth={2} />
+            </a>
+            <CopyButton value={resource.url} label={`${resource.title} URL`} />
+          </div>
         </div>
 
         {agentId === '' ? null : (
