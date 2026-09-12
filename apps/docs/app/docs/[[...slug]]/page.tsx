@@ -4,6 +4,7 @@ import { DocsBody, DocsDescription, DocsPage, DocsTitle } from 'fumadocs-ui/layo
 import { createRelativeLink } from 'fumadocs-ui/mdx';
 
 import { getMDXComponents } from '@/components/mdx';
+import { DOCS_NAME, SITE_NAME } from '@/lib/brand';
 import { source } from '@/lib/source';
 
 /** Route parameters for a documentation page. */
@@ -43,11 +44,39 @@ export function generateStaticParams() {
  * Per-page metadata.
  *
  * @param props Route parameters carrying the page slug.
+ * @returns Title, description, canonical address and the social card fields.
+ * @remarks The card's image comes from `/og/…`, a route prerendered at build
+ * time that draws this page's own title. The file convention that would
+ * normally do this cannot be used: `opengraph-image` is a route segment, and
+ * Next refuses one after the optional catch-all this route is.
  */
 export async function generateMetadata(props: DocsPageProps): Promise<Metadata> {
   const params = await props.params;
   const page = source.getPage(params.slug);
   if (!page) notFound();
 
-  return { title: page.data.title, description: page.data.description };
+  const { title, description } = page.data;
+  // `/docs/using/budgets` is drawn by `/og/using/budgets`; `/docs` by `/og`.
+  const image = {
+    url: page.url.replace(/^\/docs/, '/og'),
+    width: 1200,
+    height: 630,
+    alt: `${title} — ${SITE_NAME} documentation`,
+  };
+
+  return {
+    title,
+    description,
+    // Absolute in effect: `metadataBase` on the root layout resolves it.
+    alternates: { canonical: page.url },
+    openGraph: {
+      type: 'article',
+      siteName: DOCS_NAME,
+      title,
+      description,
+      url: page.url,
+      images: [image],
+    },
+    twitter: { card: 'summary_large_image', title, description, images: [image] },
+  };
 }

@@ -1,9 +1,9 @@
-import type { Metadata } from 'next';
+import type { Metadata, Viewport } from 'next';
 import type { ReactNode } from 'react';
 import { DM_Sans, Space_Mono } from 'next/font/google';
 import { RootProvider } from 'fumadocs-ui/provider/next';
 
-import { DESCRIPTION } from '@/lib/brand';
+import { DESCRIPTION, DOCS_NAME, SITE_NAME, TAGLINE, siteUrl } from '@/lib/brand';
 
 import './global.css';
 
@@ -18,9 +18,41 @@ const mono = Space_Mono({
   variable: '--font-space-mono',
 });
 
+/**
+ * Site-wide metadata.
+ *
+ * @remarks No `openGraph.title`, `openGraph.description` or image here on
+ * purpose. Every page under `/docs` generates its own card — title, summary
+ * and a rendered image naming the page — and a value set at the root would
+ * win over the per-page one for any field the route does not also set.
+ */
 export const metadata: Metadata = {
-  title: { default: 'Pocket Docs', template: '%s · Pocket Docs' },
+  // Absolute URLs for anything a crawler resolves. Without this, a relative
+  // image reaches a preview renderer as a path it cannot fetch.
+  metadataBase: new URL(siteUrl()),
+  title: { default: `${DOCS_NAME}: ${TAGLINE}`, template: `%s · ${DOCS_NAME}` },
   description: DESCRIPTION,
+  applicationName: DOCS_NAME,
+  keywords: [
+    'Pocket documentation',
+    'AI agent payments',
+    'agent spending limits',
+    'x402',
+    'stablecoin payments',
+    'agent wallet',
+    'MCP',
+  ],
+  openGraph: { type: 'website', siteName: DOCS_NAME, locale: 'en_US' },
+  twitter: { card: 'summary_large_image' },
+  robots: { index: true, follow: true },
+  alternates: { canonical: '/docs' },
+  other: { 'apple-mobile-web-app-title': SITE_NAME },
+};
+
+/** Light mode only — no theme toggle, no dark palette. */
+export const viewport: Viewport = {
+  colorScheme: 'light',
+  themeColor: '#f7f9f3',
 };
 
 /**
