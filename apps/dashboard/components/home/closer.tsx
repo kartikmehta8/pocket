@@ -82,7 +82,7 @@ export function Closer() {
 
           <div className="rounded-lg border border-white/25 bg-white/10 p-5 backdrop-blur-sm">
             <div className="flex items-baseline justify-between">
-              <p className="text-sm font-medium text-white">Daily spend, last 14 days</p>
+              <p className="text-sm font-medium text-white">Daily spend</p>
               <p className="font-mono text-xs text-white/70">
                 limit <Money value={LIMIT.toFixed(2)} as="ticker" />
               </p>

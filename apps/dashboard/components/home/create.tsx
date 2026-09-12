@@ -13,11 +13,11 @@ const STEPS = [
   },
   {
     title: 'Set the limits',
-    body: 'How much a day, how much per purchase, and which sellers it may pay.',
+    body: 'How much a day, how much per purchase, which sellers it may pay — and a cap for a single job when a task deserves its own.',
   },
   {
     title: 'Hand it the job',
-    body: 'One line points your agent at Pocket. Works with anything that speaks MCP.',
+    body: 'One line points your agent at Pocket. Eight tools over MCP: it prices a call before buying it, reads what is left of its budget, and pulls its own receipts.',
   },
 ] as const;
 
