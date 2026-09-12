@@ -6,3 +6,7 @@ subgraph/generated
 subgraph/build
 apps/docs/.source
 next-env.d.ts
+
+# Agent skills, vendored verbatim and never pushed.
+.claude
+temp

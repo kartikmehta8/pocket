@@ -16,3 +16,9 @@ coverage
 subgraph/generated
 subgraph/build
 subgraph/node_modules
+
+# Working notes and retired scaffolding. Kept on disk for reference, never pushed.
+temp
+
+# Agent skills, vendored per machine rather than shipped with the repository.
+.claude
