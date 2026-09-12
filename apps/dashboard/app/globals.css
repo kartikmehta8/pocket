@@ -400,6 +400,35 @@
   mask-image: linear-gradient(to bottom, black 0%, black 45%, transparent 92%);
 }
 
+/** Entrance for elements revealed together on load. */
+@keyframes pocket-rise-in {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+/*
+ * The same 8px rise the motion primitives use, for a group that is server
+ * rendered and staggers itself with an inline `animation-delay`.
+ *
+ * `backwards` is what makes the delay work: without it an element waits for
+ * its turn at full opacity and then jumps. The delay is dropped under reduced
+ * motion because the global guard only shortens durations, so a delayed
+ * element would otherwise sit invisible for its whole delay and appear late.
+ */
+@utility rise-in {
+  animation: pocket-rise-in var(--duration-slow) var(--ease-brand) backwards;
+
+  @media (prefers-reduced-motion: reduce) {
+    animation-delay: 0ms !important;
+  }
+}
+
 /** Slow horizontal sheen used while a value is still loading. */
 @keyframes pocket-shimmer {
   from {

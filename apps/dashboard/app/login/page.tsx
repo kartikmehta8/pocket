@@ -1,9 +1,8 @@
 import { Suspense } from 'react';
 import type { Metadata } from 'next';
-import Link from 'next/link';
-import { BadgeCheck, GaugeCircle, Landmark, ShieldHalf } from 'lucide-react';
 
 import { LoginPanel } from '@/components/auth/login-panel';
+import { TrustMarks } from '@/components/auth/trust-marks';
 import { Wordmark } from '@/components/layout/wordmark';
 
 /** Tab title for the sign-in screen. */
@@ -12,44 +11,34 @@ export const metadata: Metadata = { title: 'Sign in' };
 /** Nothing here is cacheable: the panel decides where to send the visitor. */
 export const dynamic = 'force-dynamic';
 
-/** The three claims worth making before someone has any data to look at. */
-const PROOF = [
-  {
-    icon: ShieldHalf,
-    title: 'Deny by default',
-    body: 'An agent with no policy and no budget cannot spend. Every rule has to be granted explicitly.',
-  },
-  {
-    icon: Landmark,
-    title: 'Custody stays with Privy',
-    body: 'Keys never reach the model, the database, or a log line. Pocket authorises; Privy signs.',
-  },
-  {
-    icon: GaugeCircle,
-    title: 'Refusals are records',
-    body: 'A blocked payment is a row with a reason, not a discarded event. The audit trail answers why.',
-  },
-] as const;
-
 /**
- * Sign-in: a marketing column beside the control.
+ * Sign-in: what Pocket runs on, beside the control that gets you in.
  *
  * Split layout rather than a bare centred box, because this is the first thing
- * a new operator sees and it has to say what the product enforces before
- * asking for an email address.
+ * a new operator sees and it has to answer "will this work with what I run,
+ * and who holds the money" before asking for an email address.
+ *
+ * @remarks The page holds the viewport and does not scroll: both columns are
+ * sized to fit, and the form column takes the overflow if a long error ever
+ * makes it taller. Below `lg` the marketing column is gone, so the marks
+ * repeat under the form — they are the part a stranger checks, and a phone is
+ * where most of them arrive.
  */
 export default function LoginPage() {
   return (
-    <div className="grid min-h-dvh lg:grid-cols-[minmax(0,1fr)_minmax(0,1.1fr)]">
-      <section className="border-border bg-ash-25 relative hidden flex-col justify-between overflow-hidden border-r p-10 lg:flex">
-        <div
-          aria-hidden
-          className="from-accent-100/70 pointer-events-none absolute -top-32 -left-24 size-[28rem] rounded-full bg-gradient-to-br to-transparent blur-3xl"
-        />
-        <div
-          aria-hidden
-          className="pointer-events-none absolute -right-32 -bottom-40 size-[26rem] rounded-full bg-gradient-to-tl from-[#eb6834]/15 to-transparent blur-3xl"
-        />
+    <div className="grid min-h-dvh lg:h-dvh lg:grid-cols-[minmax(0,1fr)_minmax(0,1.1fr)] lg:overflow-hidden">
+      {/* Scrolls only if it must: at any ordinary window height the column
+          fits, and clipping the logos would be worse than a scrollbar the
+          few people on a very short screen ever see. */}
+      <section className="border-border bg-ash-25 relative hidden flex-col justify-between gap-6 overflow-y-auto border-r p-8 lg:flex xl:p-10">
+        {/* The two washes clip against their own layer rather than the column.
+            Hanging off the edges of a scrollable parent, they would each add
+            their overhang to its scroll height and produce a scrollbar for a
+            column whose content fits. */}
+        <div aria-hidden className="pointer-events-none absolute inset-0 overflow-hidden">
+          <div className="from-accent-100/70 absolute -top-32 -left-24 size-[28rem] rounded-full bg-gradient-to-br to-transparent blur-3xl" />
+          <div className="absolute -right-32 -bottom-40 size-[26rem] rounded-full bg-gradient-to-tl from-[#eb6834]/15 to-transparent blur-3xl" />
+        </div>
 
         <Wordmark href="/" />
 
@@ -58,28 +47,19 @@ export default function LoginPage() {
             Let agents pay for what they need.
             <span className="text-text-muted block">Never more than you allowed.</span>
           </h1>
-          <ul className="mt-8 flex flex-col gap-5">
-            {PROOF.map(({ icon: Icon, title, body }) => (
-              <li key={title} className="flex gap-3">
-                <span className="border-border bg-surface shadow-e1 text-accent-600 flex size-8 shrink-0 items-center justify-center rounded-lg border">
-                  <Icon aria-hidden className="size-4" strokeWidth={1.75} />
-                </span>
-                <div>
-                  <p className="text-text text-sm font-medium">{title}</p>
-                  <p className="text-text-secondary mt-0.5 text-xs leading-relaxed">{body}</p>
-                </div>
-              </li>
-            ))}
-          </ul>
+          <p className="text-text-secondary mt-4 text-sm leading-relaxed">
+            An agent with no policy and no budget cannot spend anything. You grant each rule
+            explicitly, Privy holds the keys, and every refusal is kept as a row with a reason.
+          </p>
         </div>
 
-        <p className="text-text-muted relative flex items-center gap-1.5 text-xs">
-          <BadgeCheck aria-hidden className="size-3.5" strokeWidth={1.75} />
-          x402 payments settled on Hedera · indexed by The Graph
-        </p>
+        <TrustMarks className="relative max-w-lg" />
       </section>
 
-      <main id="main" className="flex items-center justify-center p-6 sm:p-10">
+      <main
+        id="main"
+        className="flex items-center justify-center p-6 sm:p-10 lg:h-dvh lg:overflow-y-auto"
+      >
         <div className="w-full max-w-sm">
           <div className="lg:hidden">
             <Wordmark href="/" />
@@ -98,11 +78,7 @@ export default function LoginPage() {
             </Suspense>
           </div>
 
-          <p className="text-text-muted mt-6 text-xs">
-            <Link href="/" className="hover:text-text underline underline-offset-4">
-              Back to the homepage
-            </Link>
-          </p>
+          <TrustMarks className="border-divider mt-8 border-t pt-6 lg:hidden" />
         </div>
       </main>
     </div>
