@@ -1,3 +1,7 @@
+/**
+ * What an agent may buy, and from whom.
+ */
+
 import { describe, expect, it } from 'vitest';
 import { evaluatePolicy, type EvaluablePolicy, type PolicyInput } from '../src/policy.js';
 
@@ -167,8 +171,7 @@ describe('USD ceiling', () => {
     expect(evaluatePolicy(input({ usdCents: 10_000_000n })).outcome).toBe('allow');
   });
 
-  it('catches a token limit that a price move made meaningless', () => {
-    // 2 tokens is inside the token ceiling, but the tokens are now worth $80.
+  it('denies 2 tokens inside the token ceiling once they are worth $80', () => {
     const decision = evaluatePolicy(
       input({ amount: 2_000_000n, policy: priced, usdCents: 8_000n }),
     );

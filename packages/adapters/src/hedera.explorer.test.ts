@@ -27,8 +27,7 @@ describe('explorer identifiers', () => {
     expect(toExplorerId(hash)).toBe(hash);
   });
 
-  it('only splits the fractional separator, not the account dots', () => {
-    // 0.0.123 must survive intact; only the timestamp's dot becomes a dash.
+  it('keeps the account dots in 0.0.123 and splits only the timestamp', () => {
     expect(toExplorerId('0.0.123@1.2')).toBe('0.0.123-1-2');
   });
 });

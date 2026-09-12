@@ -1,4 +1,8 @@
-import { describe, expect, it } from 'vitest';
+/**
+ * Warming and refreshing the feeds this seller offers.
+ */
+
+import { describe, expect, it, vi } from 'vitest';
 
 import { SourceCache } from '../src/cache.js';
 import type { DataSource } from '../src/sources/types.js';
@@ -47,9 +51,8 @@ describe('SourceCache.warm', () => {
     expect(cache.snapshot('dead')).toBeNull();
   });
 
-  it('keeps declaration order, not the order they happened to succeed in', async () => {
+  it('keeps declaration order when the first feed needs a second attempt', async () => {
     const cache = new SourceCache(quiet);
-    // The first feed needs two attempts, so it finishes after the second one.
     const sources = [flaky('first', 1), flaky('second', 0)];
 
     const warmed = await cache.warm([sources], { attempts: 3, retryDelayMs: 0 });
@@ -64,7 +67,6 @@ describe('SourceCache.warm', () => {
       ...flaky('composed', 0),
       id: 'composed',
       load: () => {
-        // The real composed feeds throw when an input never warmed.
         if (cache.snapshot('raw') === null) throw new Error('raw is missing');
         return Promise.resolve({ ok: true });
       },
@@ -73,5 +75,77 @@ describe('SourceCache.warm', () => {
     const warmed = await cache.warm([[raw], [composed]], { attempts: 3, retryDelayMs: 0 });
 
     expect(warmed.map((entry) => entry.id)).toEqual(['raw', 'composed']);
+  });
+});
+
+describe('background refresh', () => {
+  it('replaces a snapshot on each tick and stops when told to', async () => {
+    vi.useFakeTimers();
+    try {
+      const cache = new SourceCache(quiet);
+      let loads = 0;
+      const source: DataSource = {
+        id: 'ticking',
+        path: '/v1/ticking',
+        title: 'Ticking',
+        description: 'A feed that counts.',
+        useCase: 'Counting.',
+        provider: 'test',
+        price: '0.01',
+        ttlMs: 1000,
+        load: () => Promise.resolve({ n: ++loads }),
+      };
+
+      cache.start(await cache.warm([[source]], { attempts: 1, retryDelayMs: 0 }));
+      expect(cache.snapshot('ticking')?.data).toEqual({ n: 1 });
+
+      await vi.advanceTimersByTimeAsync(1000);
+      expect(cache.snapshot('ticking')?.data).toEqual({ n: 2 });
+
+      cache.stop();
+      await vi.advanceTimersByTimeAsync(5000);
+      expect(cache.snapshot('ticking')?.data).toEqual({ n: 2 });
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it('serves the last good data and says it is stale when a refresh fails', async () => {
+    vi.useFakeTimers();
+    try {
+      const errors: string[] = [];
+      const cache = new SourceCache((id) => errors.push(id));
+      let calls = 0;
+      const source: DataSource = {
+        id: 'flapping',
+        path: '/v1/flapping',
+        title: 'Flapping',
+        description: 'A feed whose upstream comes and goes.',
+        useCase: 'Testing.',
+        provider: 'test',
+        price: '0.01',
+        ttlMs: 1000,
+        load: () => {
+          calls += 1;
+          return calls === 1 ? Promise.resolve({ ok: true }) : Promise.reject(new Error('down'));
+        },
+      };
+
+      cache.start(await cache.warm([[source]], { attempts: 1, retryDelayMs: 0 }));
+      expect(cache.snapshot('flapping')?.stale).toBe(false);
+
+      await vi.advanceTimersByTimeAsync(1000);
+      expect(cache.snapshot('flapping')?.data).toEqual({ ok: true });
+      expect(cache.snapshot('flapping')?.stale).toBe(true);
+      expect(errors).toContain('flapping');
+
+      cache.stop();
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it('answers null for a feed it has never loaded', () => {
+    expect(new SourceCache(quiet).snapshot('never-warmed')).toBeNull();
   });
 });

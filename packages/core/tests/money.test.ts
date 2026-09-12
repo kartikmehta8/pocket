@@ -1,3 +1,7 @@
+/**
+ * Money arithmetic, which never touches a float.
+ */
+
 import { describe, expect, it } from 'vitest';
 import { formatAmount, parseAmount, remaining, sum } from '../src/money.js';
 import { PocketError } from '../src/errors.js';
@@ -57,8 +61,7 @@ describe('remaining', () => {
 });
 
 describe('sum', () => {
-  it('adds base units without float drift', () => {
-    // 0.1 + 0.2 in float is 0.30000000000000004; in base units it is exact.
+  it('adds 0.1 and 0.2 to exactly 0.3, which floats cannot', () => {
     expect(sum([parseAmount('0.1', 6), parseAmount('0.2', 6)])).toBe(parseAmount('0.3', 6));
     expect(sum([])).toBe(0n);
   });

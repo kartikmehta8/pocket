@@ -1,3 +1,17 @@
+/**
+ * Dollar ceilings, and what happens when a price cannot be agreed.
+ *
+ * A token limit bounds a count; a dollar limit bounds value. A payment of 1.5
+ * tokens is inside a two-token ceiling and still worth $60 once the token is
+ * worth $40, which is the whole reason the second control exists.
+ *
+ * An unverifiable value is not a safe value. A tiny payment, comfortably inside
+ * every token limit, is still refused when no price could be agreed.
+ *
+ * The authorization event carries the evidence. `payment.settled` is a later
+ * event about the chain, not about the decision.
+ */
+
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { randomUUID } from 'node:crypto';
 import { createFundedAgent, createHarness, paymentBody, type Harness } from './helpers.js';
@@ -34,7 +48,7 @@ describe('USD value ceiling', () => {
   it('allows a payment worth less than the ceiling', async () => {
     const agentId = await createFundedAgent(h);
     await withUsdCeiling(agentId, '1.00');
-    h.market.setPrice(100); // $1.00 per token
+    h.market.setPrice(100);
 
     const response = await h.app.inject({
       method: 'POST',
@@ -48,8 +62,6 @@ describe('USD value ceiling', () => {
   it('blocks a payment whose value exceeds the ceiling even though the token count does not', async () => {
     const agentId = await createFundedAgent(h);
     await withUsdCeiling(agentId, '1.00');
-    // The token limit is 2 tokens, and 1.5 is inside it. But the token is now
-    // worth $40, so the payment is worth $60. Value is what the ceiling bounds.
     h.market.setPrice(4000);
 
     const response = await h.app.inject({
@@ -83,15 +95,13 @@ describe('USD value ceiling', () => {
       payment: { status: string };
       decision: { violations: Array<{ code: string }> };
     };
-    // A tiny payment, comfortably inside every token limit, and still refused:
-    // an unverifiable value is not a safe value.
     expect(body.payment.status).toBe('blocked');
     expect(body.decision.violations.map((v) => v.code)).toContain('POLICY_VIOLATION');
   });
 
   it('never consults the market when no ceiling is configured', async () => {
     const agentId = await createFundedAgent(h);
-    h.market.setPrice(null); // would deny if it were consulted
+    h.market.setPrice(null);
 
     const response = await h.app.inject({
       method: 'POST',
@@ -115,8 +125,6 @@ describe('USD value ceiling', () => {
     });
 
     const audit = await h.app.inject({ method: 'GET', url: '/v1/audit?limit=10', headers: h.auth });
-    // The authorization event carries the evidence; `payment.settled` is a
-    // later event about the chain, not about the decision.
     const event = (
       audit.json() as { events: Array<{ action: string; payload: Record<string, unknown> }> }
     ).events.find((e) => e.action === 'payment.approved' || e.action === 'payment.blocked');

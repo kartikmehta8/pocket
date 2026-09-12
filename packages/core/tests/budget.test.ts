@@ -1,3 +1,7 @@
+/**
+ * What is left to spend, and what a reservation does to it.
+ */
+
 import { describe, expect, it } from 'vitest';
 import { evaluateBudget, type BudgetInput, type EvaluableBudget } from '../src/budget.js';
 
@@ -71,8 +75,7 @@ describe('evaluateBudget', () => {
       expect(decision.headroom.taskRemainingAfter).toBe(340_000n);
     });
 
-    it('denies a payment that would exceed the task budget', () => {
-      // The plan's demo: 0.75 requested against 0.42 remaining.
+    it('denies 0.75 against a task budget holding 0.42', () => {
       const decision = evaluateBudget(input({ amount: 750_000n, taskBudget: task }));
       expect(decision.allowed).toBe(false);
       expect(decision.violations.map((v) => v.code)).toContain('TASK_BUDGET_EXCEEDED');

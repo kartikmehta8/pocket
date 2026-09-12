@@ -1,3 +1,7 @@
+/**
+ * Which build a service reports it is running.
+ */
+
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { release } from '../src/release.js';
@@ -57,12 +61,10 @@ describe('release', () => {
     expect(release('0.1.0').environment).toBe('development');
   });
 
-  it('reports a start time consistent with the uptime it reports', () => {
+  it('reports a start time and an uptime that differ only by rounding', () => {
     withEnv({});
     const info = release('0.1.0');
     const elapsed = (Date.now() - Date.parse(info.startedAt)) / 1000;
-    // The two come from one reading of the clock, so they can only differ by
-    // the flooring of the seconds.
     expect(elapsed - info.uptimeSeconds).toBeLessThan(1.5);
     expect(elapsed).toBeGreaterThanOrEqual(info.uptimeSeconds);
   });

@@ -8,6 +8,21 @@
  * Circle's testnet faucet refuses to send to one, which strands an operator at
  * the funding step with a `0.0.x` id that looks perfectly good and is silently
  * rejected.
+ *
+ * The wallet is read straight from the create response: going through the
+ * detail route would need the chain mock primed before every test that only
+ * wants an agent. Seeding is off by default, because these cases are about
+ * publishing a key and a treasury paying out in the background would muddy
+ * what they assert. The chain mock answers hollow when asked and keyed once
+ * the signature is indexed, which is what the route waits for before answering
+ * — so one case is deliberately given longer than the route’s own confirmation
+ * window. Signing again would cost gas to achieve nothing, and a wallet Pocket
+ * seeded holds USDC and nothing else: left to Privy that came back as "Privy
+ * rejected the account completion", which tells an operator nothing they can
+ * act on. A slow index is not a failure — the transaction is on chain either
+ * way, and reporting failure would send the operator to press the button again
+ * for a signature they already have. `accountHollow` is null rather than
+ * false, because the two send a reader to different places.
  */
 
 import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
@@ -34,8 +49,6 @@ async function createAgent(): Promise<{ agentId: string; address: string }> {
     headers: h.auth,
     payload: { name: `Agent ${Math.random().toString(36).slice(2, 8)}` },
   });
-  // Straight from the create response: reading the detail route here would
-  // need the chain mock primed before every test that only wants an agent.
   const agent = (created.json() as { agent: { id: string; wallet: { address: string } } }).agent;
   return { agentId: agent.id, address: agent.wallet.address };
 }
@@ -59,8 +72,6 @@ afterAll(async () => {
 });
 beforeEach(() => {
   readHederaAccountState.mockReset();
-  // Off by default. The activation tests are about publishing a key, and a
-  // treasury paying out in the background would muddy what they assert.
   h.config.TREASURY_WALLET_ID = undefined;
   h.config.TREASURY_ADDRESS = undefined;
   h.config.AGENT_SEED_AMOUNT = '0.02';
@@ -69,8 +80,6 @@ beforeEach(() => {
 describe('wallet activation', () => {
   it('signs for a hollow account and reports the transaction', async () => {
     const { agentId, address } = await createAgent();
-    // Hollow when asked, then keyed once the signature is indexed, which is
-    // what the route waits for before answering.
     readHederaAccountState
       .mockResolvedValueOnce({ accountId: '0.0.123', keyPublished: false })
       .mockResolvedValue({ accountId: '0.0.123', keyPublished: true });
@@ -103,14 +112,10 @@ describe('wallet activation', () => {
 
     expect(response.statusCode).toBe(200);
     expect(response.json()).toMatchObject({ activated: false, alreadyActive: true, txHash: null });
-    // Signing again would cost gas to achieve nothing.
     expect(h.wallet.hasCompleted(address)).toBe(false);
   });
 
   it('refuses a wallet with no HBAR, naming the gas rather than the provider', async () => {
-    // A wallet seeded by Pocket holds USDC and nothing else. Left to Privy
-    // this came back as "Privy rejected the account completion", which tells
-    // an operator nothing they can act on.
     const { agentId, address } = await createAgent();
     h.chain.setBalance(address, 'HBAR', 0n);
     readHederaAccountState.mockResolvedValue({ accountId: '0.0.123', keyPublished: false });
@@ -147,9 +152,6 @@ describe('wallet activation', () => {
   });
 
   it('still reports the signature when the network has not caught up', async () => {
-    // The transaction is on chain either way. Reporting failure because an
-    // index is slow would send the operator to press the button again, for
-    // a signature they already have.
     const { agentId } = await createAgent();
     readHederaAccountState.mockResolvedValue({ accountId: '0.0.123', keyPublished: false });
 
@@ -157,7 +159,7 @@ describe('wallet activation', () => {
 
     expect(response.statusCode).toBe(200);
     expect(response.json()).toMatchObject({ activated: true, confirmed: false });
-  }, 20_000); // Deliberately longer than the route's own confirmation window.
+  }, 20_000);
 
   it('records the activation in the audit trail', async () => {
     const { agentId } = await createAgent();
@@ -190,8 +192,6 @@ describe('wallet activation', () => {
 
 describe('topping up on activation', () => {
   it('pays a wallet that ended up with nothing', async () => {
-    // The safety net for an agent registered while the treasury was empty or
-    // before one was configured.
     h.config.TREASURY_WALLET_ID = 'treasury_wallet_id';
     h.config.TREASURY_ADDRESS = '0x1111111111111111111111111111111111111111';
     const { agentId, address } = await createAgent();
@@ -242,7 +242,6 @@ describe('agent detail', () => {
       headers: h.auth,
     });
 
-    // Null, not false: the two send a reader to different places.
     expect(detail.json()).toMatchObject({ accountId: null, accountHollow: null });
   });
 });
