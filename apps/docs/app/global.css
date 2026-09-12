@@ -200,6 +200,19 @@ html > body[data-scroll-locked] {
 }
 
 /*
+ * Below md the sidebar is a drawer that opens over the page with an edge of
+ * its own. The rule the library draws above its footer is then a second line
+ * a few pixels inside the first, which reads as a seam rather than a division.
+ */
+@layer utilities {
+  @media (width < 48rem) {
+    div:has(> [data-pocket-author]) {
+      border-top-width: 0;
+    }
+  }
+}
+
+/*
  * Screenshots and diagrams carry the theme's hairline, so anything sitting on
  * top of them — the zoom overlay in particular — must not arrive with a
  * different one.

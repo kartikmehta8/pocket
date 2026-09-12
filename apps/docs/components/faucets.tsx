@@ -15,12 +15,15 @@ import { FAUCETS } from '@/lib/faucets';
  * way through something else, and sending them to look for a page about
  * funding is how a five-minute setup becomes twenty.
  *
+ * The rule above it is dropped in the drawer the sidebar becomes below `md`,
+ * which has an edge of its own and needs no second one inside it.
+ *
  * Both links open in a new tab. A faucet is a detour, not a destination, and
  * losing the page you were reading to take one is its own small annoyance.
  */
 export function SidebarFaucets() {
   return (
-    <div className="border-fd-border/15 flex flex-col gap-1 border-t px-1 pt-3 pb-1">
+    <div className="border-fd-border/15 flex flex-col gap-1 border-t px-1 pt-3 pb-1 max-md:border-t-0">
       <p className="text-fd-muted-foreground px-2 text-[0.6875rem] font-semibold tracking-[0.07em] uppercase">
         Testnet faucets
       </p>

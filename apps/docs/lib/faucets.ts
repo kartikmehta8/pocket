@@ -34,6 +34,6 @@ export const FAUCETS: readonly Faucet[] = [
     name: 'Hedera',
     href: 'https://portal.hedera.com/faucet',
     logo: '/logos/hedera.svg',
-    purpose: 'Only a treasury needs it.',
+    purpose: 'Pays the gas fees.',
   },
 ];
