@@ -6,6 +6,16 @@ description: From signing in to watching your agent buy something, without touch
 Everything here happens on the dashboard. The only command you will run is the
 one that connects your agent, at step six.
 
+The dashboard has the same sequence built in, under **Connect agent**, with
+your own addresses already filled in. Follow either.
+
+<Shot
+  priority
+  src="setup"
+  alt="The Connect agent screen showing a seven-step checklist with four steps done and wallet funding details."
+  caption="Connect agent — the same steps, reading live state rather than a checkbox"
+/>
+
 <Steps>
 <Step>
 ### Sign in
@@ -14,9 +24,8 @@ Open the dashboard and sign in with email, Google, GitHub, or a wallet you
 already have.
 
 The first time you do this, your organization is created. No credential is
-minted for you: the setup screen that follows asks you to create your first API
-key, and shows it once. Copy it somewhere safe, because only a hash of it is
-stored and it cannot be shown again.
+minted for you: you create your first API key yourself, at step five, and it is
+shown once.
 
 </Step>
 
@@ -26,25 +35,35 @@ stored and it cannot be shown again.
 Go to **Agents** and choose **New agent**. Give it a name, and optionally a line
 about what it does.
 
-A wallet is created for it at the same time. You will see the address on the
-agent's page.
+A wallet is created for it at the same time, and Pocket seeds it from its own
+treasury — a small amount, enough to buy something and watch it work. The
+address and the balance appear on the agent's page.
 
 <Callout type="info">
-Your new agent cannot spend anything yet. That is the starting state, not a step
-you have missed. It stays that way until you give it a budget in step four.
+Your new agent still cannot spend anything. Money in the wallet is not
+permission to use it: that comes from the budget you set in step four.
 
 </Callout>
 
 </Step>
 
 <Step>
-### Fund the wallet
+### Top the wallet up
 
-Copy the wallet address from the agent's page and send it some test USDC.
+The seed covers the cheapest feed a couple of times. For anything longer, add
+more.
 
-The **Connect agent** screen links to a faucet for this. The wallet is already
-set up to hold the token, so nothing else is needed. The balance appears on the
-agent's page once the transfer confirms.
+**Faucets** appears on the **Agents** screen, on the agent's own page, and in
+the **Marketplace**. Circle hands out USDC; the Hedera portal hands out HBAR,
+which your agent almost never needs.
+
+<Callout type="warn">
+Circle wants the Hedera account id, the `0.0.x` form, not the `0x…` address.
+The agent's page shows both and marks which is which. See
+[funding a wallet](/docs/using/funding) for the whole story, including what to
+do if a transfer never lands.
+
+</Callout>
 
 </Step>
 
@@ -59,8 +78,14 @@ can cost. Start small. You can change both at any time.
 **Policy** sets which sellers it may pay, which kinds of spend are allowed, and
 the amount above which you want to approve a purchase yourself.
 
-If you are not sure what to pick, [what you control](/docs/controls) walks
-through each one and what it stops.
+<Shot
+  src="agent-detail"
+  alt="An agent's page with a Budget panel, a Fund this wallet panel and a column of task budgets."
+  caption="Budget is the standing ceiling; policy, further down, is about permission"
+/>
+
+If you are not sure what to pick, [setting up a budget](/docs/using/budgets)
+walks through each limit and what it stops.
 
 </Step>
 
@@ -70,7 +95,8 @@ through each one and what it stops.
 Go to **Settings**, then **API keys**, and create one. Name it after whatever
 will use it, so you can revoke that one thing later.
 
-It is shown once. Copy it now.
+It is shown once. Copy it now — only a hash is stored, and it cannot be shown
+again.
 
 This key goes into your own server's environment. Your agent never sees it.
 
@@ -98,11 +124,12 @@ model never sees it.
 
 Give your agent a job that needs paid data. The **Capabilities** screen has
 prompts already filled in with your own agent's details, so you can copy one
-straight across.
+straight across, with the real seller address already filled in.
 
 ```text
-Get current token prices from the market data feed using agent
-agent_1a2b3c, then tell me which asset moved most in the last 24 hours.
+Using my agent "Atlas Research", get current token prices from
+https://seller.example.com/v1/market/prices and tell me which asset moved
+most in the last 24 hours.
 ```
 
 </Step>
@@ -116,6 +143,12 @@ to the transaction.
 Then try asking for something you know is over budget. It appears too, marked
 refused, with the rule that stopped it and how much room was left.
 
+<Shot
+  src="payment-blocked"
+  alt="A blocked payment expanded to show its reason, resource, recipient, network and refusal code."
+  caption="A refusal, kept — with the reason the agent gave for asking"
+/>
+
 </Step>
 
 </Steps>
@@ -126,17 +159,23 @@ If you would rather see a purchase before connecting anything, open
 **Marketplace**. It lists paid data feeds with live prices. Pick an agent, press
 buy, and the response appears inline.
 
+<Shot
+  src="marketplace"
+  alt="The marketplace with an agent selected, showing its remaining budget and wallet balance above cards for six paid feeds."
+  caption="Marketplace — the same policy engine, with a person doing the asking"
+/>
+
 A purchase you make there goes through exactly the same limits an agent's does.
 The only difference recorded is that a person asked.
 
-| Feed              | Price | Data from                      |
-| ----------------- | ----- | ------------------------------ |
-| Token prices      | 0.01  | CoinGecko                      |
-| Ethereum fees     | 0.02  | A public Ethereum node         |
-| Chain rankings    | 0.05  | DefiLlama                      |
-| Stablecoin supply | 0.08  | DefiLlama                      |
-| Market brief      | 0.08  | All three, combined            |
-| Full report       | 0.75  | The brief plus the full tables |
+| Feed                     | Price | Data from                       |
+| ------------------------ | ----- | ------------------------------- |
+| Spot prices              | 0.01  | CoinGecko                       |
+| Ethereum fee conditions  | 0.02  | A public Ethereum node          |
+| Chain TVL leaderboard    | 0.05  | DefiLlama                       |
+| Stablecoin supply        | 0.08  | DefiLlama                       |
+| Ethereum market brief    | 0.08  | All three, joined               |
+| Full ecosystem deep dive | 0.75  | The brief, plus the full tables |
 
 These are live feeds, not sample responses. Buying one fetches current data.
 
@@ -144,6 +183,13 @@ These are live feeds, not sample responses. Buying one fetches current data.
 
 **The agent says it has no budget.** Step four is not finished. Both the budget
 and the policy panel need saving.
+
+**The buy button is greyed out.** The wallet cannot cover the price. Top it up —
+see [funding a wallet](/docs/using/funding).
+
+**The faucet said it sent money and nothing arrived.** Either it was given the
+`0x…` address instead of the `0.0.x` id, or the account has never published its
+key. Both are [covered here](/docs/using/funding).
 
 **Every purchase is held for approval.** Your policy is set to ask you about
 sellers it does not know. Add the seller to your trusted list, or change the
@@ -154,5 +200,5 @@ setting on the agent's page.
 
 ## Next
 
+- [A tour of the dashboard](/docs/using/dashboard) for every screen and what it does.
 - [How it works](/docs/how-it-works) for what happens between the request and the receipt.
-- [Using the dashboard](/docs/dashboard) for every screen and what it does.

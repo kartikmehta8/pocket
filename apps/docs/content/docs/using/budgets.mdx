@@ -19,6 +19,12 @@ All five limits are checked before any money moves. Every one has to pass.
   ]}
 />
 
+<Shot
+  src="agent-detail"
+  alt="An agent's page showing the Budget panel with asset, daily limit and per-transaction fields, beside a column of task budgets."
+  caption="Budget, on the agent's page — the daily ceiling and the largest single purchase"
+/>
+
 ## How much a day
 
 On the agent's page, the **Budget** panel. This is the ceiling across everything
@@ -43,9 +49,16 @@ inside its envelope, runs out, and stops.
 
 ## How much at once
 
-Also in the **Budget** panel. The most any single purchase may cost.
+Two places set this, and both are checked.
 
-You can set this in tokens, or in dollars.
+**Per transaction**, in the **Budget** panel, is the ceiling in the asset the
+agent spends. **Max transaction amount**, in the **Policy** panel, is the same
+kind of rule expressed as part of the policy document. A purchase has to clear
+both.
+
+There is also a dollar ceiling, `maxUsdPerTransaction`, which the API accepts on
+a policy but the dashboard does not yet offer a field for. It bounds the _value_
+rather than the token count, which matters when the asset can move.
 
 <Callout type="warn">
 If you set a dollar limit and live pricing is unavailable, Pocket refuses the
@@ -66,8 +79,17 @@ you choose what happens:
 | Ask me first | Held until you approve it                        |
 | Allow        | Goes through, still subject to every other limit |
 
-The same panel controls which kinds of spend are allowed, so you can let an
-agent buy data but not compute.
+The same panel controls which assets and chains are allowed, and which kinds of
+spend are, so you can let an agent buy data but not compute.
+
+<Shot
+  src="agent-policy"
+  alt="The Policy panel with allowed assets, allowed chains, eight spend categories, trusted recipients, a max transaction amount, an approval threshold and an unknown-recipient setting."
+  caption="Policy — permission rather than amount, saved as one document"
+/>
+
+Saving replaces the whole document rather than patching it, which is why the
+panel shows every field at once: what you see is what will be enforced.
 
 ## When to ask you
 
@@ -79,11 +101,28 @@ the payments screen.
 
 ## Testing a limit before you rely on it
 
-The agent's page has a **Preview** panel. Describe a purchase and it runs the
-real decision against your real limits, showing you the answer without recording
-anything or spending a cent.
+Ask for the decision without the purchase. `POST /v1/payments/preview` runs the
+real engine against your real limits and answers with what would happen, without
+recording anything or spending a cent.
 
-Worth using after any change you are unsure about.
+```bash
+POST /v1/payments/preview
+Authorization: Bearer pocket_sk_...
+
+{
+  "agentId": "agent_1a2b3c",
+  "amount": "0.75",
+  "asset": "USDC",
+  "chain": "hedera-testnet",
+  "recipient": "0x...",
+  "category": "data"
+}
+```
+
+A connected agent can ask the same question itself, through the
+`pocket_preview_payment` tool. That is the more useful half: an agent that
+checks first picks something it can afford, rather than finding out by being
+refused.
 
 ## When something is refused
 

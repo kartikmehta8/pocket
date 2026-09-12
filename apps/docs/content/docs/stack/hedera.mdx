@@ -57,6 +57,12 @@ never in a state where money sent to it would bounce.
 You do not have to do anything. It is worth knowing only because it explains why
 wallet creation takes a moment longer than you might expect.
 
+One consequence does reach you. An account created by an incoming transfer has
+never signed anything, so the network cannot see its public key — and some
+faucets refuse to send to an account in that state while reporting success
+anyway. Pocket can still pay from it, and a single button fixes it for everyone
+else. See [funding a wallet](/docs/using/funding).
+
 ## A receipt
 
 ```text

@@ -11,22 +11,35 @@ and a set of limits.
 Go to **Agents** and choose **New agent**. Give it a name, and optionally a line
 about what it does.
 
-A wallet is created at the same time, and the address appears on the agent's
-page.
+<Shot
+  src="agents"
+  alt="The agents screen with two agent cards showing wallet address, spend today and remaining budget, and a Faucets button beside New agent."
+  caption="Agents — each card carries the wallet address, because that is what you came for"
+/>
+
+A wallet is created at the same time, and Pocket seeds it from its own treasury
+so it is not empty on arrival. The address and the balance appear on the
+agent's page.
 
 <Callout type="info">
-Your new agent cannot spend anything yet. It stays that way until you give it a
-budget, which is the next page.
+Your new agent cannot spend anything yet. Money in the wallet is not permission
+to use it: that comes from the budget, which is the next page.
 
 </Callout>
 
 ## Fund the wallet
 
-Copy the address from the agent's page and send it some stablecoin. The
-**Connect agent** screen links to a faucet if you are on testnet.
+The seed is small — enough to buy something cheap and watch it work. **Faucets**,
+beside **New agent** and on the agent's own page, opens the two testnet taps.
 
-The wallet is already set up to hold the token, so there is nothing else to do.
-The balance appears once the transfer confirms.
+Circle hands out the stablecoin your agent spends. It wants the Hedera `0.0.x`
+account id rather than the `0x…` address, and the agent's page shows both,
+labelled.
+
+The wallet is already opted into the token, so there is nothing else to do. The
+balance appears once the transfer confirms. [Funding a wallet](/docs/using/funding)
+covers the rest, including what to do when a faucet claims to have sent money
+and none arrives.
 
 ## Connect the agent you run
 
@@ -136,11 +149,10 @@ If the wallet still holds money, Pocket asks where it should go before letting
 you delete. Pick one of your other agents and the whole balance moves in one
 transaction, then the agent is retired.
 
-Sometimes it cannot move. The wallet pays the fee for that transfer itself, so
-one holding no HBAR cannot send, and a lone agent has nowhere to send to. The
-dialog then offers to delete and leave the balance where it is. Privy still
-custodies it, and the amount and the address go into the audit trail, so
-nothing is lost quietly.
+Sometimes it cannot move — the wallet pays the fee for that transfer itself, and
+one holding no HBAR cannot send. The dialog then offers the HBAR faucet, and
+failing that, offers to delete and leave the balance where it is. See
+[funding a wallet](/docs/using/funding).
 
 ## Getting good behaviour
 

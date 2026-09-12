@@ -1,0 +1,119 @@
+---
+title: Funding a wallet
+description: Two assets, two jobs, and why your agent only ever needs one of them.
+---
+
+A new agent arrives with money in it. Pocket seeds the wallet from its own
+treasury when it creates one, so the first five minutes are about Pocket rather
+than about finding a faucet that will have you.
+
+That seed is small — enough to buy something and see it work. Past that you
+top the wallet up yourself.
+
+## Two assets, two jobs
+
+| Asset    | Pays for                                       | Your agent needs it |
+| -------- | ---------------------------------------------- | ------------------- |
+| **USDC** | Everything the agent buys                      | Yes                 |
+| **HBAR** | Network fees on a transaction the wallet signs | Almost never        |
+
+The second row is the one that surprises people. Settlement on Hedera costs a
+fee, but your agent does not pay it: the x402 facilitator co-signs every
+purchase and pays for it. A wallet holding nothing but USDC can buy all day.
+
+HBAR only matters for the two things the wallet signs for itself, both covered
+below.
+
+<Flow
+  caption="The agent spends USDC; the facilitator pays every fee the purchase incurs"
+  nodes={[
+    { label: 'Agent wallet', note: 'holds USDC only' },
+    { label: 'Pocket', note: 'checks, then signs', decides: true },
+    { label: 'Facilitator', note: 'pays the network fee' },
+    { label: 'Hedera', note: 'settles the transfer' },
+  ]}
+/>
+
+## The two faucets
+
+Both are run by other people, both hand out testnet funds, and both are linked
+from the sidebar of this site as well as from three places in the dashboard:
+the **Agents** screen, an agent's own page, and the **Marketplace**.
+
+| Faucet                                            | Gives | Ask it for                        |
+| ------------------------------------------------- | ----- | --------------------------------- |
+| [Circle](https://faucet.circle.com)               | USDC  | What the agent spends             |
+| [Hedera portal](https://portal.hedera.com/faucet) | HBAR  | Only when something needs signing |
+
+<Callout type="warn">
+Circle asks for a Hedera **account id** — the `0.0.x` form — not the `0x…`
+address. Paste the wrong one and it reports success and sends nothing. The
+agent's page shows both, labelled, with the right one marked for Circle.
+
+</Callout>
+
+## Two addresses for one wallet
+
+Every agent wallet has both, and they are the same account:
+
+- **`0x…`**, the EVM address. What a wallet app or a block explorer wants.
+- **`0.0.x`**, the Hedera account id. What Circle's faucet wants.
+
+The account id only exists once the account does, which is to say once
+something has been sent to it. Before that the agent's page shows the address
+and says so.
+
+## Hollow accounts, and publishing the key
+
+A Hedera account created by an incoming transfer is **hollow**: it has an id
+and a balance, but it has never signed anything, so its public key is not
+published on the network.
+
+Pocket can pay from a hollow account perfectly well — it recorded the key when
+it provisioned the wallet. Outsiders cannot see that, and Circle's faucet will
+not send to an account whose key it cannot read. It reports the transfer as on
+its way regardless, which is the worst combination: nothing arrives, and
+nothing says why.
+
+The fix is one button. **Publish the key**, on the agent's page and in the
+setup guide, signs a transfer of nothing from the wallet to itself. No money
+moves; only the signature matters, and publishing it is what the signature
+does.
+
+<Callout type="info">
+That transaction is signed by the wallet, so the wallet pays its fee — and a
+wallet Pocket has just seeded holds USDC and no HBAR. This is the one moment
+the HBAR faucet is the one you want. A few HBAR is far more than enough.
+
+</Callout>
+
+## Wallets opt into tokens for you
+
+Hedera asks an account to opt into a token before it can hold it. Pocket does
+that when it creates the wallet rather than at the first payment, so a wallet
+is never in a state where money sent to it would bounce.
+
+Nothing for you to do. It is worth knowing only because it explains why
+creating an agent takes a moment longer than you might expect.
+
+## Where the money goes when you delete an agent
+
+If the wallet still holds a balance, Pocket asks where it should go before
+letting you delete. Pick one of your other agents and the whole balance moves
+in one transaction, and then the agent is retired.
+
+Sometimes it cannot move. The wallet pays the fee for that transfer itself, so
+one holding no HBAR cannot send, and a lone agent has nowhere to send to. The
+dialog then offers the HBAR faucet, and failing that, offers to delete and
+leave the balance where it is. Privy still custodies it, and the amount and the
+address go into the audit trail, so nothing is lost quietly.
+
+## Checking it worked
+
+The balance is on the agent's page, at the top, beside today's spend. The
+**Marketplace** shows it too, next to whichever agent is paying, so you can see
+before you buy rather than after.
+
+If a transfer has not landed, it is almost always one of three things: the
+faucet was given the `0x…` address instead of the `0.0.x` id, the account was
+hollow, or the faucet rate-limited you. The first two are fixed above.

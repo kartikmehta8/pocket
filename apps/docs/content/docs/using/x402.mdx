@@ -36,33 +36,54 @@ invoice to reconcile. The payment is the request.
 ## Trying it from the dashboard
 
 Open **Marketplace**. It lists paid feeds with live prices and how fresh each
-one is. Pick an agent, press buy, and the response appears inline.
+one is. Pick which agent pays, press buy, and the response appears inline.
 
-There is also a box for any other paid URL, so you can point it at a seller that
-is not on the list.
+<Shot
+  src="marketplace"
+  alt="The marketplace with an agent selected, its remaining budget and wallet balance above, and cards for paid feeds each naming its paid endpoint URL."
+  caption="Marketplace — each card names the URL that answers 402"
+/>
+
+Every card names its **paid endpoint**. That address is the thing an agent is
+eventually pointed at, and a marketplace that hid it would teach you nothing
+about the protocol underneath. Copy it and hand it to an agent, or paste it into
+the box for any other paid URL and buy from a seller that is not on the list at
+all.
 
 A purchase you make here goes through exactly the same limits an agent's does.
 The only difference recorded is that a person asked.
 
-| Feed              | Price | Data from                      |
-| ----------------- | ----- | ------------------------------ |
-| Token prices      | 0.01  | CoinGecko                      |
-| Ethereum fees     | 0.02  | A public Ethereum node         |
-| Chain rankings    | 0.05  | DefiLlama                      |
-| Stablecoin supply | 0.08  | DefiLlama                      |
-| Market brief      | 0.08  | All three, combined            |
-| Full report       | 0.75  | The brief plus the full tables |
+| Feed                     | Price | Refreshes | Data from                       |
+| ------------------------ | ----- | --------- | ------------------------------- |
+| Spot prices              | 0.01  | 60s       | CoinGecko                       |
+| Ethereum fee conditions  | 0.02  | 20s       | A public Ethereum node          |
+| Chain TVL leaderboard    | 0.05  | 10m       | DefiLlama                       |
+| Stablecoin supply        | 0.08  | 15m       | DefiLlama                       |
+| Ethereum market brief    | 0.08  | 5m        | All three, joined               |
+| Full ecosystem deep dive | 0.75  | 5m        | The brief, plus the full tables |
 
 These are live feeds, not sample responses.
+
+<Callout type="info">
+If the paying wallet cannot cover the price, the buy button is disabled and says
+so. That is arithmetic rather than a policy decision: nothing is signed and
+nothing is recorded, so an empty wallet does not fill your payments list with
+refusals. Top it up from [the faucets](/docs/using/funding).
+
+</Callout>
 
 ## Letting your agent do it
 
 Once connected, your agent buys on its own. Give it a job that needs paid data:
 
 ```text
-Get current token prices from the market data feed using agent
-agent_1a2b3c, then tell me which asset moved most in the last 24 hours.
+Using my agent "Atlas Research", get current token prices from
+https://seller.example.com/v1/market/prices and tell me which asset moved
+most in the last 24 hours.
 ```
+
+Name the agent, and give it the URL. The **Capabilities** screen has prompts
+with both already filled in from your own account.
 
 Behind the scenes it calls one tool, `pocket_pay_for_resource`, and Pocket does
 the rest.
@@ -100,6 +121,21 @@ that.
 ```json
 { "amount": "0.08", "asset": "USDC" }
 ```
+
+## When a seller refuses
+
+A seller answers a rejected payment exactly as it answers an unpaid request:
+`402`, an empty body, and the reason in a header. Pocket reads the header, so
+what reaches you is the seller's own words rather than an empty object.
+
+```text
+The seller refused the payment (402): No matching payment requirements.
+This usually means the wallet is empty, the price changed between the
+quote and the payment, or the seller does not accept this asset.
+```
+
+The usual cause is the first one. Check the wallet balance on the agent's page
+before looking any further.
 
 ## Where the money actually goes
 

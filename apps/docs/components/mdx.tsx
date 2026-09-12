@@ -6,6 +6,7 @@ import { Tab, Tabs } from 'fumadocs-ui/components/tabs';
 import type { MDXComponents } from 'mdx/types';
 
 import { Flow, Sequence } from './diagram/flow';
+import { Shot } from './shot';
 
 /**
  * Components every MDX page can use without importing them.
@@ -28,6 +29,7 @@ export function getMDXComponents(components?: MDXComponents): MDXComponents {
     Tabs,
     Flow,
     Sequence,
+    Shot,
     ...components,
   };
 }

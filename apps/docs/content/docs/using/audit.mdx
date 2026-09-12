@@ -13,13 +13,20 @@ Pocket keeps all of it.
 Open **Payments** for every attempt, including the ones that never went through.
 Filter by agent or by status.
 
-| Status            | Means                           |
-| ----------------- | ------------------------------- |
-| Settled           | Paid and delivered              |
-| Submitted         | Sent, waiting on confirmation   |
-| Awaiting approval | Held for you. Nothing signed    |
-| Blocked           | Refused by a limit you set      |
-| Failed            | Allowed, but did not go through |
+<Shot
+  src="payments"
+  alt="The payments screen listing attempts with time, agent, amount, category, recipient and status, refusals tinted red."
+  caption="Payments — refusals stay in the list rather than being dropped from it"
+/>
+
+| Status            | Means                                 |
+| ----------------- | ------------------------------------- |
+| Blocked           | Refused by a limit you set            |
+| Awaiting approval | Held for you. Nothing signed          |
+| Approved          | Allowed, and on its way to the seller |
+| Submitted         | Sent, waiting on confirmation         |
+| Settled           | Paid and delivered                    |
+| Failed            | Allowed, but did not go through       |
 
 Open any row for the full detail: the seller, the reason your agent gave, the
 rule that stopped it if it was stopped, and a link to the transaction.
@@ -29,6 +36,12 @@ Held purchases are approved or rejected from here.
 ## Why refusals are kept
 
 A refusal is a fact about your system, not an error that failed to happen.
+
+<Shot
+  src="payment-blocked"
+  alt="An expanded blocked payment showing its id, initiator, reason, resource, recipient, network, category, task budget and refusal code."
+  caption="One refusal, expanded — the reason is the line worth reading"
+/>
 
 ```text
 Refused      Full market report
@@ -49,8 +62,15 @@ tight or the agent was being unreasonable.
 
 **Audit** shows everything, newest first, not just payments. Budget changes,
 policy changes, new agents, new keys, approvals and rejections. Narrow it by
-activity, such as payments or API keys, or by who acted, and page back through
-as far as the record goes.
+activity — payments, agents, budgets, task budgets, policies, API keys, wallets,
+the organization itself — or by who acted, and page back through as far as the
+record goes.
+
+<Shot
+  src="audit"
+  alt="The audit screen listing events by time, actor, action and details, with filters for activity and actor."
+  caption="Audit — every actor and every action, newest first"
+/>
 
 Each entry names who did it:
 
@@ -66,8 +86,17 @@ recorded rather than guessed at.
 
 ## Spend summaries
 
-The **Overview** screen rolls it up: spend over the last fourteen days against
-your ceiling, spend by category, and anything unusual.
+The **Overview** screen rolls it up: spend over the last seven days, today's
+figures against your ceiling, spend by category, and anything unusual.
+
+<Shot
+  src="overview-payments"
+  alt="Spend by category as a stacked bar with a ranked list, above a table of the ten most recent payments."
+  caption="Overview — what the money went on, and the last ten attempts"
+/>
+
+Today's numbers sit apart from the period's on purpose. An agent can be well
+inside its weekly average and still have spent its whole day by lunchtime.
 
 Your agent can read the same summary through `pocket_spend_summary`, so you can
 ask it directly:

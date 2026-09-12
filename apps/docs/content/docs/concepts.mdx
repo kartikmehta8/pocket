@@ -16,10 +16,15 @@ the same organization cannot touch each other's money.
 
 ## Wallet
 
-Where an agent's money sits. Created automatically when you create the agent.
+Where an agent's money sits. Created automatically when you create the agent,
+and seeded with a little stablecoin from Pocket's treasury so it is not empty
+on arrival.
 
 You never handle a private key, and neither does your agent. Signing happens
 elsewhere, only when Pocket says a purchase is allowed.
+
+The wallet holds the stablecoin the agent spends and nothing else. It does not
+need a second token for network fees. See [funding a wallet](/docs/using/funding).
 
 ## Budget
 
@@ -51,12 +56,17 @@ payment too, and it is kept.
 
 Each one ends in one of these states:
 
-| State             | Means                                 |
-| ----------------- | ------------------------------------- |
-| Settled           | Paid, and the data came back          |
-| Awaiting approval | Held for you. Nothing has been signed |
-| Blocked           | Refused by one of your rules          |
-| Failed            | Allowed, but did not go through       |
+| State             | Means                                        |
+| ----------------- | -------------------------------------------- |
+| Blocked           | Refused by one of your rules                 |
+| Awaiting approval | Held for you. Nothing has been signed        |
+| Approved          | Allowed, and on its way to the seller        |
+| Submitted         | Sent to the network, waiting on confirmation |
+| Settled           | Paid, and the data came back                 |
+| Failed            | Allowed, but did not go through              |
+
+The list is in lifecycle order. A purchase that passes every check moves down
+it; one that does not stops at the first row.
 
 ## Seller
 
