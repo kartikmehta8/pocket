@@ -24,6 +24,30 @@ export interface PresentDeps {
 }
 
 /**
+ * Turns a seller's refusal into a sentence a person can act on.
+ *
+ * @param status - The status the seller answered with.
+ * @param detail - What the seller said, or an empty string when it said
+ *   nothing.
+ * @returns One sentence, ending in a full stop.
+ * @remarks A refusal after signing means the facilitator would not settle. The
+ *   reasons a seller gives are terse — "No matching payment requirements" —
+ *   and true but not actionable, so the usual causes are named alongside it.
+ *   Nothing here guesses which one applies: the wallet is not read again on a
+ *   path whose whole job is to release the reservation and return.
+ */
+function refusalMessage(status: number, detail: string): string {
+  // Sellers punctuate their reasons inconsistently, and "requirements.." is
+  // the kind of thing a reader notices instead of the sentence.
+  const said = detail.replace(/[.!\s]+$/, '');
+  const stated =
+    said === ''
+      ? `The seller refused the payment (${status}).`
+      : `The seller refused the payment: ${said}.`;
+  return `${stated} This happens when the wallet cannot cover the price, has not been associated with the token, or the signature aged out before it arrived.`;
+}
+
+/**
  * Hands the signed payment over and reports what the seller did with it.
  *
  * @param deps - Database handle, tenant, payment and explorer link builder.
@@ -57,10 +81,7 @@ export async function presentToSeller(
   }
 
   if (paid.kind === 'rejected') {
-    return await abandon(
-      'SETTLEMENT_REJECTED',
-      `The seller refused the payment (${paid.status}): ${paid.detail}`,
-    );
+    return await abandon('SETTLEMENT_REJECTED', refusalMessage(paid.status, paid.detail));
   }
 
   const transactionId =

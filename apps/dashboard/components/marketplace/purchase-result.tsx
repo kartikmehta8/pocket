@@ -2,6 +2,7 @@
 
 import { ArrowUpRight, Ban, CircleCheck, Clock, TriangleAlert } from 'lucide-react';
 import { AnimatePresence, motion, useReducedMotion } from 'motion/react';
+import Link from 'next/link';
 
 import { cn } from '@/lib/cn';
 import { DURATION, EASE } from '@/lib/motion';
@@ -77,7 +78,25 @@ function Body({ outcome }: { outcome: PurchaseOutcome }) {
     );
   }
 
-  return <p className="text-danger-ink/90 mt-1 text-xs leading-relaxed">{outcome.message}</p>;
+  // A settlement failure is usually about the wallet, which is two clicks away
+  // on a page the reader may not think to look for. The payment is absent when
+  // the attempt failed before a row existed, and then there is nothing to
+  // point at.
+  const payment = outcome.payment;
+  return (
+    <div className="mt-1 flex flex-col gap-2">
+      <p className="text-danger-ink/90 text-xs leading-relaxed">{outcome.message}</p>
+      {payment === undefined ? null : (
+        <Link
+          href={`/agents/${payment.agentId}`}
+          className="text-danger-ink inline-flex w-fit items-center gap-1 text-xs font-medium underline decoration-dotted underline-offset-4"
+        >
+          Open {payment.agentName}
+          <ArrowUpRight aria-hidden className="size-3" strokeWidth={2} />
+        </Link>
+      )}
+    </div>
+  );
 }
 
 /**

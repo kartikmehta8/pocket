@@ -31,6 +31,14 @@ export interface BuyFormProps {
    * seller's advertised feeds.
    */
   editableUrl?: boolean;
+  /**
+   * Why this purchase cannot go through, when that is known before trying.
+   *
+   * @remarks Presented as a disabled control with the reason beside it, not a
+   * hidden one: a button that vanishes leaves the reader wondering whether
+   * they misread the page.
+   */
+  blockedReason?: string;
 }
 
 /**
@@ -51,6 +59,7 @@ export function BuyForm({
   category,
   label = 'Buy',
   editableUrl = false,
+  blockedReason,
 }: BuyFormProps) {
   const [state, submit, pending] = useActionState(purchaseAction, IDLE_PURCHASE);
   // The revision whose result has been closed. A fresh purchase bumps the
@@ -60,13 +69,19 @@ export function BuyForm({
   const open = state.outcome !== null && state.revision !== dismissed;
 
   const button = (
-    <Hint label="Runs the full x402 exchange: fetch, policy decision, signature, settlement. Nothing is signed unless policy allows it.">
+    <Hint
+      label={
+        blockedReason ??
+        'Runs the full x402 exchange: fetch, policy decision, signature, settlement. Nothing is signed unless policy allows it.'
+      }
+    >
       <span className={editableUrl ? '' : 'flex'}>
         <Button
           type="submit"
           variant="primary"
           icon={ShoppingCart}
           loading={pending}
+          disabled={blockedReason !== undefined}
           className={editableUrl ? '' : 'w-full'}
         >
           {pending ? 'Paying' : label}
@@ -105,6 +120,12 @@ export function BuyForm({
           <input type="hidden" name="url" value={url} />
           {button}
         </>
+      )}
+
+      {blockedReason === undefined ? null : (
+        <p className="text-warning-ink bg-warning-soft border-border rounded-md border px-2.5 py-2 text-xs leading-relaxed">
+          {blockedReason}
+        </p>
       )}
 
       <ActionFeedback state={state} />

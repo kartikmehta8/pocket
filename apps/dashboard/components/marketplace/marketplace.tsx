@@ -2,11 +2,12 @@
 
 import { ArrowUpRight, Bot } from 'lucide-react';
 import Link from 'next/link';
-import { useId, useState } from 'react';
+import { useEffect, useId, useState } from 'react';
 
+import { agentBalanceAction } from '@/lib/actions';
 import { formatAmount, usageRatio } from '@/lib/format';
 import type { CatalogResource } from '@/lib/marketplace';
-import type { AgentSummary } from '@/lib/types';
+import type { AgentSummary, Balance } from '@/lib/types';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Field } from '@/components/ui/field';
@@ -27,10 +28,13 @@ import { ResourceCard } from './resource-card';
 function Payer({
   agents,
   agentId,
+  balance,
   onChange,
 }: {
   agents: AgentSummary[];
   agentId: string;
+  /** What the chosen agent's wallet holds, or `null` while unknown. */
+  balance: Balance | null;
   onChange: (id: string) => void;
 }) {
   const id = useId();
@@ -67,7 +71,7 @@ function Payer({
 
   return (
     <Card pop>
-      <CardContent className="grid grid-cols-[minmax(0,1fr)] items-end gap-4 pt-4 md:grid-cols-[minmax(0,18rem)_minmax(0,1fr)]">
+      <CardContent className="grid grid-cols-[minmax(0,1fr)] items-end gap-4 pt-4 md:grid-cols-[minmax(0,18rem)_minmax(0,1fr)_minmax(0,12rem)]">
         <Field htmlFor={id} label="Pay from">
           <Select
             id={id}
@@ -105,6 +109,21 @@ function Payer({
             />
           </div>
         )}
+
+        {/* The budget says what this agent is allowed to spend; the wallet
+            says what it can actually pay with. A purchase needs both, and the
+            second one used to be invisible until a settlement failed. */}
+        <div className="flex flex-col gap-1.5 md:pb-1">
+          <div className="flex items-baseline justify-between gap-3 text-xs">
+            <span className="eyebrow">In the wallet</span>
+            <span className="figures text-text font-semibold">
+              {balance === null ? '—' : formatAmount(balance.amount, balance.asset)}
+            </span>
+          </div>
+          <p className="text-text-muted text-xs leading-snug">
+            {balance === null ? 'Reading the chain…' : 'On chain, right now.'}
+          </p>
+        </div>
       </CardContent>
     </Card>
   );
@@ -130,15 +149,30 @@ export function Marketplace({
   const [chosen, setChosen] = useState(payers.find((agent) => agent.status === 'active')?.id ?? '');
   // Falls back to the first payer when the chosen one is no longer offered.
   const agentId = payers.some((agent) => agent.id === chosen) ? chosen : (payers[0]?.id ?? '');
+  const [balance, setBalance] = useState<Balance | null>(null);
+
+  useEffect(() => {
+    // The read is slower than a click, so a stale answer can arrive after the
+    // reader has already switched agents. `live` drops it rather than
+    // labelling one agent's wallet with another's balance.
+    let live = true;
+    setBalance(null);
+    void agentBalanceAction(agentId).then((next) => {
+      if (live) setBalance(next);
+    });
+    return () => {
+      live = false;
+    };
+  }, [agentId]);
 
   return (
     <>
-      <Payer agents={payers} agentId={agentId} onChange={setChosen} />
+      <Payer agents={payers} agentId={agentId} balance={balance} onChange={setChosen} />
 
       <Stagger className="grid grid-cols-[minmax(0,1fr)] gap-4 md:grid-cols-2">
         {resources.map((resource) => (
           <StaggerItem key={resource.path}>
-            <ResourceCard resource={resource} agentId={agentId} />
+            <ResourceCard resource={resource} agentId={agentId} balance={balance} />
           </StaggerItem>
         ))}
       </Stagger>

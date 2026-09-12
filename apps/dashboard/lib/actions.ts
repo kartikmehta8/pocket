@@ -7,6 +7,7 @@ import {
   closeTaskBudget,
   createTaskBudget,
   deleteAgent,
+  getAgent,
   patchAgent,
   putBudget,
   putPolicy,
@@ -15,7 +16,7 @@ import {
 } from './api';
 import type { ActionState } from './action-state';
 import type { ApiResult } from './http';
-import type { AgentStatus, Policy } from './types';
+import type { AgentStatus, Balance, Policy } from './types';
 
 /** Refresh every view that can show agent or payment state. */
 function revalidateAll(agentId?: string): void {
@@ -191,4 +192,25 @@ export async function rejectPaymentAction(paymentId: string, note?: string): Pro
   const result = await rejectPayment(paymentId, note);
   if (result.ok) revalidateAll(result.data.payment.agentId);
   return toState(result, 'Payment rejected.');
+}
+
+/**
+ * Reads what one agent's wallet holds, on demand.
+ *
+ * @param agentId The agent whose wallet to read.
+ * @returns The balance, or `null` when the chain would not answer or the
+ *   agent has no wallet yet.
+ * @remarks Its own action rather than a field on the agent list: the balance
+ *   is a chain read, and the list is rendered on four pages that do not need
+ *   one. The marketplace asks for the agent it is about to spend from, and
+ *   again whenever that choice changes.
+ *
+ *   `null` means unknown, never zero. A caller that cannot read the balance
+ *   must not conclude the wallet is empty and stand in the way of a purchase
+ *   that would have gone through.
+ */
+export async function agentBalanceAction(agentId: string): Promise<Balance | null> {
+  if (agentId === '') return null;
+  const result = await getAgent(agentId);
+  return result.ok ? result.data.balance : null;
 }

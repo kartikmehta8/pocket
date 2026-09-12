@@ -1,9 +1,10 @@
 import { ArrowUpRight, Clock, Link2 } from 'lucide-react';
 import Image from 'next/image';
 
-import { formatDateTime } from '@/lib/format';
+import { compareAmounts, formatAmount, formatDateTime } from '@/lib/format';
 import type { CatalogResource } from '@/lib/marketplace';
 import { providerMarks } from '@/lib/providers';
+import type { Balance } from '@/lib/types';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent } from '@/components/ui/card';
 import { CopyButton } from '@/components/ui/copy-button';
@@ -53,20 +54,42 @@ function Providers({ provider }: { provider: string }) {
 }
 
 /**
+ * Why this purchase cannot settle, if that is already knowable.
+ *
+ * @param resource The feed and its price.
+ * @param balance What the paying wallet holds, or `null` when unknown.
+ * @returns A sentence for the buyer, or `null` when the purchase should be
+ *   offered.
+ * @remarks Only a balance that is known, denominated in the same asset, and
+ * genuinely short stops anything. An unreadable balance is not an empty one:
+ * a chain read that timed out must not stand in the way of a purchase that
+ * would have gone through, and the policy engine is the real gate either way.
+ */
+function shortfall(resource: CatalogResource, balance: Balance | null): string | null {
+  if (balance === null || balance.asset !== resource.assetSymbol) return null;
+  if (compareAmounts(balance.amount, resource.price) >= 0) return null;
+  return `This costs ${formatAmount(resource.price, resource.assetSymbol)} and the wallet holds ${formatAmount(balance.amount, balance.asset)}. Fund it, then buy.`;
+}
+
+/**
  * One purchasable feed: whose data it is, what it is, what it costs, and one
  * button that buys it.
  *
  * @param resource The seller's advertised feed.
  * @param agentId The agent paying, or `''` when none is registered yet.
+ * @param balance What that agent's wallet holds, or `null` when unknown.
  */
 export function ResourceCard({
   resource,
   agentId,
+  balance,
 }: {
   resource: CatalogResource;
   agentId: string;
+  balance: Balance | null;
 }) {
   const price = `${resource.price} ${resource.assetSymbol}`;
+  const unaffordable = shortfall(resource, balance);
   // Host and path only. The scheme is noise at this size, and the copy button
   // hands over the full URL anyway.
   const endpoint = resource.url.replace(/^https?:\/\//, '');
@@ -151,6 +174,7 @@ export function ResourceCard({
             reason={`${resource.title} from ${resource.provider}`}
             category="data"
             label={`Buy for ${price}`}
+            {...(unaffordable === null ? {} : { blockedReason: unaffordable })}
           />
         )}
       </CardContent>

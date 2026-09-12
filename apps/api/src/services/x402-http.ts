@@ -118,6 +118,23 @@ export type PaidResponse =
   | { kind: 'rejected'; status: number; detail: string };
 
 /**
+ * Reads why a seller turned a payment down.
+ *
+ * @param response - The seller's refusal.
+ * @returns The reason it stated, or `null` when it stated none.
+ * @remarks An x402 seller answers a rejected payment the same way it answers
+ * an unpaid request: status 402, an empty JSON body, and the challenge in the
+ * `payment-required` header — where a rejection carries an `error` naming what
+ * was wrong. Reading the body alone produces the string `{}`, which is what a
+ * buyer used to be told.
+ */
+function refusalReason(response: Response): string | null {
+  const challenge = decodeHeader(response.headers.get('payment-required'));
+  const error = challenge?.['error'];
+  return typeof error === 'string' && error.trim() !== '' ? error.trim() : null;
+}
+
+/**
  * Presents a signed payment and collects the resource.
  *
  * @param url - The resource.
@@ -131,10 +148,15 @@ export async function payForResource(url: URL, payload: X402PaymentPayload): Pro
   });
 
   if (!response.ok) {
+    const stated = refusalReason(response);
+    const body = (await response.text()).slice(0, 300).trim();
     return {
       kind: 'rejected',
       status: response.status,
-      detail: (await response.text()).slice(0, 300),
+      // The header first: it is the only place an x402 seller says what was
+      // wrong. The body is the fallback for a seller that is not speaking
+      // x402 at all by this point — a gateway error page, say.
+      detail: stated ?? (body === '' || body === '{}' ? '' : body),
     };
   }
 

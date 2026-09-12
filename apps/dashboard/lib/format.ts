@@ -183,3 +183,32 @@ export function sumMoney(values: ReadonlyArray<string | null | undefined>, decim
   const frac = magnitude.slice(cut);
   return `${negative ? '-' : ''}${int}${decimals > 0 ? `.${frac}` : ''}`;
 }
+
+/**
+ * Compare two decimal money strings exactly.
+ *
+ * @param left Decimal string.
+ * @param right Decimal string.
+ * @param decimals Fraction digits both are truncated to before comparing.
+ * @returns A negative number when `left` is smaller, `0` when they are equal,
+ *   a positive number when `left` is larger.
+ * @remarks Scaled integers, like {@link sumMoney}. Comparing prices as floats
+ *   is how a wallet holding exactly the asking price gets told it cannot
+ *   afford it.
+ */
+export function compareAmounts(
+  left: string | null | undefined,
+  right: string | null | undefined,
+  decimals = 6,
+): number {
+  const scale = (value: string | null | undefined): bigint => {
+    if (!value || !/^-?\d*\.?\d*$/.test(value.trim())) return 0n;
+    const { sign, int, frac } = parts(value);
+    const scaled =
+      BigInt(int) * 10n ** BigInt(decimals) +
+      BigInt((frac + '0'.repeat(decimals)).slice(0, decimals));
+    return sign === '-' ? -scaled : scaled;
+  };
+  const difference = scale(left) - scale(right);
+  return difference === 0n ? 0 : difference > 0n ? 1 : -1;
+}
