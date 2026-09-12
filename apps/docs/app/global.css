@@ -39,8 +39,20 @@
   --radius-lg: 1rem;
   --radius-xl: 1.25rem;
 
-  /* Motion, mirrored from the product site. */
+  /*
+   * The indigo ramp, for the one piece of chrome that is the product's rather
+   * than the library's: the navigation marker. Fumadocs' own `fd-` tokens
+   * cover everything else.
+   */
+  --color-accent-50: #eef2ff;
+  --color-accent-300: #a5b4fc;
+  --color-accent-500: #6366f1;
+  --color-accent-700: #4338ca;
+
+  /* Motion, mirrored from the product site: one curve, two durations. */
   --ease-brand: cubic-bezier(0.22, 1, 0.36, 1);
+  --duration-fast: 130ms;
+  --duration-slow: 340ms;
 }
 
 @layer base {
@@ -137,4 +149,73 @@
 html > body[data-scroll-locked] {
   margin-right: 0px !important;
   --removed-body-scroll-bar-size: 0px !important;
+}
+
+/*
+ * Section labels, in the same uppercase micro-type the dashboard's rail uses.
+ *
+ * Every paragraph in this rail is a label: the page tree renders links as
+ * anchors and separators as paragraphs, and the faucet block follows the same
+ * rule. The links themselves are styled by `components/sidebar-item.tsx`,
+ * which replaces the library's own so the active marker can slide.
+ */
+@layer components {
+  #nd-sidebar p {
+    font-size: 0.6875rem;
+    font-weight: 600;
+    letter-spacing: 0.07em;
+    text-transform: uppercase;
+    color: var(--color-fd-muted-foreground);
+  }
+}
+
+/*
+ * The 8px rise the product uses for anything that arrives on load.
+ *
+ * Applied to the article and the table of contents, which are the two things
+ * that change on navigation. The sidebar deliberately does not move: chrome
+ * that re-enters on every click reads as the page being rebuilt rather than
+ * as a page being replaced.
+ */
+@keyframes pocket-rise-in {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@layer components {
+  #nd-page article,
+  #nd-toc > div {
+    animation: pocket-rise-in var(--duration-slow) var(--ease-brand) backwards;
+  }
+
+  #nd-toc > div {
+    animation-delay: 60ms;
+  }
+}
+
+/*
+ * Screenshots and diagrams carry the theme's hairline, so anything sitting on
+ * top of them — the zoom overlay in particular — must not arrive with a
+ * different one.
+ */
+@layer components {
+  [data-rmiz-modal-overlay] {
+    background-color: rgb(247 249 243 / 0.92);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  ::before,
+  ::after {
+    animation-duration: 0.01ms !important;
+    animation-delay: 0ms !important;
+    transition-duration: 0.01ms !important;
+  }
 }
