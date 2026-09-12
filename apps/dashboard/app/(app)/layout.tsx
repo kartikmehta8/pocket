@@ -1,8 +1,16 @@
+import type { Metadata } from 'next';
 import type { ReactNode } from 'react';
 
 import { Sidebar } from '@/components/layout/sidebar';
 import { Topbar } from '@/components/layout/topbar';
 import { PageTransition } from '@/components/ui/page-transition';
+
+/**
+ * Every route in this group needs a session, so none of them belongs in a
+ * search index. Titles and descriptions still matter: a link pasted into a
+ * team's chat renders a card from them.
+ */
+export const metadata: Metadata = { robots: { index: false, follow: false } };
 
 /**
  * Chrome for every signed-in route: a persistent rail, a sticky top bar, and a

@@ -11,8 +11,11 @@ import { Guide } from '@/components/setup/guide';
 import { Button } from '@/components/ui/button';
 import { PageHeader } from '@/components/ui/page-header';
 
-/** Tab title for the setup guide. */
-export const metadata: Metadata = { title: 'Connect an agent' };
+/** Tab title, and the card a shared link renders. */
+export const metadata: Metadata = {
+  title: 'Connect an agent',
+  description: 'Seven steps from an empty organization to an agent that has paid for its own data.',
+};
 
 /** Live state decides which steps show as done, so nothing is prerendered. */
 export const dynamic = 'force-dynamic';

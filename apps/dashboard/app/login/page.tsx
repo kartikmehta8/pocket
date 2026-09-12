@@ -5,8 +5,18 @@ import { LoginPanel } from '@/components/auth/login-panel';
 import { TrustMarks } from '@/components/auth/trust-marks';
 import { Wordmark } from '@/components/layout/wordmark';
 
-/** Tab title for the sign-in screen. */
-export const metadata: Metadata = { title: 'Sign in' };
+/**
+ * Tab title and link preview for the sign-in screen.
+ *
+ * @remarks Kept out of search results. It is a door, not a page: everything
+ * worth indexing is on the other side of it or on the marketing page.
+ */
+export const metadata: Metadata = {
+  title: 'Sign in',
+  description:
+    'Sign in to Pocket, or create an organization. Nothing can spend until you say it may.',
+  robots: { index: false, follow: true },
+};
 
 /** Nothing here is cacheable: the panel decides where to send the visitor. */
 export const dynamic = 'force-dynamic';

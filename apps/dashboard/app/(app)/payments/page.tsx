@@ -12,8 +12,12 @@ import type { PaymentStatus } from '@/lib/types';
 /** Payment history is read live on every request. */
 export const dynamic = 'force-dynamic';
 
-/** Tab title for the payments index. */
-export const metadata: Metadata = { title: 'Payments' };
+/** Tab title, and the card a shared link renders. */
+export const metadata: Metadata = {
+  title: 'Payments',
+  description:
+    'Every payment attempt, including the ones policy stopped. Expand a row for its reason, resource and denial code.',
+};
 
 /** How many payments one page of the table holds. */
 const PAGE_LIMIT = 30;

@@ -15,8 +15,11 @@ import type { AgentStatus } from '@/lib/types';
 /** Agent state changes constantly; never prerender this route. */
 export const dynamic = 'force-dynamic';
 
-/** Tab title for the agents index. */
-export const metadata: Metadata = { title: 'Agents' };
+/** Tab title, and the card a shared link renders. */
+export const metadata: Metadata = {
+  title: 'Agents',
+  description: "Every agent holding a Pocket wallet, with today's spend against its daily budget.",
+};
 
 /**
  * How many agents one page holds.

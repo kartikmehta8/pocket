@@ -2,7 +2,7 @@ import type { Metadata, Viewport } from 'next';
 import { DM_Sans, Space_Mono } from 'next/font/google';
 import type { ReactNode } from 'react';
 
-import { DESCRIPTION, TAGLINE } from '@/lib/brand';
+import { DESCRIPTION, SITE_NAME, TAGLINE, siteUrl } from '@/lib/brand';
 import { Providers } from './providers';
 
 import './globals.css';
@@ -22,10 +22,53 @@ const mono = Space_Mono({
   variable: '--font-space-mono',
 });
 
+/**
+ * The preview card every shared link inherits.
+ *
+ * @remarks One image for the whole site: a capture of the homepage as it
+ * actually renders, rather than a card drawn to look like it. Routes override
+ * the title and description; none of them override this, because a link to a
+ * page nobody outside the organization can open should still show what the
+ * product is.
+ */
+const SOCIAL_IMAGE = {
+  url: '/og.png',
+  width: 1200,
+  height: 630,
+  alt: `${SITE_NAME}: ${TAGLINE}`,
+};
+
 /** Document metadata for every route. */
 export const metadata: Metadata = {
-  title: { default: `Pocket: ${TAGLINE}`, template: '%s · Pocket' },
+  // Absolute URLs for anything a crawler resolves. Without this, `/og.png`
+  // reaches a preview renderer as a path it cannot fetch.
+  metadataBase: new URL(siteUrl()),
+  title: { default: `${SITE_NAME}: ${TAGLINE}`, template: `%s · ${SITE_NAME}` },
   description: DESCRIPTION,
+  applicationName: SITE_NAME,
+  keywords: [
+    'AI agent payments',
+    'agent spending limits',
+    'x402',
+    'stablecoin payments',
+    'agent wallet',
+    'MCP',
+  ],
+  // No title or description here on purpose: Next fills those from each
+  // route's own `title` and `description`, so a link to Payments says
+  // Payments. What every card does share is the image, the site name and the
+  // card type.
+  openGraph: {
+    type: 'website',
+    siteName: SITE_NAME,
+    url: '/',
+    locale: 'en_US',
+    images: [SOCIAL_IMAGE],
+  },
+  twitter: {
+    card: 'summary_large_image',
+    images: [SOCIAL_IMAGE],
+  },
 };
 
 /** Light mode only — no theme toggle, no dark palette. */

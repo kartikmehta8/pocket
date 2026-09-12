@@ -13,7 +13,11 @@ import { Card, CardContent } from '@/components/ui/card';
 import { PageHeader } from '@/components/ui/page-header';
 import { Stagger, StaggerItem } from '@/components/ui/reveal';
 
-export const metadata: Metadata = { title: 'What your agent can do' };
+export const metadata: Metadata = {
+  title: 'What your agent can do',
+  description:
+    'Eight tools reach your agent over MCP. One of them can move money; the other seven exist so it does not have to guess.',
+};
 
 /** Reads live agents and the live catalog to build real example prompts. */
 export const dynamic = 'force-dynamic';

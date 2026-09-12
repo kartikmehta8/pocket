@@ -1,4 +1,5 @@
 import { ArrowUpRight, BarChart3, Unplug } from 'lucide-react';
+import type { Metadata } from 'next';
 import Link from 'next/link';
 
 import { CategorySplit } from '@/components/charts/category-split';
@@ -24,6 +25,12 @@ import { hasAmount, sumMoney } from '@/lib/format';
 
 /** Overview reads live state on every request; nothing here is prerendered. */
 export const dynamic = 'force-dynamic';
+
+/** Tab title, and the card a shared link renders. */
+export const metadata: Metadata = {
+  title: 'Overview',
+  description: 'Spend, policy outcomes and agent activity across your whole organization.',
+};
 
 /**
  * The reporting window every panel on this page shares.

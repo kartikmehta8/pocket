@@ -12,8 +12,11 @@ import type { AuditEvent } from '@/lib/types';
 /** The audit trail is append-only but read live; never prerender it. */
 export const dynamic = 'force-dynamic';
 
-/** Tab title for the audit trail. */
-export const metadata: Metadata = { title: 'Audit' };
+/** Tab title, and the card a shared link renders. */
+export const metadata: Metadata = {
+  title: 'Audit',
+  description: 'Every actor, action and payload, newest first. Expand a row to read the raw event.',
+};
 
 /** Events per page. */
 const PAGE_LIMIT = 30;

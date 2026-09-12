@@ -14,8 +14,12 @@ import { Fact } from '@/components/ui/fact';
 import { InlineCode } from '@/components/ui/inline-code';
 import { PageHeader } from '@/components/ui/page-header';
 
-/** Tab title for settings. */
-export const metadata: Metadata = { title: 'Settings' };
+/** Tab title, and the card a shared link renders. */
+export const metadata: Metadata = {
+  title: 'Settings',
+  description:
+    'Rename your organization, manage the keys your agents authenticate with, and copy the addresses they connect to.',
+};
 
 /** Credentials are live; nothing here is prerendered. */
 export const dynamic = 'force-dynamic';

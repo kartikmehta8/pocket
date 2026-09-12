@@ -16,7 +16,11 @@ import { PageHeader } from '@/components/ui/page-header';
  */
 export const maxDuration = 60;
 
-export const metadata: Metadata = { title: 'Marketplace' };
+export const metadata: Metadata = {
+  title: 'Marketplace',
+  description:
+    "Paid data feeds, priced per call and settled in stablecoin. Every purchase goes through the same policy engine an agent's does.",
+};
 
 /** Prices and freshness are live; nothing here is prerendered. */
 export const dynamic = 'force-dynamic';

@@ -10,9 +10,17 @@ import { Preview } from '@/components/home/preview';
 import { X402Banner } from '@/components/home/x402-banner';
 import { isSignedIn } from '@/lib/session';
 
+/**
+ * Tab title and link preview for the marketing page.
+ *
+ * @remarks The card itself — image, site name, Twitter card type — is set once
+ * in the root layout and inherited here, so the page a link most often points
+ * at cannot drift from the one every other route shows.
+ */
 export const metadata: Metadata = {
   title: `Pocket: ${TAGLINE}`,
   description: DESCRIPTION,
+  alternates: { canonical: '/' },
 };
 
 /**

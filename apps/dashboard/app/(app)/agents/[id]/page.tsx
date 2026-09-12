@@ -21,14 +21,22 @@ interface RouteProps {
 }
 
 /**
- * Tab title for one agent.
+ * Tab title and link preview for one agent.
  *
  * @param props Route params.
+ * @returns The agent's own name, or a neutral title when it cannot be read —
+ *   a failed lookup must not put an identifier in a browser tab.
  */
 export async function generateMetadata({ params }: RouteProps): Promise<Metadata> {
   const { id } = await params;
   const result = await getAgent(id);
-  return { title: result.ok ? result.data.agent.name : 'Agent' };
+  if (!result.ok) return { title: 'Agent' };
+  const { agent } = result.data;
+  return {
+    title: agent.name,
+    description:
+      agent.description ?? `Wallet, budget, policy and payment history for ${agent.name}.`,
+  };
 }
 
 /**
