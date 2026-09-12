@@ -5,7 +5,7 @@ import { AnimatePresence, motion, useReducedMotion } from 'motion/react';
 import { useEffect, useState } from 'react';
 
 import { DURATION, EASE } from '@/lib/motion';
-import { AGENT_BRANDS, ROTATE_MS } from './agents';
+import { AGENT_BRANDS, ROTATE_MS } from '@/lib/agent-brands';
 
 /** Every name, read out once, for anyone who cannot see the animation. */
 const SPOKEN = AGENT_BRANDS.map((brand) => brand.name).join(', ');

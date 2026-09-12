@@ -7,7 +7,7 @@ import { motion, useReducedMotion } from 'motion/react';
 
 import { DURATION, EASE } from '@/lib/motion';
 import { Button } from '@/components/ui/button';
-import { AGENT_BRANDS } from './agents';
+import { AGENT_BRANDS } from '@/lib/agent-brands';
 import { BudgetLine } from './budget-line';
 import { Money } from './marks';
 
