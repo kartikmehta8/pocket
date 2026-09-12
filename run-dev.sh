@@ -5,6 +5,13 @@ set -euo pipefail
 cd "$(dirname "$0")"
 set -a; . ./.env; set +a
 
+# Which build is running, for each service's own home route. A checkout is not
+# a deployment, so this is the commit in the working tree rather than one that
+# was ever released, and the timestamp is when these processes were started.
+GIT_COMMIT=$(git rev-parse --short HEAD 2>/dev/null || echo "")
+BUILD_TIME=$(date -u +%Y-%m-%dT%H:%M:%SZ)
+export GIT_COMMIT BUILD_TIME
+
 for port in "${PORT:-8080}" "${PAID_SERVICE_PORT:-8402}" "${MCP_PORT:-8081}"; do
   if lsof -tiTCP:"$port" -sTCP:LISTEN >/dev/null 2>&1; then
     echo "Port $port is already in use. Stop what is on it, or change the port in .env." >&2
@@ -26,4 +33,5 @@ echo "  API           http://localhost:${PORT:-8080}"
 echo "  MCP           http://localhost:${MCP_PORT:-8081}/mcp"
 echo "  Paid service  http://localhost:${PAID_SERVICE_PORT:-8402}"
 echo "  Logs in .logs/"
+echo "  Build ${GIT_COMMIT:-unknown} started ${BUILD_TIME}"
 wait

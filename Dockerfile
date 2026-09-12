@@ -56,7 +56,11 @@ CMD ["pnpm", "--filter", "@pocket/db", "push", "--force"]
 
 FROM node:22-alpine AS runtime
 ARG APP=api
-ENV NODE_ENV=production APP=${APP}
+# Which build this is, so a running service can say so on its own home route.
+# Both are optional: unset, a service reports only when its process started.
+ARG GIT_COMMIT=""
+ARG BUILD_TIME=""
+ENV NODE_ENV=production APP=${APP} GIT_COMMIT=${GIT_COMMIT} BUILD_TIME=${BUILD_TIME}
 WORKDIR /app
 
 # Never run as root, and never own the files the process reads.
