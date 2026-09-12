@@ -13,6 +13,7 @@ import { cn } from '@/lib/cn';
 import { homeCta } from '@/lib/home-cta';
 import { DURATION, EASE } from '@/lib/motion';
 import { Button } from '@/components/ui/button';
+import { AuthorBadge, AuthorLinks } from './author';
 import { ScrollLink } from './scroll-link';
 
 /** Where the documentation site is served from. */
@@ -104,6 +105,7 @@ export function FloatingNav({ signedIn }: { signedIn: boolean }) {
             <Button variant="primary" asChild className="rounded-full">
               <Link href={cta.href}>{cta.label}</Link>
             </Button>
+            <AuthorBadge className="hidden md:block" />
             <button
               type="button"
               onClick={() => setOpen((value) => !value)}
@@ -158,6 +160,10 @@ export function FloatingNav({ signedIn }: { signedIn: boolean }) {
                     Sign in
                   </Link>
                 )}
+                <AuthorLinks
+                  className="border-divider mt-1 border-t px-3 pt-3 pb-1"
+                  onNavigate={() => setOpen(false)}
+                />
               </div>
             </motion.div>
           ) : null}
