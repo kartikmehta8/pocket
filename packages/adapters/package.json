@@ -1,6 +1,7 @@
 {
   "name": "@pocket/adapters",
   "version": "0.1.0",
+  "description": "Privy, Hedera and The Graph, implemented behind the core ports.",
   "private": true,
   "type": "module",
   "main": "./dist/index.js",

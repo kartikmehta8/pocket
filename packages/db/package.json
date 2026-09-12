@@ -1,6 +1,7 @@
 {
   "name": "@pocket/db",
   "version": "0.1.0",
+  "description": "Postgres schema and the repositories that read and write it.",
   "private": true,
   "type": "module",
   "main": "./dist/index.js",

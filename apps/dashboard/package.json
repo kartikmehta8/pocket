@@ -1,6 +1,7 @@
 {
   "name": "@pocket/dashboard",
   "version": "0.1.0",
+  "description": "Dashboard where a human sets an agent's budget and reads every payment it attempted.",
   "private": true,
   "type": "module",
   "scripts": {

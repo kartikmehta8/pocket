@@ -1,6 +1,7 @@
 {
   "name": "@pocket/core",
   "version": "0.1.0",
+  "description": "Pure domain logic: money, budgets, policy decisions, and the ports vendors plug into.",
   "private": true,
   "type": "module",
   "main": "./dist/index.js",

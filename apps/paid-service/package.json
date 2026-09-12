@@ -1,6 +1,7 @@
 {
   "name": "@pocket/paid-service",
   "version": "0.1.0",
+  "description": "Example x402 seller, so the demo is a real purchase from an independent service.",
   "private": true,
   "type": "module",
   "scripts": {

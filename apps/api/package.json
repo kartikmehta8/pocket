@@ -1,6 +1,7 @@
 {
   "name": "@pocket/api",
   "version": "0.1.0",
+  "description": "Policy engine, payment ledger and audit trail, over HTTP.",
   "private": true,
   "type": "module",
   "main": "./dist/index.js",
@@ -11,7 +12,8 @@
     "typecheck": "tsc -p tsconfig.json --noEmit",
     "test": "vitest run",
     "adopt": "tsx src/adopt.ts",
-    "seed": "tsx src/seed.ts"
+    "provision:treasury": "tsx src/provision-treasury.ts",
+    "provision:merchant": "tsx src/provision-merchant.ts"
   },
   "dependencies": {
     "@fastify/cors": "^10.0.1",
