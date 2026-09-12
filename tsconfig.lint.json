@@ -7,6 +7,7 @@
     "apps/api/src/**/*.ts",
     "apps/api/tests/**/*.ts",
     "apps/mcp/src/**/*.ts",
+    "apps/mcp/tests/**/*.ts",
     "apps/paid-service/src/**/*.ts",
     "apps/paid-service/tests/**/*.ts"
   ]

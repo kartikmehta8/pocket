@@ -19,6 +19,9 @@ import type { AppContext } from './context.js';
 /** Routes that may be called without a key. Everything else is protected. */
 const PUBLIC_ROUTES = new Set([
   'POST:/v1/orgs',
+  // The service's own description. It names endpoints and vendors, all of
+  // which are public, and nothing that belongs to an organization.
+  'GET:/',
   'GET:/v1/health',
   // Session bootstrap authenticates the identity token itself; it cannot
   // require an organization, because establishing one is what it does.

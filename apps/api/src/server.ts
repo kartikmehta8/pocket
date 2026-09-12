@@ -10,6 +10,7 @@ import helmet from '@fastify/helmet';
 import rateLimit from '@fastify/rate-limit';
 import Fastify, { type FastifyInstance } from 'fastify';
 import type { AppContext } from './context.js';
+import { registerAboutRoute } from './routes/about.js';
 import { registerAuth } from './auth.js';
 import { registerErrorHandler } from './errors.js';
 import { registerAgentRoutes } from './routes/agents.js';
@@ -74,6 +75,19 @@ export async function buildServer(ctx: AppContext): Promise<FastifyInstance> {
     keyGenerator: (request) => request.headers.authorization ?? request.ip,
   });
 
+  // Collected as routes register, and handed to `GET /` at the end so the
+  // service can list its own surface. A hook rather than a hand-written list:
+  // one of those goes stale and the other cannot.
+  const routes: string[] = [];
+  app.addHook('onRoute', (route) => {
+    const methods = Array.isArray(route.method) ? route.method : [route.method];
+    for (const method of methods) {
+      // HEAD is generated for every GET, and listing both would double the
+      // index without telling a reader anything.
+      if (method !== 'HEAD') routes.push(`${method} ${route.url}`);
+    }
+  });
+
   app.decorateRequest('orgId', '');
   app.decorateRequest('principal', 'api-key');
   app.decorateRequest('userId', null);
@@ -90,6 +104,9 @@ export async function buildServer(ctx: AppContext): Promise<FastifyInstance> {
   registerPaymentRoutes(app, ctx);
   registerX402Routes(app, ctx);
   registerAnalyticsRoutes(app, ctx);
+
+  // Last, so the index it serves has every other route in it.
+  registerAboutRoute(app, ctx, routes);
 
   return app;
 }

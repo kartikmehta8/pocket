@@ -23,12 +23,15 @@ import { catalogStages, toBaseUnits } from './catalog.js';
 import { loadSellerConfig } from './config.js';
 import type { DataSource } from './sources/types.js';
 import { loadEnvFile } from '@pocket/core/env';
+import { release } from '@pocket/core/release';
 
 // Before the first configuration read. `tsx` does not read `.env`, so without
 // this a service keeps whatever environment its shell had when it started.
 loadEnvFile();
 
 const config = loadSellerConfig();
+/** Version reported on the home route. Matches `package.json`. */
+const VERSION = '0.1.0';
 // Behind a reverse proxy the socket address is the proxy's, so without this
 // every request looks like it came from the same client.
 const app = Fastify({ logger: { level: config.LOG_LEVEL }, trustProxy: true });
@@ -137,6 +140,66 @@ async function main(): Promise<void> {
     // and a buyer comparing the catalog to the docs deserves to know why.
     unavailable: missing,
   }));
+
+  /**
+   * What this service is, served from its own front door.
+   *
+   * `GET /` answered 404. Every other path here either quotes a price or
+   * charges one, so there was nowhere to look up what the thing selling them
+   * actually is — which, for a service whose whole claim is that it is a
+   * stranger to the buyer, is the one question worth answering in the open.
+   *
+   * The resource list is the live catalogue, not a copy of it, so a feed whose
+   * upstream never warmed is absent here exactly as it is absent from sale.
+   */
+  app.get('/', (_request, reply) => {
+    // Uptime, the running build and each feed's freshness all change under the
+    // reader's feet, so an intermediary holding a copy would answer
+    // confidently with yesterday's.
+    reply.header('cache-control', 'no-store');
+    return {
+      service: 'pocket-paid-service',
+      name: 'x402 example seller',
+      summary: 'Sells live market data by the call, paid for in stablecoin in the same request.',
+      description:
+        'A standalone seller that states a price and is paid before it serves. It holds no ' +
+        'account with the buyer, no API key, and no relationship with Pocket: a facilitator ' +
+        'verifies and settles the payment, and only then does the data come back. That ' +
+        'independence is what makes a purchase here a purchase rather than a simulation.',
+      role: 'The other side of the trade. Pocket decides whether its agent may buy; this service decides what it costs.',
+      payment: {
+        protocol: 'x402',
+        network: config.X402_NETWORK,
+        asset: config.X402_ASSET,
+        assetSymbol: config.X402_ASSET_SYMBOL,
+        payTo,
+        payToAddress: config.PAID_SERVICE_ADDRESS,
+        facilitator: config.X402_FACILITATOR_URL,
+        // The exchange, in the order a reader meets it. Four lines rather than a
+        // link, because the whole point of the protocol is that it is short.
+        handshake: [
+          'Request a resource with no payment. The seller answers 402 with its terms in a payment-required header.',
+          'The buyer signs a transfer for exactly that amount and presents it in a payment-signature header.',
+          'The seller asks the facilitator to verify and settle it. The facilitator pays the network fee.',
+          'Settlement confirms, and the resource is served with its receipt.',
+        ],
+      },
+      // Priced before purchase, so a buyer sees the same number the policy
+      // engine will.
+      resources: sellable.map(catalogEntry),
+      // Named rather than hidden: a feed that could not warm is not for sale,
+      // and a buyer comparing this list to the documentation deserves to know why.
+      unavailable: missing,
+      links: {
+        catalog: '/catalog',
+        health: '/health',
+        protocol: 'https://x402.org',
+        product: 'https://www.pocket-app.xyz',
+        documentation: 'https://docs.pocket-app.xyz/docs/using/x402',
+      },
+      release: release(VERSION),
+    };
+  });
 
   app.get('/catalog', () => ({ resources: sellable.map(catalogEntry) }));
 

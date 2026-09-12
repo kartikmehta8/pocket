@@ -10,6 +10,52 @@ import { z } from 'zod';
 import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { PocketApiError, type PocketClient } from './client.js';
 
+/** The only tool that can move money. Every other one reads or records. */
+const SPENDING_TOOLS = new Set(['pocket_pay_for_resource']);
+
+/** One tool, as the server advertises it on its home route. */
+export interface ToolSummary {
+  name: string;
+  title: string;
+  description: string;
+  /** Whether calling it can spend from an agent's wallet. */
+  spends: boolean;
+  /** Whether it changes nothing at all, as declared to MCP clients. */
+  readOnly: boolean;
+}
+
+/**
+ * Every tool this server registers, as plain metadata.
+ *
+ * @returns One entry per tool, in registration order.
+ * @remarks Collected by running the real registration against a server that
+ * only records what it was given, rather than by keeping a second list beside
+ * the first. A hand-written catalogue is a catalogue that goes stale, and this
+ * one is served publicly where being wrong is visible.
+ *
+ * The client is never touched: registration only stores handlers, and none of
+ * them runs here.
+ */
+export function toolCatalog(): ToolSummary[] {
+  const catalog: ToolSummary[] = [];
+  const recorder = {
+    registerTool(
+      name: string,
+      config: { title: string; description: string; annotations?: { readOnlyHint?: boolean } },
+    ) {
+      catalog.push({
+        name,
+        title: config.title,
+        description: config.description,
+        spends: SPENDING_TOOLS.has(name),
+        readOnly: config.annotations?.readOnlyHint === true,
+      });
+    },
+  };
+  registerTools(recorder as unknown as McpServer, null as unknown as PocketClient);
+  return catalog;
+}
+
 /** Renders any value as a single JSON text block. */
 function json(value: unknown) {
   return { content: [{ type: 'text' as const, text: JSON.stringify(value, null, 2) }] };
@@ -46,6 +92,7 @@ export function registerTools(server: McpServer, client: PocketClient): void {
       description:
         'List the agents in this organization with their wallet, daily budget and spend so far today.',
       inputSchema: {},
+      annotations: { readOnlyHint: true },
     },
     async () => guard(() => client.listAgents()),
   );
@@ -56,6 +103,7 @@ export function registerTools(server: McpServer, client: PocketClient): void {
       title: 'Get agent',
       description: 'Load one agent with its spending policy, task budgets and wallet balance.',
       inputSchema: { agentId: z.string().describe('Agent identifier, for example agent_1a2b3c.') },
+      annotations: { readOnlyHint: true },
     },
     async ({ agentId }) => guard(() => client.getAgent(agentId)),
   );

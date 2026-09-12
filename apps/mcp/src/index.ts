@@ -14,8 +14,9 @@ import express from 'express';
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { StreamableHTTPServerTransport } from '@modelcontextprotocol/sdk/server/streamableHttp.js';
 import { PocketClient } from './client.js';
-import { registerTools } from './tools.js';
+import { registerTools, toolCatalog } from './tools.js';
 import { loadEnvFile } from '@pocket/core/env';
+import { release } from '@pocket/core/release';
 
 // Before the first configuration read. `tsx` does not read `.env`, so without
 // this a service keeps whatever environment its shell had when it started.
@@ -54,6 +55,15 @@ function bearerToken(header: string | undefined): string | null {
 
 const port = Number(envOr('MCP_PORT', '8081'));
 const baseUrl = envOr('POCKET_API_URL', 'http://localhost:8080');
+// The address an agent runtime is told to connect to, which is not necessarily
+// the address this process bound: behind a proxy they differ, and the snippets
+// below are meant to be pasted somewhere else.
+const publicUrl = envOr('MCP_PUBLIC_URL', `http://localhost:${String(port)}/mcp`);
+// Version reported on the home route. Matches `package.json`.
+const VERSION = '0.1.0';
+// Derived once. The registration it runs is identical on every call, and the
+// home route is the kind of endpoint a monitor hits on a schedule.
+const TOOLS = toolCatalog();
 
 const app = express();
 // Behind a reverse proxy the socket address is the proxy's, so without this
@@ -63,6 +73,65 @@ app.use(express.json({ limit: '1mb' }));
 
 app.get('/health', (_request, response) => {
   response.json({ ok: true, api: baseUrl, transport: 'streamable-http', auth: 'bearer' });
+});
+
+/**
+ * What this service is, served from its own front door.
+ *
+ * `GET /` answered 404, which tells a visitor nothing: an MCP endpoint is a
+ * URL someone pastes into a configuration file, and the one thing they cannot
+ * do with it beforehand is look at it. So it describes itself — the transport,
+ * the credential it wants, every tool it offers and which of them can spend —
+ * without a key, because none of that belongs to an organization.
+ *
+ * The tools are listed from the same registration the protocol serves, so the
+ * page cannot advertise a tool that is not there.
+ */
+app.get('/', (_request, response) => {
+  // Uptime and the running build change under the reader's feet, so an
+  // intermediary holding a copy would answer confidently with yesterday's.
+  response.set('cache-control', 'no-store').json({
+    service: 'pocket-mcp',
+    name: 'Pocket MCP server',
+    summary: 'Lets an AI agent spend real money inside limits a human set.',
+    description:
+      'Pocket gives each agent its own wallet and a hard cap it cannot raise. This server is ' +
+      'how an agent reaches it: one tool buys things, and the other seven exist so the agent ' +
+      'does not have to guess what it is allowed to do before it tries.',
+    role: 'Protocol adapter. It holds no state and no key of its own; every call is forwarded to the Pocket API as whoever presented the credential.',
+    protocol: {
+      name: 'Model Context Protocol',
+      transport: 'streamable-http',
+      endpoint: { method: 'POST', path: '/mcp', url: publicUrl },
+    },
+    auth: {
+      scheme: 'Bearer',
+      header: 'Authorization: Bearer pocket_sk_…',
+      credential: 'An organization API key, minted in the Pocket dashboard.',
+      note: 'The key travels as a transport header. It is never passed to the model, never returned in a tool result, and never written into the context.',
+    },
+    tools: TOOLS,
+    connect: {
+      hermes: `hermes mcp add pocket --transport http --url ${publicUrl} --header "Authorization: Bearer pocket_sk_..."`,
+      claudeCode: `claude mcp add --transport http pocket ${publicUrl} --header "Authorization: Bearer pocket_sk_..."`,
+      config: {
+        mcpServers: {
+          pocket: {
+            type: 'http',
+            url: publicUrl,
+            headers: { Authorization: 'Bearer pocket_sk_...' },
+          },
+        },
+      },
+    },
+    links: {
+      product: 'https://www.pocket-app.xyz',
+      documentation: 'https://docs.pocket-app.xyz/docs/using/creating-an-agent',
+      protocol: 'https://modelcontextprotocol.io',
+      health: '/health',
+    },
+    release: release(VERSION),
+  });
 });
 
 /**
