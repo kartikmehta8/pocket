@@ -107,11 +107,26 @@ Same shape as the dashboard, on port 3001:
 
 ```bash
 docker build -f apps/docs/Dockerfile -t pocket-docs \
-  --build-arg NEXT_PUBLIC_APP_URL=https://pocket-app.xyz \
+  --build-arg NEXT_PUBLIC_APP_URL=https://www.pocket-app.xyz \
+  --build-arg NEXT_PUBLIC_DOCS_DOMAIN=docs.pocket-app.xyz \
   .
 
 docker run -d -p 127.0.0.1:3001:3001 pocket-docs
 ```
+
+Both are build arguments rather than run-time environment. `NEXT_PUBLIC_*`
+values are inlined when the bundle is compiled, and `NEXT_PUBLIC_DOCS_DOMAIN`
+is the address every canonical link, sitemap entry and social preview is built
+on — set at run time it would arrive too late and the site would advertise
+itself as `localhost`.
+
+On Vercel, set `NEXT_PUBLIC_DOCS_DOMAIN` in project settings only if the site
+answers on a domain other than the project's production one. A production
+deployment already reads `VERCEL_PROJECT_PRODUCTION_URL`, and a preview build
+deliberately addresses itself by its own deployment host.
+
+Point the dashboard at it too: `NEXT_PUBLIC_DOCS_URL` is what its
+**Documentation** link opens, and it defaults to `http://localhost:3001/docs`.
 
 ## 5. Privy configuration
 
