@@ -1,4 +1,4 @@
-# The Graph — composed market data and spend intelligence
+# The Graph: composed market data and spend intelligence
 
 The Graph does two separate jobs in Pocket, and only one of them needs keys.
 

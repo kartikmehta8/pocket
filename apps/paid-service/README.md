@@ -15,8 +15,9 @@ Pocket paying itself.
 pnpm --filter @pocket/paid-service dev
 ```
 
-`http://localhost:8402/` describes the running seller — who it is paid at, which
-facilitator settles for it, and its live catalogue.
+[`pay.pocket-app.xyz`](https://pay.pocket-app.xyz) is the deployed seller, and
+the local one answers on `:8402`. Either one describes itself at `/`: who it is
+paid at, which facilitator settles for it, and its live catalogue.
 
 ## What it sells
 
@@ -58,14 +59,19 @@ failing a request that was already paid for.
 
 ## Configuration
 
-| Variable               | What it is                                   |
-| ---------------------- | -------------------------------------------- |
-| `PAID_SERVICE_PORT`    | Port to bind, default `8402`                 |
-| `PAID_SERVICE_ADDRESS` | EVM address it is paid at                    |
-| `X402_FACILITATOR_URL` | Who verifies and settles                     |
-| `X402_NETWORK`         | Settlement network, e.g. `hedera:testnet`    |
-| `X402_ASSET`           | Token id it prices in                        |
-| `HEDERA_MIRROR_URL`    | Used once at startup to resolve the payee id |
+| Variable                     | What it is                                   |
+| ---------------------------- | -------------------------------------------- |
+| `PAID_SERVICE_PORT`          | Port to bind, default `8402`                 |
+| `PAID_SERVICE_ADDRESS`       | EVM address it is paid at                    |
+| `X402_FACILITATOR_URL`       | Who verifies and settles                     |
+| `X402_NETWORK`               | Settlement network, e.g. `hedera:testnet`    |
+| `X402_ASSET`                 | Token id it prices in                        |
+| `X402_ASSET_DECIMALS`        | Decimal places of that token, default `6`    |
+| `X402_ASSET_SYMBOL`          | Ticker shown beside a price, default `USDC`  |
+| `PAID_SERVICE_PRICE`         | Overrides the standard feed price            |
+| `PAID_SERVICE_PREMIUM_PRICE` | Overrides the deep-dive price                |
+| `PAID_SERVICE_PUBLIC_URL`    | The origin a 402 names as the resource       |
+| `HEDERA_MIRROR_URL`          | Used once at startup to resolve the payee id |
 
 The payee is resolved from address to Hedera account id at startup rather than
 pasted into configuration, because the x402 Hedera scheme addresses accounts by

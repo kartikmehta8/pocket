@@ -1,4 +1,4 @@
-# Privy — wallets and signing
+# Privy: wallets and signing
 
 Privy custodies the agent wallets. Pocket never holds a private key.
 
@@ -34,7 +34,7 @@ credentials. Two more things are needed for that half:
 1. **Settings → Basics → Allowed domains.** Add every origin the dashboard is
    served from, including `http://localhost:3000` for local work. Without it the
    login modal opens and never completes, with no error in the console.
-2. Put the **App ID** — not the secret — in the dashboard environment:
+2. Put the **App ID**, not the secret, in the dashboard environment:
 
 ```bash
 # apps/dashboard/.env.local
@@ -45,7 +45,7 @@ POCKET_API_KEY=                     # empty: setting it bypasses sign-in
 The App ID is a public identifier and is compiled into the browser bundle. The
 App Secret never leaves the API.
 
-## Authorization key — optional
+## Authorization key (optional)
 
 Privy only _requires_ a request signature when a wallet has an owner. Pocket's
 wallets have none, so this step is genuinely optional and you can skip it and

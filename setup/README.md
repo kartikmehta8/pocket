@@ -85,8 +85,8 @@ The MCP server holds no key of its own. Every caller sends its own in an
 being an open door onto somebody else's agents.
 
 `POCKET_API_KEY` in the dashboard environment is the single-tenant escape
-hatch — it bypasses sign-in and pins the dashboard to one organization, which
-is right for an offline demo and wrong for anything else.
+hatch. It bypasses sign-in and pins the dashboard to one organization, which is
+right for an offline demo and wrong for anything else.
 
 Already have an organization with data in it? Sign in, then attach your account
 to it:

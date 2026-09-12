@@ -1,4 +1,4 @@
-# Hedera — settlement and balance reads
+# Hedera: settlement and balance reads
 
 Pocket talks to Hedera through its Ethereum-compatible JSON-RPC relay, so this
 is ordinary EVM wiring: chain id 296 on testnet, `0x` addresses, `eth_call`.

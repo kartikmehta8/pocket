@@ -11,8 +11,9 @@ marketing page at `/`.
 pnpm dev:dashboard
 ```
 
-`http://localhost:3000`. Sign in and the setup guide walks you from an empty
-organization to an agent that has paid for its own data.
+The deployed dashboard is [www.pocket-app.xyz](https://www.pocket-app.xyz); the
+local one answers on `:3000`. Sign in and the setup guide walks you from an
+empty organization to an agent that has paid for its own data.
 
 ## The screens
 
@@ -43,7 +44,7 @@ the page down with it.
 Light mode only, defined once in `app/globals.css`. Three things carry the look
 and every component honours all three: a warm off-white canvas, a true-black
 hairline around anything that is a surface or a control, and generous 1rem
-radii. Shadows are nearly absent — the border does the separating.
+radii. Shadows are nearly absent, because the border does the separating.
 
 Tailwind v4, tokens in `@theme`. Note that theme variables are tree-shaken
 unless a literal class name references them, so a computed

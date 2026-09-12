@@ -8,7 +8,9 @@ The documentation site. Fumadocs on Next.js, content in MDX.
 pnpm --filter @pocket/docs dev
 ```
 
-`http://localhost:3001/docs`.
+The published site is
+[docs.pocket-app.xyz/docs](https://docs.pocket-app.xyz/docs); the local one
+answers on `:3001`.
 
 Note that link navigation reloads the page in development. That is the dev
 server, not the site; the production build navigates client-side, which is what
