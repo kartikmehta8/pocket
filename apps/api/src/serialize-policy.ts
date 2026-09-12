@@ -7,7 +7,7 @@
 
 import { money } from './serialize.js';
 
-/** JSON shape of a policy, matching API_CONTRACT.md. */
+/** JSON shape of a policy, as the API promises it. */
 export interface PolicyJson {
   allowedAssets: string[];
   allowedChains: string[];

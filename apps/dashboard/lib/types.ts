@@ -1,5 +1,5 @@
 /**
- * TypeScript mirror of `API_CONTRACT.md`.
+ * TypeScript mirror of the shapes the Pocket API returns.
  *
  * Every monetary value is a decimal `string` beside its `asset` — never a
  * `number` — so no rounding happens between the API and the screen.

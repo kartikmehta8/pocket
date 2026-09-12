@@ -25,13 +25,14 @@ pnpm db:push
 pnpm --filter @pocket/api dev
 ```
 
-`http://localhost:8080/` describes the running service — every endpoint, which
-vendor is answering for each adapter, and which build it is.
+[`api.pocket-app.xyz`](https://api.pocket-app.xyz) is the deployed one, and the
+local server answers on `:8080`. Either one describes itself at `/`: every
+endpoint, which vendor is answering for each adapter, and which build it is.
 
 ## The surface
 
-[`API_CONTRACT.md`](../../API_CONTRACT.md) is authoritative. The shape worth
-knowing before you read it:
+`GET /` lists every endpoint this service serves, so the running API is its own
+reference. The shape worth knowing before you read it:
 
 ```json
 { "amount": "0.08", "asset": "USDC" }

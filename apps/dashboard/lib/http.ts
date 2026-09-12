@@ -76,8 +76,8 @@ async function credential(): Promise<string | null> {
  * @remarks No content is an answer, not a malformed one, and a delete says so
  * this way.
  *
- * ponytail: the envelope is trusted to match API_CONTRACT.md rather than being
- * re-validated field by field. Ceiling: contract drift surfaces as a blank cell
+ * ponytail: the envelope is trusted to match what the API promises rather than
+ * being re-validated field by field. Ceiling: contract drift surfaces as a blank cell
  * instead of a caught error. Upgrade path: a zod schema per endpoint, parsed
  * right here.
  */

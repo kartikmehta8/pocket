@@ -28,7 +28,7 @@ export function money(amount: bigint, asset: string): string {
   return isAssetId(asset) ? formatAmount(amount, decimalsOf(asset)) : amount.toString();
 }
 
-/** JSON shape of a payment, matching API_CONTRACT.md. */
+/** JSON shape of a payment, as the API promises it. */
 export interface PaymentJson {
   id: string;
   agentId: string;

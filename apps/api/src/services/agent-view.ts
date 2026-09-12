@@ -16,7 +16,7 @@ import {
   type Database,
 } from '@pocket/db';
 
-/** JSON shape of an agent summary, matching API_CONTRACT.md. */
+/** JSON shape of an agent summary, as the API promises it. */
 export interface AgentSummaryJson {
   id: string;
   name: string;
