@@ -8,6 +8,7 @@ import { motion, useReducedMotion } from 'motion/react';
 import { DURATION, EASE } from '@/lib/motion';
 import { Button } from '@/components/ui/button';
 import { AGENT_BRANDS } from '@/lib/agent-brands';
+import { homeCta } from '@/lib/home-cta';
 import { BudgetLine } from './budget-line';
 import { Money } from './marks';
 
@@ -20,8 +21,11 @@ const LIMIT = 2;
  * One line, one button, and a spend line that draws itself as it comes into
  * view, so the last thing on the page is the thing the product actually does:
  * stop at a number you chose.
+ *
+ * @param signedIn Whether the visitor already has a session.
  */
-export function Closer() {
+export function Closer({ signedIn }: { signedIn: boolean }) {
+  const cta = homeCta(signedIn);
   const reduced = useReducedMotion();
 
   return (
@@ -45,8 +49,8 @@ export function Closer() {
 
             <div className="mt-6 flex flex-wrap items-center gap-4">
               <Button variant="secondary" size="md" asChild className="h-11 px-5 text-sm">
-                <Link href="/login">
-                  Start free
+                <Link href={cta.href}>
+                  {cta.label}
                   <ArrowRight aria-hidden className="size-4" strokeWidth={2.25} />
                 </Link>
               </Button>

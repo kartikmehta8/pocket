@@ -1,11 +1,17 @@
 import Link from 'next/link';
 
 import { DESCRIPTION } from '@/lib/brand';
+import { homeCta } from '@/lib/home-cta';
 import { Wordmark } from '@/components/layout/wordmark';
 import { ScrollLink } from './scroll-link';
 
-/** Footer: the wordmark, one line about the product, and the way in. */
-export function MarketingFooter() {
+/**
+ * Footer: the wordmark, one line about the product, and the way in.
+ *
+ * @param signedIn Whether the visitor already has a session.
+ */
+export function MarketingFooter({ signedIn }: { signedIn: boolean }) {
+  const cta = homeCta(signedIn);
   return (
     <footer className="border-border bg-surface border-t">
       <div className="mx-auto flex w-full max-w-[76rem] flex-wrap items-end justify-between gap-6 px-5 py-10 sm:px-8">
@@ -28,8 +34,8 @@ export function MarketingFooter() {
           >
             Documentation
           </a>
-          <Link href="/login" className="text-text-secondary hover:text-text">
-            Sign in
+          <Link href={cta.href} className="text-text-secondary hover:text-text">
+            {signedIn ? 'Dashboard' : 'Sign in'}
           </Link>
         </div>
       </div>

@@ -11,32 +11,44 @@ import { NextResponse, type NextRequest } from 'next/server';
 
 import { SESSION_COOKIE } from '@/lib/session';
 
-/** Paths reachable without a session. The homepage is one of them. */
-const PUBLIC_PATHS = ['/login', '/api/session'];
-
-/** The marketing homepage, which anyone may see. */
-const HOME = '/';
+/** The sign-in screen, which is the one page a session sends you away from. */
+const LOGIN = '/login';
 
 /**
- * Redirects anonymous visitors to the sign-in screen.
+ * Paths reachable without a session.
+ *
+ * @param pathname Path of the incoming request.
+ * @returns Whether the middleware should let it through ungated.
+ * @remarks The marketing page is public in both directions: signed in or not,
+ * anyone may read it. The session endpoint has to stay open because signing in
+ * and signing out both go through it.
+ */
+function isPublic(pathname: string): boolean {
+  return pathname === '/' || pathname.startsWith('/api/session');
+}
+
+/**
+ * Redirects anonymous visitors to the sign-in screen, and signed-in visitors
+ * away from it.
  *
  * @param request Incoming request.
  * @returns A redirect, or a pass-through.
- * @remarks Skipped entirely when `POCKET_API_KEY` is set, which is how the
- *   single-tenant local setup runs without an identity provider.
+ * @remarks Every gate here is skipped when `POCKET_API_KEY` is set, which is
+ *   how the single-tenant local setup runs without an identity provider.
  */
 export function middleware(request: NextRequest): NextResponse {
   const { pathname } = request.nextUrl;
   const signedIn = request.cookies.has(SESSION_COOKIE) || Boolean(process.env.POCKET_API_KEY);
 
-  // Someone who is already signed in has no use for the pitch.
-  if (pathname === HOME) {
+  // Signing in again is the one thing a signed-in visitor cannot usefully do:
+  // the screen would authenticate them a second time and send them here anyway.
+  if (pathname === LOGIN || pathname.startsWith(`${LOGIN}/`)) {
     return signedIn
       ? NextResponse.redirect(new URL('/dashboard', request.url))
       : NextResponse.next();
   }
 
-  if (PUBLIC_PATHS.some((path) => pathname.startsWith(path))) return NextResponse.next();
+  if (isPublic(pathname)) return NextResponse.next();
   if (signedIn) return NextResponse.next();
 
   const login = new URL('/login', request.url);

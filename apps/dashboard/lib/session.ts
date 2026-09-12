@@ -41,3 +41,15 @@ export async function sessionToken(): Promise<string | null> {
   const store = await cookies();
   return store.get(SESSION_COOKIE)?.value ?? null;
 }
+
+/**
+ * Whether the caller is signed in.
+ *
+ * @returns `true` when a session cookie is present, or when the deployment
+ *   runs on a single API key and has no identity provider at all.
+ * @remarks The same rule the middleware applies, so the marketing page and the
+ *   gate in front of it can never disagree about who is looking.
+ */
+export async function isSignedIn(): Promise<boolean> {
+  return (await sessionToken()) !== null || (process.env.POCKET_API_KEY ?? '') !== '';
+}

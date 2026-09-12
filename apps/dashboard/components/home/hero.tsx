@@ -4,6 +4,7 @@ import { ArrowRight, Ban, Check, Compass } from 'lucide-react';
 import { motion, useReducedMotion } from 'motion/react';
 import Link from 'next/link';
 
+import { homeCta } from '@/lib/home-cta';
 import { DURATION, EASE } from '@/lib/motion';
 import { Button } from '@/components/ui/button';
 import { AgentRotator } from './agent-rotator';
@@ -46,8 +47,11 @@ const ATTEMPTS = [
  * than about ours. The card beside it ends on a refusal: anyone can show an
  * agent buying something, and the reason to trust one with money is that it can
  * be stopped.
+ *
+ * @param signedIn Whether the visitor already has a session.
  */
-export function Hero() {
+export function Hero({ signedIn }: { signedIn: boolean }) {
+  const cta = homeCta(signedIn);
   const reduced = useReducedMotion();
   const rise = (delay: number) =>
     reduced
@@ -84,8 +88,8 @@ export function Hero() {
 
           <motion.div {...rise(0.12)} className="mt-8 flex flex-wrap items-center gap-3">
             <Button variant="primary" size="md" asChild className="h-11 px-5 text-sm">
-              <Link href="/login">
-                Start free
+              <Link href={cta.href}>
+                {cta.label}
                 <ArrowRight aria-hidden className="size-4" strokeWidth={2.25} />
               </Link>
             </Button>
@@ -97,9 +101,13 @@ export function Hero() {
             </Button>
           </motion.div>
 
-          <motion.p {...rise(0.18)} className="text-text-muted mt-6 text-xs">
-            Free to start. Your first agent is running in under a minute.
-          </motion.p>
+          {/* The promise under the button is about signing up, so it goes when
+              the reader already has. */}
+          {signedIn ? null : (
+            <motion.p {...rise(0.18)} className="text-text-muted mt-6 text-xs">
+              Free to start. Your first agent is running in under a minute.
+            </motion.p>
+          )}
         </div>
 
         <motion.div

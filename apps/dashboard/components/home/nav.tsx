@@ -6,6 +6,7 @@ import Link from 'next/link';
 import { useEffect, useState } from 'react';
 
 import { cn } from '@/lib/cn';
+import { homeCta } from '@/lib/home-cta';
 import { DURATION, EASE } from '@/lib/motion';
 import { Button } from '@/components/ui/button';
 import { ScrollLink } from './scroll-link';
@@ -28,8 +29,13 @@ const LINKS = [
  *
  * It gains its border and shadow only once the page has scrolled, so at rest it
  * reads as part of the hero instead of a strip pinned over it.
+ *
+ * @param signedIn Whether the visitor already has a session. Sign-in is not
+ *   offered to someone who is already signed in; the way through is their
+ *   dashboard.
  */
-export function FloatingNav() {
+export function FloatingNav({ signedIn }: { signedIn: boolean }) {
+  const cta = homeCta(signedIn);
   const [open, setOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
   const reduced = useReducedMotion();
@@ -86,11 +92,13 @@ export function FloatingNav() {
                 View documentation
               </a>
             </Button>
-            <Button variant="ghost" asChild className="hidden rounded-full sm:inline-flex">
-              <Link href="/login">Sign in</Link>
-            </Button>
+            {signedIn ? null : (
+              <Button variant="ghost" asChild className="hidden rounded-full sm:inline-flex">
+                <Link href="/login">Sign in</Link>
+              </Button>
+            )}
             <Button variant="primary" asChild className="rounded-full">
-              <Link href="/login">Start free</Link>
+              <Link href={cta.href}>{cta.label}</Link>
             </Button>
             <button
               type="button"
@@ -138,12 +146,14 @@ export function FloatingNav() {
                 >
                   View documentation
                 </a>
-                <Link
-                  href="/login"
-                  className="text-text-secondary hover:bg-ash-100 hover:text-text rounded-md px-3 py-2 text-sm font-medium sm:hidden"
-                >
-                  Sign in
-                </Link>
+                {signedIn ? null : (
+                  <Link
+                    href="/login"
+                    className="text-text-secondary hover:bg-ash-100 hover:text-text rounded-md px-3 py-2 text-sm font-medium sm:hidden"
+                  >
+                    Sign in
+                  </Link>
+                )}
               </div>
             </motion.div>
           ) : null}
