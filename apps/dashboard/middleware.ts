@@ -15,6 +15,15 @@ import { SESSION_COOKIE } from '@/lib/session';
 const LOGIN = '/login';
 
 /**
+ * Files a crawler asks for before it has any notion of a session.
+ *
+ * @remarks Redirected to sign-in, `robots.txt` answers with an HTML login
+ * page, which a crawler reads as "no rules" — and the sitemap it names would
+ * do the same. Both have to be reachable by anyone.
+ */
+const CRAWLER_FILES = ['/robots.txt', '/sitemap.xml'];
+
+/**
  * Paths reachable without a session.
  *
  * @param pathname Path of the incoming request.
@@ -24,7 +33,9 @@ const LOGIN = '/login';
  * and signing out both go through it.
  */
 function isPublic(pathname: string): boolean {
-  return pathname === '/' || pathname.startsWith('/api/session');
+  return (
+    pathname === '/' || pathname.startsWith('/api/session') || CRAWLER_FILES.includes(pathname)
+  );
 }
 
 /**
