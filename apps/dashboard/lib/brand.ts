@@ -42,25 +42,57 @@ const DEFAULT_DOMAIN = 'pocket-app.xyz';
  *
  * @returns An origin with no trailing slash, e.g. `https://pocket-app.xyz`.
  * @remarks Metadata needs absolute URLs: a preview card is rendered by
- * somebody else's server, which cannot resolve `/og.png`. Vercel's
- * per-deployment host is preferred on a preview build so its cards point at
- * the build being previewed rather than production.
+ * somebody else's server, which cannot resolve `/og.png`.
  *
- * `next.config.ts` reads the same variable to decide which origins may submit
- * a server action. Change one and look at the other.
+ * The order matters, and getting it wrong is visible to everyone who shares a
+ * link. `VERCEL_URL` is the per-deployment host — `…-2tl3c72e5-….vercel.app` —
+ * which is the right address for a preview build and the wrong one for
+ * production, where it changes on every deploy and matches no domain anybody
+ * recognises. Production therefore asks Vercel for the project's own domain
+ * first, and only a preview falls back to addressing itself.
+ *
+ * `next.config.ts` reads `NEXT_PUBLIC_APP_DOMAIN` too, to decide which origins
+ * may submit a server action. Change one and look at the other.
  */
 export function siteUrl(): string {
-  const configured = process.env.NEXT_PUBLIC_APP_DOMAIN ?? '';
-  if (configured !== '') {
-    const apex = configured.replace(/^https?:\/\//, '').replace(/\/.*$/, '');
-    return `https://${apex}`;
-  }
-  const deployment = process.env.VERCEL_URL ?? '';
-  if (deployment !== '') return `https://${deployment}`;
-  // Deployed with nothing configured, a card pointing at localhost is worse
-  // than one pointing at the canonical domain, which is also what
-  // `next.config.ts` assumes when the variable is missing.
+  const host = vercelHost();
+  if (host !== null) return `https://${host}`;
+  // Nothing configured and not on Vercel: a card pointing at localhost would
+  // be worse than one pointing at the domain the product actually lives on.
   return process.env.NODE_ENV === 'production'
     ? `https://${DEFAULT_DOMAIN}`
     : 'http://localhost:3000';
+}
+
+/**
+ * The host this deployment should call itself, from configuration.
+ *
+ * @returns A bare host, or `null` when nothing says.
+ */
+function vercelHost(): string | null {
+  const configured = clean(process.env.NEXT_PUBLIC_APP_DOMAIN);
+  if (configured !== null) return configured;
+
+  // Vercel's own name for the project's production domain. Present on every
+  // deployment, and the only variable that keeps pointing at the same place.
+  if (process.env.VERCEL_ENV === 'production') {
+    const canonical = clean(process.env.VERCEL_PROJECT_PRODUCTION_URL);
+    if (canonical !== null) return canonical;
+  }
+
+  return clean(process.env.VERCEL_URL);
+}
+
+/**
+ * Reduces a configured value to a bare host.
+ *
+ * @param value Raw environment value: may carry a scheme, a path, or nothing.
+ * @returns The host, or `null` when the value was empty.
+ */
+function clean(value: string | undefined): string | null {
+  const host = (value ?? '')
+    .trim()
+    .replace(/^https?:\/\//, '')
+    .replace(/\/.*$/, '');
+  return host === '' ? null : host;
 }
