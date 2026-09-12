@@ -1,3 +1,7 @@
+/**
+ * The placeholder for "nothing here yet" and "this could not be read".
+ */
+
 import type { LucideIcon } from 'lucide-react';
 import type { ReactNode } from 'react';
 

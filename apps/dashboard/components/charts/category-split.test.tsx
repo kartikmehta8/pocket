@@ -1,3 +1,9 @@
+/**
+ * How spend divides across what agents bought. Rows are ordered largest first
+ * whatever order the API returned them in, and a category with a share too
+ * small to paint still gets its row.
+ */
+
 import { renderToStaticMarkup } from 'react-dom/server';
 import { describe, expect, it } from 'vitest';
 
@@ -20,7 +26,6 @@ describe('CategorySplit', () => {
     const html = renderToStaticMarkup(<CategorySplit byCategory={BY_CATEGORY} asset="USDC" />);
     const rendered = text(html);
 
-    // Largest first, whatever order the API returned them in.
     expect(rendered.indexOf('Research')).toBeLessThan(rendered.indexOf('Data'));
     expect(rendered).toContain('75% of spend');
     expect(rendered).toContain('25% of spend');
@@ -39,7 +44,6 @@ describe('CategorySplit', () => {
         asset="USDC"
       />,
     );
-    // One painted slice, both rows.
     expect(html.match(/width:/g)).toHaveLength(1);
     expect(text(html)).toContain('0% of spend');
     expect(text(html)).toContain('1 payment ');

@@ -206,5 +206,5 @@ export interface AgentDetail {
   accountHollow: boolean | null;
 }
 
-// Account, credential and identity shapes.
+/** Account, credential and identity shapes. */
 export * from './types-account';

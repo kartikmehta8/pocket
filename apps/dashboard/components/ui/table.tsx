@@ -1,3 +1,7 @@
+/**
+ * The table primitives: frame, head, row and cell.
+ */
+
 import type { ReactNode, ThHTMLAttributes } from 'react';
 
 import { cn } from '@/lib/cn';

@@ -8,6 +8,10 @@
  * The credential travels with the request. This server holds no key of its
  * own, so an unauthenticated caller can reach nothing: whoever connects
  * presents their own organization key and sees only that organization.
+ *
+ * `loadEnvFile()` runs before the first configuration read. `tsx` does not read
+ * `.env`, so without it a service keeps whatever environment its shell had when
+ * it started.
  */
 
 import express from 'express';
@@ -18,8 +22,6 @@ import { registerTools, toolCatalog } from './tools.js';
 import { loadEnvFile } from '@pocket/core/env';
 import { release } from '@pocket/core/release';
 
-// Before the first configuration read. `tsx` does not read `.env`, so without
-// this a service keeps whatever environment its shell had when it started.
 loadEnvFile();
 
 /**
@@ -55,19 +57,28 @@ function bearerToken(header: string | undefined): string | null {
 
 const port = Number(envOr('MCP_PORT', '8081'));
 const baseUrl = envOr('POCKET_API_URL', 'http://localhost:8080');
-// The address an agent runtime is told to connect to, which is not necessarily
-// the address this process bound: behind a proxy they differ, and the snippets
-// below are meant to be pasted somewhere else.
+
+/**
+ * The address an agent runtime is told to connect to.
+ *
+ * Not necessarily the address this process bound: behind a proxy the two
+ * differ, and the snippets on the home route are meant to be pasted somewhere
+ * else.
+ */
 const publicUrl = envOr('MCP_PUBLIC_URL', `http://localhost:${String(port)}/mcp`);
-// Version reported on the home route. Matches `package.json`.
+
+/** Version reported on the home route. Matches `package.json`. */
 const VERSION = '0.1.0';
-// Derived once. The registration it runs is identical on every call, and the
-// home route is the kind of endpoint a monitor hits on a schedule.
+
+/**
+ * The published tool catalogue, derived once.
+ *
+ * The registration it runs is identical on every call, and the home route is
+ * the kind of endpoint a monitor hits on a schedule.
+ */
 const TOOLS = toolCatalog();
 
 const app = express();
-// Behind a reverse proxy the socket address is the proxy's, so without this
-// every agent looks like it came from the same client.
 app.set('trust proxy', true);
 app.use(express.json({ limit: '1mb' }));
 
@@ -86,10 +97,12 @@ app.get('/health', (_request, response) => {
  *
  * The tools are listed from the same registration the protocol serves, so the
  * page cannot advertise a tool that is not there.
+ *
+ * `no-store`, because uptime and the running build change under the reader's
+ * feet and an intermediary holding a copy would answer confidently with
+ * yesterday's.
  */
 app.get('/', (_request, response) => {
-  // Uptime and the running build change under the reader's feet, so an
-  // intermediary holding a copy would answer confidently with yesterday's.
   response.set('cache-control', 'no-store').json({
     service: 'pocket-mcp',
     name: 'Pocket MCP server',
@@ -141,13 +154,15 @@ app.get('/', (_request, response) => {
  * request means no state and no credential leaks between callers. The cost is
  * per-request setup, which is negligible next to the network calls each tool
  * makes.
+ *
+ * A missing credential is answered `401` with a `WWW-Authenticate` challenge,
+ * so a client that can prompt for one knows what to ask for instead of
+ * reporting an opaque failure.
  */
 app.post('/mcp', (request, response) => {
   void (async () => {
     const apiKey = bearerToken(request.get('authorization'));
     if (apiKey === null) {
-      // 401 with the challenge, so a client that can prompt for a credential
-      // knows what to ask for instead of reporting an opaque failure.
       response
         .status(401)
         .set('WWW-Authenticate', 'Bearer realm="pocket"')
@@ -188,8 +203,13 @@ app.post('/mcp', (request, response) => {
   })();
 });
 
-// Streamable HTTP in stateless mode has no server-initiated stream to open and
-// no session to end, so these verbs are answered rather than left to 404.
+/**
+ * Answers the transport's other verbs rather than leaving them to 404.
+ *
+ * Streamable HTTP in stateless mode has no server-initiated stream to open and
+ * no session to end, so `GET` and `DELETE` on the endpoint are method errors
+ * rather than missing routes.
+ */
 for (const method of ['get', 'delete'] as const) {
   app[method]('/mcp', (_request, response) => {
     response.status(405).json({

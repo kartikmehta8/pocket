@@ -1,5 +1,9 @@
 'use client';
 
+/**
+ * The fade the content column plays on navigation.
+ */
+
 import { motion, useReducedMotion } from 'motion/react';
 import { usePathname } from 'next/navigation';
 import type { ReactNode } from 'react';
@@ -14,13 +18,14 @@ import { DURATION, EASE } from '@/lib/motion';
  * entirely rather than shortened, because a flash is worse than no animation.
  *
  * @param children The active page.
+ *
+ * @remarks Only the animation is dropped, never the layout: returning the
+ * children bare would take the column's spacing with it and collapse the page.
  */
 export function PageTransition({ children }: { children: ReactNode }) {
   const pathname = usePathname();
   const reduced = useReducedMotion();
 
-  // Only the animation is dropped, never the layout: returning the children
-  // bare would take the column's spacing with it and collapse the page.
   if (reduced) return <div className="gap-section flex w-full flex-col">{children}</div>;
 
   return (

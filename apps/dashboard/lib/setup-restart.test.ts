@@ -1,3 +1,13 @@
+/**
+ * Restarting the guide, across the two halves that implement it. The browser
+ * stamps the instant and the server reads it; refusing a skewed one made the
+ * button do nothing at all, with no error to see. The browser builds the
+ * cookie value and the server parses it, and nothing else ties the two halves
+ * together, so a format change would otherwise break the restart with every
+ * check still green. A restart the operator just asked for is shown as a fresh
+ * run rather than silently ignored.
+ */
+
 import { describe, expect, it } from 'vitest';
 
 import { readRestartAt, restartInEffect } from './setup-restart';
@@ -17,8 +27,6 @@ describe('readRestartAt', () => {
   });
 
   it('clamps a browser clock running fast, rather than refusing the restart', () => {
-    // The browser stamps this and the server reads it. Refusing a skewed
-    // instant made the button do nothing at all, with no error to see.
     expect(readRestartAt(String(NOW + 60_000), NOW)).toBe(NOW);
   });
 
@@ -42,9 +50,6 @@ describe('restartInEffect', () => {
   });
 
   it('round-trips what the button writes', () => {
-    // The browser builds the cookie value and the server parses it. Nothing
-    // else ties the two halves together, so a format change would otherwise
-    // break the restart with every check still green.
     const written = String(NOW);
     expect(restartInEffect(readRestartAt(written, NOW), BEFORE)).toBe(true);
   });
@@ -54,8 +59,6 @@ describe('restartInEffect', () => {
   });
 
   it('holds when the newest agent has an unreadable registration date', () => {
-    // Better to show a fresh run the operator can act on than to silently
-    // ignore a restart they just asked for.
     expect(restartInEffect(NOW, 'not a date')).toBe(true);
   });
 });

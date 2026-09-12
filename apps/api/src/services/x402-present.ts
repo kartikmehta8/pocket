@@ -35,10 +35,12 @@ export interface PresentDeps {
  *   and true but not actionable, so the usual causes are named alongside it.
  *   Nothing here guesses which one applies: the wallet is not read again on a
  *   path whose whole job is to release the reservation and return.
+ *
+ * Trailing punctuation is stripped first. Sellers punctuate their reasons
+ * inconsistently, and "requirements.." is the kind of thing a reader notices
+ * instead of the sentence.
  */
 function refusalMessage(status: number, detail: string): string {
-  // Sellers punctuate their reasons inconsistently, and "requirements.." is
-  // the kind of thing a reader notices instead of the sentence.
   const said = detail.replace(/[.!\s]+$/, '');
   const stated =
     said === ''
@@ -55,6 +57,8 @@ function refusalMessage(status: number, detail: string): string {
  * @param payload - The signed x402 payload.
  * @returns Paid when the seller served the resource, failed otherwise. Never
  *   throws: a failure that escaped would strand the reservation.
+ *
+ * A seller that goes quiet after signing must cost the budget nothing.
  */
 export async function presentToSeller(
   deps: PresentDeps,
@@ -73,7 +77,6 @@ export async function presentToSeller(
   try {
     paid = await payForResource(url, payload);
   } catch (cause) {
-    // A seller that goes quiet after signing must cost the budget nothing.
     return await abandon(
       'UPSTREAM_UNAVAILABLE',
       `The seller could not be reached: ${String(cause)}`,

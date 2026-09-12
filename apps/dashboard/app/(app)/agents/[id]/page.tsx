@@ -1,3 +1,9 @@
+/**
+ * One agent's page: the header, the budget, the policy, its task budgets, its
+ * funding and its own payment history. Everything that decides whether a
+ * purchase goes through is set here.
+ */
+
 import type { Metadata } from 'next';
 import { ArrowUpRight } from 'lucide-react';
 import Link from 'next/link';
@@ -44,6 +50,14 @@ export async function generateMetadata({ params }: RouteProps): Promise<Metadata
 /**
  * Agent detail: status, wallet and balance, budget, the full policy document,
  * task budgets, and this agent's payment history.
+ *
+ * @remarks An agent with no policy row cannot spend at all: the engine denies by
+ * default. The editor renders empty so an operator can set the first one.
+ *
+ * Somewhere to move funds to before this agent is deleted. Revoked agents are
+ * left out: money moved into one is stranded just as surely. A failed listing is
+ * not an empty one, but it reads as one here, and the dialog then says there is
+ * nowhere to move to — the safe thing to be wrong about.
  */
 export default async function AgentDetailPage({ params }: RouteProps) {
   const { id } = await params;
@@ -61,13 +75,7 @@ export default async function AgentDetailPage({ params }: RouteProps) {
   }
 
   const detail = detailResult.data;
-  // An agent with no policy row cannot spend at all: the engine denies by
-  // default. The editor renders empty so an operator can set the first one.
   const asset = detail.agent.budget?.asset ?? detail.policy?.allowedAssets[0] ?? 'USDC';
-  // Somewhere to move funds to before this agent is deleted. Revoked agents
-  // are left out: money moved into one is stranded just as surely. A failed
-  // listing is not an empty one, but it reads as one here, and the dialog then
-  // says there is nowhere to move to — the safe thing to be wrong about.
   const others = (agentsResult.ok ? agentsResult.data.agents : []).filter(
     (other) => other.id !== detail.agent.id && other.status !== 'revoked',
   );

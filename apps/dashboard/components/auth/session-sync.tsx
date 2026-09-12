@@ -1,5 +1,9 @@
 'use client';
 
+/**
+ * Keeping the server's session cookie in step with the browser's.
+ */
+
 import { useIdentityToken, usePrivy } from '@privy-io/react-auth';
 import { useRouter } from 'next/navigation';
 import { useCallback, useEffect, useRef } from 'react';
@@ -14,12 +18,21 @@ const REFRESH_INTERVAL = 10 * 60 * 1000;
  * The cookie the server reads has no such machinery, so this component pushes
  * the current token back to `/api/session` on mount, on an interval, and
  * whenever the tab regains focus. Renders nothing.
+ *
+ * @remarks Guards against two syncs racing when a refresh and a focus event
+ * coincide.
+ *
+ * A failed refresh is not fatal. The existing cookie stays valid until it
+ * expires, and the next tick tries again.
+ *
+ * Privy can end a session in another tab. When that happens the cookie is stale,
+ * so send the browser back to sign-in rather than letting the next navigation
+ * render a wall of unauthorized panels.
  */
 export function SessionSync() {
   const { ready, authenticated, getAccessToken } = usePrivy();
   const { identityToken } = useIdentityToken();
   const router = useRouter();
-  // Guards against two syncs racing when a refresh and a focus event coincide.
   const syncing = useRef(false);
 
   const sync = useCallback(async () => {
@@ -34,8 +47,6 @@ export function SessionSync() {
         body: JSON.stringify({ token, idToken: identityToken }),
       });
     } catch {
-      // A failed refresh is not fatal. The existing cookie stays valid until
-      // it expires, and the next tick tries again.
     } finally {
       syncing.current = false;
     }
@@ -52,9 +63,6 @@ export function SessionSync() {
     };
   }, [sync]);
 
-  // Privy can end a session in another tab. When that happens the cookie is
-  // stale, so send the browser back to sign-in rather than letting the next
-  // navigation render a wall of unauthorized panels.
   useEffect(() => {
     if (ready && !authenticated) router.replace('/login');
   }, [ready, authenticated, router]);

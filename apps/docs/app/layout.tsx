@@ -1,3 +1,7 @@
+/**
+ * The document shell: fonts, site-wide metadata and the Fumadocs provider.
+ */
+
 import type { Metadata, Viewport } from 'next';
 import type { ReactNode } from 'react';
 import { DM_Sans, Space_Mono } from 'next/font/google';
@@ -25,10 +29,11 @@ const mono = Space_Mono({
  * purpose. Every page under `/docs` generates its own card — title, summary
  * and a rendered image naming the page — and a value set at the root would
  * win over the per-page one for any field the route does not also set.
+ *
+ * `metadataBase` is what makes every relative address absolute. Without it a
+ * relative image reaches a preview renderer as a path it cannot fetch.
  */
 export const metadata: Metadata = {
-  // Absolute URLs for anything a crawler resolves. Without this, a relative
-  // image reaches a preview renderer as a path it cannot fetch.
   metadataBase: new URL(siteUrl()),
   title: { default: `${DOCS_NAME}: ${TAGLINE}`, template: `%s · ${DOCS_NAME}` },
   description: DESCRIPTION,

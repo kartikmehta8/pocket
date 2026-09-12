@@ -1,3 +1,7 @@
+/**
+ * The progress panel beside the steps.
+ */
+
 import { ArrowUpRight, BookOpen, Check, Receipt, ScrollText } from 'lucide-react';
 import Link from 'next/link';
 

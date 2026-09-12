@@ -10,6 +10,10 @@
  * Every feed is warmed before the port is bound. A feed whose upstream is
  * unreachable at startup is simply not offered, so this service never quotes a
  * price for something it cannot deliver.
+ *
+ * `loadEnvFile()` runs before the first configuration read, because `tsx` does
+ * not read `.env` and a service would otherwise keep whatever environment its
+ * shell had when it started.
  */
 
 import Fastify from 'fastify';
@@ -25,15 +29,19 @@ import type { DataSource } from './sources/types.js';
 import { loadEnvFile } from '@pocket/core/env';
 import { release } from '@pocket/core/release';
 
-// Before the first configuration read. `tsx` does not read `.env`, so without
-// this a service keeps whatever environment its shell had when it started.
 loadEnvFile();
 
 const config = loadSellerConfig();
 /** Version reported on the home route. Matches `package.json`. */
 const VERSION = '0.1.0';
-// Behind a reverse proxy the socket address is the proxy's, so without this
-// every request looks like it came from the same client.
+
+/**
+ * The server.
+ *
+ * `trustProxy`, because behind a reverse proxy the socket address is the
+ * proxy's and every request would otherwise look like it came from the same
+ * client.
+ */
 const app = Fastify({ logger: { level: config.LOG_LEVEL }, trustProxy: true });
 
 const cache = new SourceCache((source, error) => {
@@ -136,8 +144,6 @@ async function main(): Promise<void> {
     payTo,
     payToAddress: config.PAID_SERVICE_ADDRESS,
     resources: sellable.map((source) => source.path),
-    // Named rather than hidden: a feed that could not warm is not for sale,
-    // and a buyer comparing the catalog to the docs deserves to know why.
     unavailable: missing,
   }));
 
@@ -151,11 +157,15 @@ async function main(): Promise<void> {
    *
    * The resource list is the live catalogue, not a copy of it, so a feed whose
    * upstream never warmed is absent here exactly as it is absent from sale.
+   * Prices are quoted before purchase, so a buyer sees the same number the
+   * policy engine will, and the handshake is spelled out rather than linked
+   * because the whole point of the protocol is that it is short.
+   *
+   * `no-store`, because uptime, the running build and each feed's freshness all
+   * change under the reader's feet and an intermediary holding a copy would
+   * answer confidently with yesterday's.
    */
   app.get('/', (_request, reply) => {
-    // Uptime, the running build and each feed's freshness all change under the
-    // reader's feet, so an intermediary holding a copy would answer
-    // confidently with yesterday's.
     reply.header('cache-control', 'no-store');
     return {
       service: 'pocket-paid-service',
@@ -175,8 +185,6 @@ async function main(): Promise<void> {
         payTo,
         payToAddress: config.PAID_SERVICE_ADDRESS,
         facilitator: config.X402_FACILITATOR_URL,
-        // The exchange, in the order a reader meets it. Four lines rather than a
-        // link, because the whole point of the protocol is that it is short.
         handshake: [
           'Request a resource with no payment. The seller answers 402 with its terms in a payment-required header.',
           'The buyer signs a transfer for exactly that amount and presents it in a payment-signature header.',
@@ -184,11 +192,7 @@ async function main(): Promise<void> {
           'Settlement confirms, and the resource is served with its receipt.',
         ],
       },
-      // Priced before purchase, so a buyer sees the same number the policy
-      // engine will.
       resources: sellable.map(catalogEntry),
-      // Named rather than hidden: a feed that could not warm is not for sale,
-      // and a buyer comparing this list to the documentation deserves to know why.
       unavailable: missing,
       links: {
         catalog: '/catalog',
@@ -204,8 +208,6 @@ async function main(): Promise<void> {
   app.get('/catalog', () => ({ resources: sellable.map(catalogEntry) }));
 
   for (const source of sellable) {
-    // The middleware gates these: the handler only runs once the facilitator
-    // has confirmed settlement. It reads from memory and cannot fail.
     app.get(source.path, () => {
       const snapshot = cache.snapshot(source.id);
       if (snapshot === null) throw new Error(`Feed ${source.id} vanished from the cache.`);

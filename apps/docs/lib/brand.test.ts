@@ -1,3 +1,7 @@
+/**
+ * The address this deployment gives out.
+ */
+
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { appUrl, siteUrl } from './brand';

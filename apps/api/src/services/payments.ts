@@ -82,6 +82,13 @@ export async function previewPayment(
  * @throws {PocketError} `IDEMPOTENCY_KEY_REUSED` when the key was already used
  *   for different money, `NOT_FOUND` for an unknown agent, or
  *   `WALLET_NOT_PROVISIONED` when an authorized agent has no wallet.
+ *
+ * The same rule as the x402 path: an attempt that reserved nothing holds no
+ * key, so raising the limit that blocked it lets a retry through. Evidence is
+ * stored in the wire shape — money as decimal strings rather than base units —
+ * so it reads the same as what the agent was told. The task budget is reserved
+ * the moment the payment is authorized, so a burst of concurrent requests
+ * cannot each see the same unspent headroom.
  */
 export async function executePayment(
   deps: PaymentDeps,
@@ -130,8 +137,6 @@ export async function executePayment(
         orgId,
         agentId: request.agentId,
         taskBudgetId: request.taskBudgetId ?? null,
-        // Same rule as the x402 path: an attempt that reserved nothing holds
-        // no key, so raising the limit that blocked it lets a retry through.
         idempotencyKey: status === 'blocked' ? null : idempotencyKey,
         amount: context.amount,
         asset: request.asset,
@@ -143,14 +148,10 @@ export async function executePayment(
         initiatedBy: request.initiatedBy,
         status,
         denialCode: verdict.primaryDenialCode,
-        // Stored in the wire shape: money as decimal strings, not base units,
-        // so the evidence reads the same as what the agent was told.
         decision: decisionToJson(verdict, request.asset),
         txHash: null,
       });
 
-      // Reserve the task budget the moment the payment is authorized, so a burst
-      // of concurrent requests cannot each see the same unspent headroom.
       if (status !== 'blocked' && context.taskBudget !== null) {
         await chargeTaskBudget(tx, context.taskBudget.id, context.amount);
       }

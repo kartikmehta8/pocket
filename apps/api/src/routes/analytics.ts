@@ -36,12 +36,16 @@ const auditQuerySchema = z.object({
 export function registerAnalyticsRoutes(app: FastifyInstance, ctx: AppContext): void {
   const deps = { db: ctx.db, analytics: ctx.analytics };
 
+  /**
+   * `GET /v1/analytics/spend` — spend over a window, by category and recipient.
+   *
+   * Reconciliation against The Graph needs a wallet address to inspect, so it only
+   * runs when the report is scoped to a single agent.
+   */
   app.get('/v1/analytics/spend', async (request) => {
     const query = analyticsQuerySchema.parse(request.query);
     const asset: AssetId = isAssetId(query.asset ?? '') ? (query.asset as AssetId) : 'USDC';
 
-    // Reconciliation against The Graph needs a wallet address to inspect, so
-    // it only runs when the report is scoped to a single agent.
     let address: string | undefined;
     if (query.agentId !== undefined) {
       const bundle = await getAgentBundle(ctx.db, request.orgId, query.agentId);
@@ -56,6 +60,7 @@ export function registerAnalyticsRoutes(app: FastifyInstance, ctx: AppContext): 
     });
   });
 
+  /** `GET /v1/analytics/timeseries` — one point per UTC day, gaps included. */
   app.get('/v1/analytics/timeseries', async (request) => {
     const query = analyticsQuerySchema.parse(request.query);
     return spendTimeseries(deps, request.orgId, {
@@ -65,6 +70,7 @@ export function registerAnalyticsRoutes(app: FastifyInstance, ctx: AppContext): 
     });
   });
 
+  /** `GET /v1/payments/stats` — true counts by status, not a capped page. */
   app.get('/v1/payments/stats', async (request) => {
     const query = analyticsQuerySchema.parse(request.query);
     const days = query.days ?? 7;
@@ -82,6 +88,7 @@ export function registerAnalyticsRoutes(app: FastifyInstance, ctx: AppContext): 
     };
   });
 
+  /** `GET /v1/audit` — the organization's record, newest first. */
   app.get('/v1/audit', async (request) => {
     const query = auditQuerySchema.parse(request.query);
     const page = await listAuditEvents(ctx.db, request.orgId, {

@@ -1,3 +1,7 @@
+/**
+ * How each vendor behind an adapter is named on screen.
+ */
+
 import { describe, expect, it } from 'vitest';
 
 import { providerMarks } from './providers';

@@ -1,3 +1,8 @@
+/**
+ * The document shell: fonts, site-wide metadata and the client providers.
+ * Deliberately thin, because each route group brings its own chrome.
+ */
+
 import type { Metadata, Viewport } from 'next';
 import { DM_Sans, Space_Mono } from 'next/font/google';
 import type { ReactNode } from 'react';
@@ -38,10 +43,17 @@ const SOCIAL_IMAGE = {
   alt: `${SITE_NAME}: ${TAGLINE}`,
 };
 
-/** Document metadata for every route. */
+/**
+ * Document metadata for every route.
+ *
+ * @remarks Absolute URLs for anything a crawler resolves. Without this,
+ * `/og.png` reaches a preview renderer as a path it cannot fetch.
+ *
+ * No title or description here on purpose: Next fills those from each route's
+ * own `title` and `description`, so a link to Payments says Payments. What every
+ * card does share is the image, the site name and the card type.
+ */
 export const metadata: Metadata = {
-  // Absolute URLs for anything a crawler resolves. Without this, `/og.png`
-  // reaches a preview renderer as a path it cannot fetch.
   metadataBase: new URL(siteUrl()),
   title: { default: `${SITE_NAME}: ${TAGLINE}`, template: `%s · ${SITE_NAME}` },
   description: DESCRIPTION,
@@ -54,10 +66,6 @@ export const metadata: Metadata = {
     'agent wallet',
     'MCP',
   ],
-  // No title or description here on purpose: Next fills those from each
-  // route's own `title` and `description`, so a link to Payments says
-  // Payments. What every card does share is the image, the site name and the
-  // card type.
   openGraph: {
     type: 'website',
     siteName: SITE_NAME,

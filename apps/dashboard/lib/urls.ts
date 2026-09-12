@@ -1,3 +1,8 @@
+/**
+ * The service addresses an operator has to paste somewhere else, read from the
+ * environment rather than derived from the request.
+ */
+
 import 'server-only';
 
 /** Where the MCP server is reachable when nothing else is configured. */

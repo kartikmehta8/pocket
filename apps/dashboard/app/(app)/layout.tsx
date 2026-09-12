@@ -1,3 +1,8 @@
+/**
+ * Chrome for every signed-in route: the navigation rail, the top bar, and the
+ * session sync that keeps the server-side cookie fresh.
+ */
+
 import type { Metadata } from 'next';
 import type { ReactNode } from 'react';
 

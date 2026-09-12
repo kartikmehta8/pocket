@@ -1,3 +1,7 @@
+/**
+ * The page masthead.
+ */
+
 import type { ReactNode } from 'react';
 
 /** Props for {@link PageHeader}. */

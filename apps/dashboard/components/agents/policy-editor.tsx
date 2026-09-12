@@ -1,5 +1,9 @@
 'use client';
 
+/**
+ * The Policy panel on an agent's page.
+ */
+
 import { Save } from 'lucide-react';
 import { useState, useTransition } from 'react';
 

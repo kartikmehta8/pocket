@@ -1,3 +1,8 @@
+/**
+ * Settings: the organization, the API keys agents authenticate with, and the
+ * addresses a runtime connects to.
+ */
+
 import type { Metadata } from 'next';
 
 import { getOrg, listApiKeys } from '@/lib/api';

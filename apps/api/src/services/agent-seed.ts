@@ -56,6 +56,19 @@ export interface SeedLogger {
  * is empty or a relay is slow would destroy work to report a shortfall the
  * funding step already explains. A failure leaves the agent exactly as it
  * would have been without a treasury configured.
+ *
+ * The amount is parsed inside the guard rather than above it. Configuration is
+ * validated at boot, but a parse that threw here would escape a function whose
+ * whole contract is that it cannot — and it would do so after the agent already
+ * exists.
+ *
+ * The idempotency key is unique per attempt. Keyed to the agent instead, the
+ * provider replays the first outcome for that key forever, so a treasury that
+ * was empty at registration could never fund that agent again even once
+ * refilled. At-most-once is enforced where it belongs: registration seeds
+ * exactly once, and the top-up path checks the balance before it pays. A
+ * failure is worth a log line and nothing more, because an empty treasury is an
+ * operational fact about the deployment rather than a fault in the request.
  */
 export async function seedAgentWallet(
   ctx: AppContext,
@@ -69,9 +82,6 @@ export async function seedAgentWallet(
   if (walletId === undefined || from === undefined) return NOT_SEEDED;
 
   try {
-    // Inside the guard, not above it. Configuration is validated at boot, but
-    // a parse that threw here would escape a function whose whole contract is
-    // that it cannot — and it would do so after the agent already exists.
     const amount = parseAmount(ctx.config.AGENT_SEED_AMOUNT, decimalsOf(SEED_ASSET));
     if (amount <= 0n) return NOT_SEEDED;
 
@@ -82,11 +92,6 @@ export async function seedAgentWallet(
       amount,
       asset: SEED_ASSET,
       chain: wallet.chain as ChainId,
-      // Unique per attempt. Keyed to the agent instead, the provider replays
-      // the first outcome for that key forever — so a treasury that was empty
-      // at registration could never fund that agent again, even once refilled.
-      // At-most-once is enforced where it belongs: registration seeds exactly
-      // once, and the top-up path checks the balance before it pays.
       idempotencyKey: `seed:${agentId}:${randomUUID()}`,
     });
 
@@ -101,8 +106,6 @@ export async function seedAgentWallet(
 
     return { amount: money(amount, SEED_ASSET), txHash: submitted.txHash };
   } catch (cause) {
-    // Worth a log line and nothing more. An empty treasury is an operational
-    // fact about this deployment, not a fault in the request.
     log.warn({ err: cause, agentId }, 'Could not seed the new agent wallet.');
     return NOT_SEEDED;
   }
@@ -125,6 +128,9 @@ export async function seedAgentWallet(
  * USDC only, deliberately. HBAR is not something Pocket hands out: an agent
  * never spends it, and the one place it is needed is a public faucet the
  * operator can reach themselves.
+ *
+ * An unreadable balance is not an empty one. Paying on a failed read would
+ * double-fund a wallet every time the chain was briefly unavailable.
  */
 export async function topUpIfEmpty(
   ctx: AppContext,
@@ -137,8 +143,6 @@ export async function topUpIfEmpty(
   try {
     balance = await ctx.chain.getBalance(wallet.address, SEED_ASSET);
   } catch (cause) {
-    // An unreadable balance is not an empty one. Paying on a failed read
-    // would double-fund a wallet every time the chain was briefly unavailable.
     log.warn({ err: cause, agentId }, 'Could not read the balance before topping up.');
     return NOT_SEEDED;
   }

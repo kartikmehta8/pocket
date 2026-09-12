@@ -35,6 +35,13 @@ interface MirrorAccount {
  *   `VALIDATION_FAILED` when no key was supplied and the account has published
  *   none (a hollow account, completed by its first signed transaction), or is
  *   held by a key of a type a Privy wallet cannot sign with.
+ * @remarks A caller holding `knownPublicKey` needs nothing further from the
+ * chain, which is the ordinary path: the key was captured when the wallet was
+ * provisioned, so a hollow account pays like any other and that first payment
+ * completes it. A hollow account is reported separately from one held by the
+ * wrong key type, because the two send the reader somewhere different. The
+ * returned address is the mirror node's canonical form, which may differ from
+ * the long-zero form of the account number.
  */
 export async function resolveHederaAccount(
   mirrorNodeUrl: string,
@@ -59,10 +66,6 @@ export async function resolveHederaAccount(
   if (typeof accountId !== 'string') {
     throw new PocketError('NOT_FOUND', 'Mirror node returned no account id.', { evmAddress });
   }
-  // A caller that already holds the key needs nothing further from the chain.
-  // This is the ordinary path: the key was captured when the wallet was
-  // provisioned, so a hollow account pays like any other and that first
-  // payment is what completes it.
   if (knownPublicKey !== undefined) {
     return {
       accountId,
@@ -71,11 +74,6 @@ export async function resolveHederaAccount(
     };
   }
 
-  // A hollow account — created by a transfer to an EVM address that has never
-  // signed anything — has no key on record yet. That is not the same fault as
-  // an account held by a key of the wrong type, and saying so sends the reader
-  // to the wrong place: the fix is to associate the token, whose transaction
-  // publishes the key and completes the account.
   if (body.key === null || body.key === undefined) {
     throw new PocketError(
       'VALIDATION_FAILED',
@@ -92,8 +90,6 @@ export async function resolveHederaAccount(
   }
   return {
     accountId,
-    // The mirror node echoes the canonical EVM address, which may differ from
-    // the long-zero form of the account number.
     evmAddress: typeof resolvedEvm === 'string' ? resolvedEvm : evmAddress,
     publicKey: PublicKey.fromStringECDSA(keyHex),
   };

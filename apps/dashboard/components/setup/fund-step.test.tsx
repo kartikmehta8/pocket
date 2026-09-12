@@ -1,10 +1,23 @@
+/**
+ * The funding step, and which faucet it leads with. The buttons are client
+ * components that reach for the app router, which does not exist outside Next,
+ * so only their presence is tested. The facilitator pays every fee, and saying
+ * so stops operators hunting for an HBAR faucet they never needed. Circle
+ * rate-limits and refuses accounts silently, so it has no business being the
+ * first thing on a step that is already satisfied — but neither faucet is ever
+ * withheld, because somebody who wants to stock a wallet before they need to
+ * should not have to reach a particular state to be shown the link. A wallet
+ * Pocket seeded holds USDC and nothing else, so the publish button without
+ * that warning reads as an unexplained provider rejection. Why the treasury
+ * did not pay is Pocket’s problem rather than something an operator can act
+ * on, so the only useful thing to say is how to carry on.
+ */
+
 import { renderToStaticMarkup } from 'react-dom/server';
 import { describe, expect, it, vi } from 'vitest';
 
 import { FundStep, type FundStepProps } from './fund-step';
 
-// The buttons in this step are client components that reach for the app
-// router, which does not exist outside Next. Only their presence is tested.
 vi.mock('next/navigation', () => ({
   useRouter: () => ({ refresh: () => undefined }),
 }));
@@ -49,8 +62,6 @@ describe('FundStep', () => {
     });
 
     it('says the agent needs no HBAR of its own', () => {
-      // The facilitator pays every fee. Operators otherwise go hunting for an
-      // HBAR faucet they never needed.
       expect(text(fund())).toContain('needs no HBAR');
     });
 
@@ -65,16 +76,12 @@ describe('FundStep', () => {
     });
 
     it('does not lead with a faucet', () => {
-      // Circle rate-limits and refuses accounts silently. It has no business
-      // being the first thing on a step that is already satisfied.
       const html = text(fund());
       expect(html.indexOf('Ready to spend')).toBeLessThan(html.indexOf('Circle'));
     });
   });
 
   describe('the faucets', () => {
-    // Never withheld. Somebody who wants to stock a wallet before they need
-    // to should not have to reach a particular state to be shown the link.
     it.each([
       ['a keyed account', { accountId: ACCOUNT, accountHollow: false }],
       ['a hollow account', { accountId: ACCOUNT, accountHollow: true }],
@@ -117,8 +124,6 @@ describe('FundStep', () => {
     });
 
     it('warns that the signature itself needs HBAR for gas', () => {
-      // A wallet Pocket seeded holds USDC and nothing else, so pressing the
-      // button without this reads as an unexplained provider rejection.
       expect(hollow()).toContain('needs a little HBAR to pay for it');
     });
 
@@ -139,8 +144,6 @@ describe('FundStep', () => {
     const empty = () => text(fund({ funded: false, balance: '0' }));
 
     it('says what to do rather than what went wrong inside Pocket', () => {
-      // Why the treasury did not pay is Pocket's problem, not something an
-      // operator can act on. The only useful thing to say is how to carry on.
       expect(empty()).toContain('Add some USDC to get started');
       expect(empty()).not.toContain('treasury');
       expect(empty()).not.toContain('seeding');

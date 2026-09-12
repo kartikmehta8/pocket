@@ -4,6 +4,10 @@
  * Two things are worth proving here and cannot be proved by the x402 tests:
  * that a caller cannot aim the API's outbound fetch at an internal address,
  * and that the derived idempotency key changes when the price does.
+ *
+ * A seller that reprices is quoting a different purchase, and replaying the
+ * cheaper payment against it would hand over data nobody paid for. The
+ * replay-window cases sit one millisecond either side of the boundary.
  */
 
 import { describe, expect, it } from 'vitest';
@@ -70,8 +74,6 @@ describe('purchase idempotency', () => {
   });
 
   it('changes when the price changes', () => {
-    // A seller that reprices is quoting a different purchase. Replaying the
-    // cheaper payment against it would hand over data nobody paid for.
     expect(purchaseIdempotencyKey(base)).not.toBe(
       purchaseIdempotencyKey(['agent_1', 'https://seller/v1/prices', '', '20000']),
     );
@@ -110,7 +112,6 @@ describe('derived idempotency windows', () => {
 
   it('still matches a retry that crosses a window boundary', () => {
     const seconds = 120;
-    // One millisecond before a boundary, and one millisecond after it.
     const before = Math.ceil(1_000 * MINUTE) * seconds * 1_000 - 1;
     const after = before + 2;
     const [mintedUnder] = purchaseIdempotencyKeys(BASE, seconds, before);

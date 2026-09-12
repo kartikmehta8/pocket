@@ -1,3 +1,7 @@
+/**
+ * Every payment attempt, refusals included, filterable by agent and by status.
+ */
+
 import type { Metadata } from 'next';
 import { Suspense } from 'react';
 

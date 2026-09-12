@@ -1,5 +1,9 @@
 'use client';
 
+/**
+ * The modal that renames an agent, opened from its own page.
+ */
+
 import { Save } from 'lucide-react';
 import { useId, useState, useTransition } from 'react';
 

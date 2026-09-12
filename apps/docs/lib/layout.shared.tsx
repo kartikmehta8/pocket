@@ -1,3 +1,7 @@
+/**
+ * Chrome shared by every layout in the documentation site.
+ */
+
 import type { BaseLayoutProps } from 'fumadocs-ui/layouts/shared';
 
 import { POWERED_BY, appUrl } from '@/lib/brand';
@@ -10,6 +14,9 @@ import { POWERED_BY, appUrl } from '@/lib/brand';
  * accent dot, and no glyph — with the line the dashboard's rail carries
  * underneath it. Someone arriving here from the app should recognise the
  * furniture before they read a word.
+ *
+ * The theme switch is removed rather than hidden. The product is light only,
+ * and a docs site that could go dark would not be the same product.
  */
 export function baseOptions(): BaseLayoutProps {
   return {
@@ -36,8 +43,6 @@ export function baseOptions(): BaseLayoutProps {
         external: true,
       },
     ],
-    // The product is light only. A docs site that could go dark would not be
-    // the same product, so the control is removed rather than hidden.
     themeSwitch: { enabled: false },
   };
 }

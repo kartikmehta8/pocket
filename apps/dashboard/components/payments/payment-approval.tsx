@@ -1,5 +1,9 @@
 'use client';
 
+/**
+ * The approve and reject controls on a held payment.
+ */
+
 import { useState, useTransition } from 'react';
 
 import { ActionFeedback } from '@/components/ui/action-feedback';

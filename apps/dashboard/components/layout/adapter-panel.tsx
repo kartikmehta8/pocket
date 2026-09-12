@@ -1,5 +1,9 @@
 'use client';
 
+/**
+ * The adapter disclosure itself, as a client component.
+ */
+
 import { ChevronDown } from 'lucide-react';
 import { useState } from 'react';
 
@@ -54,6 +58,9 @@ function providerFor(provider: string): { name: string; logo: string | null } {
  *   twice, once fixed and once inside the mobile drawer, and a generated id
  *   is allocated by tree position: the two copies arrive in a different order
  *   on the client than on the server, and the markup fails to hydrate.
+ *
+ * Liveness comes from the API, never inferred from the provider name: the local
+ * ledger fallback is not a live index.
  */
 export function AdapterPanel({ slots, id }: { slots: readonly AdapterSlot[]; id: string }) {
   const [open, setOpen] = useState(false);
@@ -124,8 +131,6 @@ export function AdapterPanel({ slots, id }: { slots: readonly AdapterSlot[]; id:
         <div>
           <ul className="flex flex-col gap-2.5 px-5 pt-0.5 pb-4">
             {slots.map(({ key, label, role, mode }) => {
-              // Liveness comes from the API, never inferred from the provider
-              // name: the local ledger fallback is not a live index.
               const live = mode?.live === true;
               return (
                 <li key={key} className="flex flex-col gap-1">

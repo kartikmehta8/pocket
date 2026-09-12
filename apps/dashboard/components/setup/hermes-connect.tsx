@@ -1,5 +1,9 @@
 'use client';
 
+/**
+ * Connection recipes for the MCP server.
+ */
+
 import * as ToggleGroup from '@radix-ui/react-toggle-group';
 import { useState } from 'react';
 

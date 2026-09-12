@@ -1,5 +1,9 @@
 'use client';
 
+/**
+ * The sign-in control on the login screen.
+ */
+
 import { useIdentityToken, usePrivy } from '@privy-io/react-auth';
 import { ArrowRight, LoaderCircle, ShieldCheck } from 'lucide-react';
 import { useRouter, useSearchParams } from 'next/navigation';
@@ -20,6 +24,9 @@ type Phase = 'loading' | 'ready' | 'exchanging' | 'error';
  *
  * @param configured Whether a Privy application id is present. When it is not,
  *   the panel explains what to set rather than offering a button that cannot work.
+ *
+ * @remarks A first sign-in provisions the organization, so send new operators
+ * straight to setup instead of an overview with nothing in it.
  */
 export function LoginPanel({ configured }: { configured: boolean }) {
   const { ready, authenticated, login, getAccessToken } = usePrivy();
@@ -51,8 +58,6 @@ export function LoginPanel({ configured }: { configured: boolean }) {
         throw new Error(detail === '' ? 'The API refused the session.' : detail);
       }
 
-      // A first sign-in provisions the organization, so send new operators
-      // straight to setup instead of an overview with nothing in it.
       const created = response.status === 201;
       router.replace(created ? '/setup' : destination);
       router.refresh();

@@ -4,6 +4,11 @@
  * Most of this project's `.env` is meant to be left blank: a blank vendor key
  * is how an adapter is told to fall back to its in-memory twin. So a blank has
  * to mean "use the default", not "refuse to start".
+ *
+ * Half a treasury pays nobody and explains nothing: the operator is told their
+ * agent "arrived empty" and cannot tell a typo from a switch. Validating at
+ * boot is what makes that visible — otherwise it throws at the moment of the
+ * transfer instead, after an agent has been created and cannot be un-created.
  */
 
 import { describe, expect, it } from 'vitest';
@@ -97,14 +102,10 @@ describe('treasury configuration', () => {
     ],
     ['a wallet id with no address', { TREASURY_WALLET_ID: 'w_1' }],
   ])('refuses %s', (_case, half) => {
-    // Half a treasury pays nobody and explains nothing: the operator is told
-    // their agent "arrived empty" and cannot tell a typo from a switch.
     expect(() => loadConfig({ ...base, ...half })).toThrow(/TREASURY_ADDRESS/);
   });
 
   it('refuses more precision than USDC has', () => {
-    // It would throw at the moment of the transfer instead, after an agent
-    // has been created and cannot be un-created.
     expect(() => loadConfig({ ...base, AGENT_SEED_AMOUNT: '0.0000001' })).toThrow(
       /AGENT_SEED_AMOUNT/,
     );

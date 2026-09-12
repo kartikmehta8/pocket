@@ -74,8 +74,6 @@ export async function resolveSession(
   });
 
   if (created === null) {
-    // Another request won the race and owns the tenant, so ours was rolled
-    // back and this sign-in provisioned nothing.
     const winner = await findSession(db, input.subject);
     if (winner === null) throw new Error('Session insert conflicted but no row was found.');
     return { ...winner, provisioned: false };

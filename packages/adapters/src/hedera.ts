@@ -141,6 +141,10 @@ export class HederaChainProvider implements ChainProvider {
    * @remarks Uses the HIP-719 facade: calling `isAssociated()` on the token's
    *   own address, with the account as `msg.sender`. Hedera routes that call
    *   to the token service rather than to contract code.
+   *
+   *   A failed call answers `null` rather than `false`. An unanswerable
+   *   question is not the same as a negative answer, and treating it as one
+   *   would block a payment that would have succeeded.
    */
   public async isTokenAssociated(address: string, asset: AssetId): Promise<boolean | null> {
     const config = chainConfig(this.chain);
@@ -155,8 +159,6 @@ export class HederaChainProvider implements ChainProvider {
       });
       return BigInt(result) === 1n;
     } catch {
-      // Treat an unanswerable question as unknown rather than as "not
-      // associated", which would block a payment that would have succeeded.
       return null;
     }
   }

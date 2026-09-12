@@ -1,3 +1,7 @@
+/**
+ * The seven steps as data, shared by the list and the rail.
+ */
+
 import type { LucideIcon } from 'lucide-react';
 import { Bot, Coins, Gauge, KeyRound, PlugZap, ShieldHalf, ShoppingCart } from 'lucide-react';
 

@@ -1,3 +1,18 @@
+/**
+ * Reading a policy back and writing it straight out again.
+ *
+ * An unset threshold comes back as null, so the document has to be accepted in
+ * exactly the shape it was served rather than refused as a schema violation.
+ *
+ * Wallet reads answer null when there is no chain account yet, which is true of
+ * a deterministic wallet and of a freshly provisioned real one alike. A faucet
+ * asking for a `0.0.x` id needs the reader to understand that difference.
+ *
+ * The mirror node's own ceiling is fifteen seconds. A detail page that waits
+ * that long for a value it only decorates itself with is broken whatever the
+ * value turns out to be.
+ */
+
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { createFundedAgent, createHarness, SELLER, type Harness } from './helpers.js';
 
@@ -33,8 +48,6 @@ describe('policy round trip', () => {
       headers: h.auth,
     });
     const policy = read.json().policy;
-    // An unset threshold comes back as null, so writing the document straight
-    // back must be accepted rather than refused as a schema violation.
     expect(policy.approvalThreshold).toBeNull();
 
     const written = await h.app.inject({
@@ -107,9 +120,6 @@ describe('agent detail', () => {
       headers: h.auth,
     });
 
-    // The deterministic wallet has no chain account behind it, and neither
-    // does a freshly provisioned real one. Null says "no account yet", which a
-    // faucet asking for a 0.0.x id needs the reader to understand.
     expect(read.json()).toHaveProperty('accountId', null);
   });
 });
@@ -126,9 +136,6 @@ describe('a chain that will not answer', () => {
     });
     const elapsed = Date.now() - started;
 
-    // The mirror node's own ceiling is fifteen seconds. A detail page that
-    // waits that long for a value it only decorates itself with is broken
-    // whatever the value turns out to be.
     expect(read.statusCode).toBe(200);
     expect(elapsed).toBeLessThan(6_000);
   });

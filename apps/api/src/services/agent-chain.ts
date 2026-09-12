@@ -29,6 +29,10 @@ const READ_TIMEOUT_MS = 4_000;
  * @remarks The loser of the race is abandoned, not cancelled. Both callers are
  *   plain reads with no side effect, so letting one finish into nothing costs
  *   only the socket it was already using.
+ *
+ * The timer is cleared even when the read wins the race. Left running it holds
+ * a handle for the full timeout, and the confirmation poll starts a dozen of
+ * these per request.
  */
 async function bounded<T>(work: () => Promise<T>): Promise<T | null> {
   try {
@@ -43,9 +47,6 @@ async function bounded<T>(work: () => Promise<T>): Promise<T | null> {
         }),
       ]);
     } finally {
-      // Cleared even when the read wins the race. Left running it holds a
-      // handle for the full timeout, and the confirmation poll starts a dozen
-      // of these per request.
       if (timer !== undefined) clearTimeout(timer);
     }
   } catch {
@@ -92,15 +93,16 @@ export async function readBalance(
  *   useful together: an id belonging to a hollow account is one a faucet will
  *   refuse, and handing that to an operator with no warning is what makes the
  *   funding step fail in a way nothing on screen explains.
+ *
+ * The result is normalised to `null`, because two layers here can each answer
+ * "nothing": the read itself when no account exists, and the timeout around it.
+ * A caller distinguishing them would learn nothing it could act on.
  */
 export async function readAccount(
   ctx: AppContext,
   wallet: { address: string } | null,
 ): Promise<{ accountId: string; keyPublished: boolean } | null> {
   if (wallet === null) return null;
-  // Normalised to `null`, because two layers here can each answer "nothing":
-  // the read itself when no account exists, and the timeout around it. A
-  // caller distinguishing them would learn nothing it could act on.
   return (
     (await bounded(async () =>
       readHederaAccountState(ctx.config.HEDERA_MIRROR_URL, wallet.address),
@@ -134,20 +136,21 @@ const CONFIRM_INTERVAL_MS = 1_000;
  *
  * Returning `false` is not failure. The signature is on chain either way; the
  * only thing lost is the confirmation, and the next page load will have it.
+ *
+ * The account is read before the first sleep. Consensus is often reached before
+ * the response is written, so sleeping up front costs every caller a second for
+ * nothing. The deadline is tested again after each read, which can itself take
+ * seconds: testing only at the top let one late iteration run well past the
+ * deadline this documents.
  */
 export async function awaitKeyPublished(
   ctx: AppContext,
   wallet: { address: string },
 ): Promise<boolean> {
   const deadline = Date.now() + CONFIRM_TIMEOUT_MS;
-  // Read first. Consensus is often reached before the response is written, so
-  // sleeping up front costs every caller a second for nothing.
   while (Date.now() < deadline) {
     const state = await readAccount(ctx, wallet);
     if (state?.keyPublished === true) return true;
-    // Checked again after the read, which can itself take seconds: testing
-    // only at the top let one late iteration run well past the deadline the
-    // documentation promises.
     if (Date.now() + CONFIRM_INTERVAL_MS >= deadline) break;
     await new Promise((resolve) => setTimeout(resolve, CONFIRM_INTERVAL_MS));
   }

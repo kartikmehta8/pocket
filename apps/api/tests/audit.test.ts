@@ -1,3 +1,14 @@
+/**
+ * The record, and the filters that narrow it.
+ *
+ * Each case leaves a mixed trail behind — an agent with a budget and a policy,
+ * and one settled payment — so there is more than one action family to filter
+ * on.
+ *
+ * `task_budget` carries an underscore, which is a LIKE wildcard. Unescaped it
+ * would also match `taskXbudget.*`; escaped it matches only the family it names.
+ */
+
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { randomUUID } from 'node:crypto';
 import { createFundedAgent, createHarness, paymentBody, type Harness } from './helpers.js';
@@ -13,8 +24,6 @@ interface Event {
 
 beforeAll(async () => {
   h = await createHarness();
-  // Leave a mixed trail behind: an agent with a budget and a policy, and one
-  // settled payment, so there is more than one action family to filter on.
   const agentId = await createFundedAgent(h);
   const response = await h.app.inject({
     method: 'POST',
@@ -45,8 +54,6 @@ describe('GET /v1/audit', () => {
   });
 
   it('does not let a LIKE wildcard in the family widen the match', async () => {
-    // `task_budget` carries an underscore. Unescaped it would also match
-    // `taskXbudget.*`; escaped it matches only the family it names.
     const page = await read('?action=task_budget');
     for (const event of page.events) expect(event.action).toMatch(/^task_budget\./);
   });

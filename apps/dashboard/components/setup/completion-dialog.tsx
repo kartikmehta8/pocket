@@ -1,5 +1,9 @@
 'use client';
 
+/**
+ * The dialog shown when the guide is finished.
+ */
+
 import { ArrowUpRight, BookOpen, PartyPopper, ShoppingBag, Sparkles } from 'lucide-react';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';

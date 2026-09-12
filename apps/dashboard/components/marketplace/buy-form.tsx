@@ -1,5 +1,9 @@
 'use client';
 
+/**
+ * The buy control on a marketplace card.
+ */
+
 import { ShoppingCart } from 'lucide-react';
 import { useActionState, useId, useState } from 'react';
 
@@ -51,6 +55,9 @@ export interface BuyFormProps {
  * @remarks The agent is not chosen here. Six cards each asking "pay from?"
  * was six chances to answer differently on one page; the choice is made once,
  * above the grid, and arrives as a prop.
+ *
+ * The closed revision is tracked rather than a boolean. A fresh purchase bumps
+ * the revision, so the next result opens on its own.
  */
 export function BuyForm({
   agentId,
@@ -62,8 +69,6 @@ export function BuyForm({
   blockedReason,
 }: BuyFormProps) {
   const [state, submit, pending] = useActionState(purchaseAction, IDLE_PURCHASE);
-  // The revision whose result has been closed. A fresh purchase bumps the
-  // revision, so the next result opens on its own.
   const [dismissed, setDismissed] = useState(0);
   const urlId = useId();
   const open = state.outcome !== null && state.revision !== dismissed;

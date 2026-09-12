@@ -1,3 +1,12 @@
+/**
+ * Recording a payment, and what a refusal leaves behind.
+ *
+ * A blocked attempt is charged nothing and holds no idempotency key. That is
+ * deliberate: when the operator fixes what blocked it, the retry must be able
+ * to proceed, and holding the key would strand the agent behind a limit that is
+ * no longer set.
+ */
+
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { randomUUID } from 'node:crypto';
 import {
@@ -196,7 +205,6 @@ describe('a blocked attempt does not hold the idempotency key', () => {
     const agentId = await createFundedAgent(h);
     const shared = key();
 
-    // Blocked: the recipient is a stranger, so nothing is charged.
     const refused = await h.app.inject({
       method: 'POST',
       url: '/v1/payments',
@@ -206,8 +214,6 @@ describe('a blocked attempt does not hold the idempotency key', () => {
     expect(refused.json().payment['status']).toBe('blocked');
     expect(refused.json().payment['idempotencyKey'] ?? null).toBeNull();
 
-    // The operator fixes what blocked it. The retry must be able to proceed:
-    // holding the key would strand the agent behind a limit no longer set.
     const allowed = await h.app.inject({
       method: 'POST',
       url: '/v1/payments',

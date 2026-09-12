@@ -1,5 +1,9 @@
 'use client';
 
+/**
+ * The control that marks a step nobody can verify as done.
+ */
+
 import { Check } from 'lucide-react';
 
 import { Button, type ButtonVariant } from '@/components/ui/button';

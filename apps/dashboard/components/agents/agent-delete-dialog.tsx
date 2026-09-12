@@ -1,5 +1,9 @@
 'use client';
 
+/**
+ * The modal that retires an agent, and moves what is in its wallet first.
+ */
+
 import { ArrowRight, Trash2 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useId, useState, useTransition } from 'react';
@@ -51,6 +55,30 @@ export interface AgentDeleteDialogProps {
  * The payments the agent made are not deleted. The dialog says so, because
  * "delete" reads as "erase the evidence" in a product whose whole claim is
  * that it keeps the evidence.
+ *
+ * The dialog tracks whether the balance has already been moved on this visit. A
+ * delete can fail after a successful transfer — a chain that has not caught up
+ * still reports the old balance — and pressing again must not send the money a
+ * second time, nor fail on a wallet that is now empty. That flag is read from a
+ * local rather than from state, because `setMoved` does not change what the
+ * closure already captured and the delete two lines down has to know.
+ *
+ * The delete is forced after a sweep, because the wallet it just emptied can
+ * still read as funded while the mirror node lags a few seconds behind the
+ * transfer. Without that the delete is refused and the operator has to press
+ * again for no reason they could see; where the money went is in the audit
+ * trail, one entry above the deletion.
+ *
+ * Only the HBAR faucet is offered. The transfer is the only thing here that
+ * costs gas, and the API refuses it up front with a message naming HBAR, so
+ * matching that word is enough to know which faucet helps. Offering both would
+ * make the reader choose again having just been told what is missing.
+ *
+ * Deleting without moving the balance is offered but never taken by default.
+ * Moving is impossible when the wallet has no gas for the fee, and an agent
+ * that can be neither emptied nor deleted is one nobody can ever be rid of.
+ * Choosing it clears the refusal on screen, which was about the transfer the
+ * operator has just opted out of and would otherwise read as a fresh failure.
  */
 export function AgentDeleteDialog({
   agent,
@@ -64,26 +92,15 @@ export function AgentDeleteDialog({
   const leaveId = useId();
   const [destination, setDestination] = useState(others[0]?.id ?? '');
   const [state, setState] = useState<ActionState>(IDLE_ACTION);
-  // Whether the balance has already been moved on this visit. The delete can
-  // fail after a successful transfer — a chain that has not caught up still
-  // reports the old balance — and pressing again must not send the money a
-  // second time, nor fail on a wallet that is now empty.
   const [moved, setMoved] = useState(false);
-  // Whether the operator has chosen to delete without moving the balance.
   const [leaveFunds, setLeaveFunds] = useState(false);
   const [pending, startTransition] = useTransition();
 
   const plan = planDelete(balance, others, moved, leaveFunds);
-  // The transfer is the only thing here that costs gas, and the API refuses it
-  // up front with a message naming HBAR. Matching that word is enough to know
-  // which faucet helps; offering both would make the reader choose again
-  // having just been told what is missing.
   const needsGas = state.status === 'error' && state.message.includes('HBAR');
 
   const run = () =>
     startTransition(async () => {
-      // Local, not the state variable: `setMoved` does not change what this
-      // closure already captured, and the delete two lines down has to know.
       let swept = moved;
       if (plan.moveFirst) {
         const transfer = await transferAgentFundsAction(agent.id, destination);
@@ -94,11 +111,6 @@ export function AgentDeleteDialog({
         swept = true;
         setMoved(true);
       }
-      // Forced after a sweep, because the wallet this just emptied can still
-      // read as funded: the mirror node lags a few seconds behind the
-      // transfer. Without this the delete is refused and the operator has to
-      // press again for no reason they could see. Where the money went is in
-      // the audit trail, one entry above the deletion.
       const deleted = await deleteAgentAction(agent.id, leaveFunds || swept);
       setState(deleted);
       if (deleted.status === 'error') return;
@@ -164,17 +176,12 @@ export function AgentDeleteDialog({
         )}
 
         {plan.offerLeaveFunds ? (
-          // Offered, never taken by default. Moving is impossible when the
-          // wallet has no gas for the fee, and an agent that can be neither
-          // emptied nor deleted is one nobody can ever be rid of.
           <label className="text-text-secondary flex cursor-pointer items-start gap-2.5 text-sm">
             <Switch
               id={leaveId}
               checked={leaveFunds}
               onCheckedChange={(checked) => {
                 setLeaveFunds(checked);
-                // The refusal on screen is about the transfer this just opted
-                // out of. Leaving it up would read as a fresh failure.
                 setState(IDLE_ACTION);
               }}
               label="Delete without moving the balance"

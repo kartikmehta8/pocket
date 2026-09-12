@@ -1,5 +1,9 @@
 'use client';
 
+/**
+ * The seven steps, in the order they have to happen.
+ */
+
 import type { AgentDetail, AgentSummary } from '@/lib/types';
 import { ApiKeyMinter } from './api-key-minter';
 import { ConfigureStep } from './configure-step';
@@ -51,6 +55,9 @@ export interface SetupStepsProps {
  *
  * @remarks Separated from the guide so that one owns the state while this one
  * only draws. Nothing here reads state of its own.
+ *
+ * The five states are resolved once each. They drive both the marker and the
+ * body, and asking twice invites the two answers to drift apart.
  */
 export function SetupSteps({
   agent,
@@ -66,8 +73,6 @@ export function SetupSteps({
   onConnected,
   onPurchased,
 }: SetupStepsProps) {
-  // Resolved once each: these five drive both the marker and the body, and
-  // asking twice invites the two answers to drift apart.
   const fund = stateOf(1);
   const budget = stateOf(2);
   const policy = stateOf(3);

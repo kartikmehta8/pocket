@@ -1,3 +1,7 @@
+/**
+ * The Pocket wordmark.
+ */
+
 import Link from 'next/link';
 
 import { cn } from '@/lib/cn';

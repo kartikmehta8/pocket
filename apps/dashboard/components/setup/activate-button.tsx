@@ -1,5 +1,9 @@
 'use client';
 
+/**
+ * The control that publishes a wallet's key.
+ */
+
 import { KeyRound } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useState, useTransition } from 'react';
@@ -29,6 +33,11 @@ const IDLE: ActionState = { status: 'idle', message: '' };
  *
  * The API holds its response until the key is readable on a mirror node, so
  * by the time this refreshes, the funding step has something new to draw.
+ *
+ * `revalidatePath` inside the action marks the cache stale but does not redraw
+ * what is already on screen, and an action called from an event handler returns
+ * no new payload to render. Without this the step keeps asking for a signature
+ * it has already got, and only a second press appears to work.
  */
 export function ActivateButton({ agentId }: ActivateButtonProps) {
   const router = useRouter();
@@ -46,11 +55,6 @@ export function ActivateButton({ agentId }: ActivateButtonProps) {
             startTransition(async () => {
               const result = await activateWalletAction(agentId);
               setState(result);
-              // `revalidatePath` inside the action marks the cache stale but
-              // does not redraw what is already on screen, and an action
-              // called from an event handler returns no new payload to render.
-              // Without this the step keeps asking for a signature it has
-              // already got, and only a second press appears to work.
               if (result.status === 'success') router.refresh();
             });
           }}

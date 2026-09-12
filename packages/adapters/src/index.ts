@@ -109,6 +109,12 @@ function present(value: string | undefined): value is string {
  * @remarks Setting `USE_MOCK_ADAPTERS=true` forces every adapter to a fake.
  *   That is intended for tests and offline demos, and the mode is reported by
  *   the health endpoint so a live-looking dashboard cannot hide it.
+ *
+ *   Pricing needs both Graph products, because the whole point is that they
+ *   check each other; one credential is not enough to turn it on. Sign-in
+ *   reuses the wallet application's credentials, so one Privy app both
+ *   custodies the agents' wallets and authenticates the operators and there is
+ *   no second set of keys to configure or leak.
  */
 export function buildAdapters(env: AdapterEnv = process.env): Adapters {
   const chain = (env.CHAIN ?? 'hedera-testnet') as ChainId;
@@ -137,8 +143,6 @@ export function buildAdapters(env: AdapterEnv = process.env): Adapters {
       })
     : new LedgerAnalyticsProvider();
 
-  // Pricing needs BOTH Graph products, because the whole point is that they
-  // check each other. One credential is not enough to turn it on.
   const marketLive =
     !forceMock &&
     present(env.GRAPH_TOKEN_API_JWT) &&
@@ -167,9 +171,6 @@ export function buildAdapters(env: AdapterEnv = process.env): Adapters {
       })
     : new UnpricedMarketDataProvider();
 
-  // Human sign-in reuses the wallet application's credentials: one Privy app
-  // both custodies the agents' wallets and authenticates the operators, so
-  // there is no second set of keys to configure or leak.
   const identity: IdentityVerifier = walletLive
     ? new PrivyIdentityVerifier({
         appId: env.PRIVY_APP_ID as string,

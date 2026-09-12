@@ -1,3 +1,7 @@
+/**
+ * How a status reads on screen: its tone, its label and its glyph.
+ */
+
 import {
   Ban,
   CircleCheck,
@@ -136,5 +140,5 @@ export function usageTone(ratio: number): Tone {
   return 'info';
 }
 
-// Audit actors.
+/** Audit actors, and how a decision reads on screen. */
 export * from './status-decision';

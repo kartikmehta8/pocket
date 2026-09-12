@@ -1,3 +1,7 @@
+/**
+ * One step of the guide: its marker, its spine and its body.
+ */
+
 import type { LucideIcon } from 'lucide-react';
 import { Check } from 'lucide-react';
 import type { ReactNode } from 'react';
@@ -63,6 +67,12 @@ const BADGE: Record<StepState, { label: string; className: string } | null> = {
  * A finished step is a tinted disc rather than a filled green block. Seven of
  * those stacked down a column shout louder than the one step still asking to
  * be done, which is the only thing on the page anybody has to act on.
+ *
+ * The connector uses the theme’s hairline like the markers rather than a colour
+ * of its own: solid against dashed carries the difference, and colour was never
+ * doing the work. The finished marker keeps the same black hairline the theme
+ * puts around every other container, because a soft green edge made it read as
+ * a different family of object from the two beside it.
  */
 export function Step({
   index,
@@ -87,9 +97,6 @@ export function Step({
           aria-hidden
           className={cn(
             'absolute top-9 bottom-1 left-[0.875rem] w-0 border-l',
-            // Solid against dashed carries the difference, so the connector
-            // uses the theme's hairline like the markers rather than a colour
-            // of its own. Colour was never doing the work here anyway.
             done ? 'border-border' : 'border-divider border-dashed',
           )}
         />
@@ -100,9 +107,6 @@ export function Step({
         className={cn(
           'relative z-10 flex size-7 shrink-0 items-center justify-center rounded-full border',
           'transition-colors duration-(--duration-base) ease-(--ease-brand)',
-          // The same black hairline the theme puts around every other
-          // container. A soft green edge made the finished marker read as a
-          // different family of object from the two beside it.
           'border-border',
           done
             ? 'bg-success-soft text-success-ink'

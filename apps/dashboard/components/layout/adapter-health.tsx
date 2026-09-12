@@ -1,3 +1,7 @@
+/**
+ * The adapter panel in the sidebar footer, read on the server.
+ */
+
 import { getHealth } from '@/lib/api';
 import { AdapterPanel, type AdapterSlot } from './adapter-panel';
 

@@ -22,7 +22,6 @@ const PRIVATE_V4 = [
   /^169\.254\./,
   /^192\.168\./,
   /^172\.(1[6-9]|2\d|3[01])\./,
-  // Carrier-grade NAT, and the range cloud metadata services live in.
   /^100\.(6[4-9]|[7-9]\d|1[01]\d|12[0-7])\./,
 ];
 
@@ -34,12 +33,15 @@ const PRIVATE_V4 = [
  * @remarks Literal inspection only. A public name that resolves to a private
  *   address still gets through, which is why this is a guard rather than a
  *   guarantee — the deployment's egress rules are the real boundary.
+ *
+ * The last IPv4 pattern is carrier-grade NAT, which is also the range cloud
+ * metadata services live in. The final expression matches IPv6 unique-local
+ * (`fc00::/7`) and link-local (`fe80::/10`).
  */
 export function isPrivateHost(hostname: string): boolean {
   if (LOOPBACK_NAMES.has(hostname)) return true;
   if (hostname.endsWith('.localhost') || hostname.endsWith('.internal')) return true;
   if (PRIVATE_V4.some((pattern) => pattern.test(hostname))) return true;
-  // IPv6 unique-local (fc00::/7) and link-local (fe80::/10).
   return /^\[?(f[cd][0-9a-f]{2}|fe[89ab][0-9a-f]):/i.test(hostname);
 }
 

@@ -1,3 +1,7 @@
+/**
+ * The expanded body of a payment row.
+ */
+
 import { ExternalLink } from 'lucide-react';
 import type { ReactNode } from 'react';
 

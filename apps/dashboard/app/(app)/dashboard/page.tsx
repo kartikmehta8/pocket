@@ -1,3 +1,8 @@
+/**
+ * The overview. Seven days of spend against today's figures, what the money
+ * went on, what policy stopped, and the last ten attempts.
+ */
+
 import { ArrowUpRight, BarChart3, Unplug } from 'lucide-react';
 import type { Metadata } from 'next';
 import Link from 'next/link';
@@ -63,6 +68,9 @@ function Unavailable({ subject, message }: { subject: string; message: string })
 /**
  * Overview: the organization's headline numbers, spend over time, spend by
  * category, anomalies, and the most recent payments.
+ *
+ * @remarks Real counts over the window, so the tiles do not plateau at a page
+ * size.
  */
 export default async function OverviewPage() {
   const [agentsResult, summaryResult, seriesResult, paymentsResult, statsResult] =
@@ -93,7 +101,6 @@ export default async function OverviewPage() {
   const agents = agentsResult.ok ? agentsResult.data.agents : [];
   const summary = summaryResult.ok ? summaryResult.data : null;
   const payments = paymentsResult.ok ? paymentsResult.data.payments : [];
-  // Real counts over the window, so the tiles do not plateau at a page size.
   const stats = statsResult.ok ? statsResult.data : null;
 
   const asset = summary?.currency ?? agents[0]?.budget?.asset ?? 'USDC';

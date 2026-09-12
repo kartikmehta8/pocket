@@ -1,5 +1,9 @@
 'use client';
 
+/**
+ * The marketing page's compact spend line.
+ */
+
 import { motion, useReducedMotion } from 'motion/react';
 
 import { DURATION, EASE } from '@/lib/motion';

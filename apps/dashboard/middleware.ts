@@ -46,13 +46,16 @@ function isPublic(pathname: string): boolean {
  * @returns A redirect, or a pass-through.
  * @remarks Every gate here is skipped when `POCKET_API_KEY` is set, which is
  *   how the single-tenant local setup runs without an identity provider.
+ *
+ * Signing in again is the one thing a signed-in visitor cannot usefully do: the
+ * screen would authenticate them a second time and send them here anyway.
+ *
+ * Preserve where they were heading, so sign-in returns them to it.
  */
 export function middleware(request: NextRequest): NextResponse {
   const { pathname } = request.nextUrl;
   const signedIn = request.cookies.has(SESSION_COOKIE) || Boolean(process.env.POCKET_API_KEY);
 
-  // Signing in again is the one thing a signed-in visitor cannot usefully do:
-  // the screen would authenticate them a second time and send them here anyway.
   if (pathname === LOGIN || pathname.startsWith(`${LOGIN}/`)) {
     return signedIn
       ? NextResponse.redirect(new URL('/dashboard', request.url))
@@ -63,7 +66,6 @@ export function middleware(request: NextRequest): NextResponse {
   if (signedIn) return NextResponse.next();
 
   const login = new URL('/login', request.url);
-  // Preserve where they were heading, so sign-in returns them to it.
   login.searchParams.set('next', pathname);
   return NextResponse.redirect(login);
 }

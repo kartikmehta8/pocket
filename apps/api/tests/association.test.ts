@@ -1,3 +1,10 @@
+/**
+ * Opting a wallet into holding a token.
+ *
+ * Association is checked before it is attempted, so a second request broadcasts
+ * nothing and spends no gas discovering the obvious.
+ */
+
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { randomUUID } from 'node:crypto';
 import { createFundedAgent, createHarness, paymentBody, SELLER, type Harness } from './helpers.js';
@@ -118,7 +125,6 @@ describe('paying an unassociated recipient', () => {
     };
     expect(body.payment.status).toBe('failed');
     expect(body.payment.txHash).toBeNull();
-    // Nothing was broadcast, so no gas was spent discovering the obvious.
     expect(h.wallet.sent.length).toBe(before);
 
     const audit = await h.app.inject({ method: 'GET', url: '/v1/audit?limit=20', headers: h.auth });

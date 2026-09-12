@@ -1,5 +1,9 @@
 'use client';
 
+/**
+ * The entrance animation a group of elements shares.
+ */
+
 import { motion, useReducedMotion } from 'motion/react';
 import type { ReactNode } from 'react';
 

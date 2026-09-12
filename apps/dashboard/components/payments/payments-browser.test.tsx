@@ -1,3 +1,10 @@
+/**
+ * Filtering and paging the payment list. The browser reaches for the app
+ * router and the live query string, neither of which exists outside Next. The
+ * query string is what paging links build on, so it is the one part the mock
+ * lets a test set.
+ */
+
 import { renderToStaticMarkup } from 'react-dom/server';
 import { describe, expect, it, vi } from 'vitest';
 
@@ -6,9 +13,6 @@ import type { AgentSummary, Payment } from '@/lib/types';
 
 import { PaymentsBrowser, type PaymentsBrowserProps } from './payments-browser';
 
-// The browser reaches for the app router and the live query string, neither of
-// which exists outside Next. The query string is what paging links build on,
-// so it is the one part the mock lets a test set.
 let search = '';
 vi.mock('next/navigation', () => ({
   useRouter: () => ({ replace: () => undefined }),

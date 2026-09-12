@@ -1,5 +1,9 @@
 'use client';
 
+/**
+ * The payment flow, as the marketing page tells it.
+ */
+
 import Image from 'next/image';
 import { motion, useReducedMotion } from 'motion/react';
 

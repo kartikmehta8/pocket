@@ -1,3 +1,7 @@
+/**
+ * The whole decision, budget and policy together.
+ */
+
 import { describe, expect, it } from 'vitest';
 import { authorizePayment } from '../src/authorize.js';
 import type { PolicyInput, EvaluablePolicy } from '../src/policy.js';

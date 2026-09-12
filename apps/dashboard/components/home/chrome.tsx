@@ -1,3 +1,7 @@
+/**
+ * The marketing page's header and footer.
+ */
+
 import Link from 'next/link';
 
 import { DESCRIPTION } from '@/lib/brand';

@@ -1,3 +1,7 @@
+/**
+ * The three stages of funding a wallet, as a strip.
+ */
+
 import { cn } from '@/lib/cn';
 
 /** How far one stage of the funding sequence has got. */

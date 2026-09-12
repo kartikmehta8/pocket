@@ -1,3 +1,9 @@
+/**
+ * The transport. Every call answers a result union, so a failing panel
+ * degrades instead of taking the page down, and the credential never leaves
+ * the server.
+ */
+
 import 'server-only';
 
 import { sessionToken } from './session';
@@ -66,6 +72,14 @@ async function credential(): Promise<string | null> {
  * @param path Path below the base URL, starting with `/v1`.
  * @param init Optional JSON body and extra headers.
  * @returns A result union — transport failures become `ApiErr`, never a throw.
+ *
+ * @remarks No content is an answer, not a malformed one, and a delete says so
+ * this way.
+ *
+ * ponytail: the envelope is trusted to match API_CONTRACT.md rather than being
+ * re-validated field by field. Ceiling: contract drift surfaces as a blank cell
+ * instead of a caught error. Upgrade path: a zod schema per endpoint, parsed
+ * right here.
  */
 export async function request<T>(
   method: string,
@@ -86,7 +100,6 @@ export async function request<T>(
       cache: 'no-store',
     });
 
-    // No content is an answer, not a malformed one. A delete says so this way.
     if (response.status === 204) return { ok: true, data: {} as T };
 
     const body: unknown = await response.json().catch(() => null);
@@ -96,10 +109,6 @@ export async function request<T>(
     if (record === null) {
       return { ok: false, code: 'MALFORMED_RESPONSE', message: 'The API returned a non-object.' };
     }
-    // ponytail: the envelope is trusted to match API_CONTRACT.md rather than
-    // being re-validated field by field. Ceiling: contract drift surfaces as a
-    // blank cell instead of a caught error. Upgrade path: a zod schema per
-    // endpoint, parsed right here.
     return { ok: true, data: record as T };
   } catch {
     return {

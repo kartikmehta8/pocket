@@ -1,5 +1,9 @@
 'use client';
 
+/**
+ * The payments table itself, one row per attempt.
+ */
+
 import { Receipt } from 'lucide-react';
 import Link from 'next/link';
 import { useState } from 'react';

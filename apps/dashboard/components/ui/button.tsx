@@ -1,3 +1,7 @@
+/**
+ * The one button in the system.
+ */
+
 import { Slot } from '@radix-ui/react-slot';
 import { LoaderCircle, type LucideIcon } from 'lucide-react';
 import type { ButtonHTMLAttributes } from 'react';
@@ -10,10 +14,12 @@ export type ButtonVariant = 'primary' | 'secondary' | 'ghost' | 'danger';
 /** Control height. */
 export type ButtonSize = 'sm' | 'md';
 
-/*
- * Every variant carries the same black hairline, so the difference between
- * them is fill, not weight. Ghost is the exception: it has no border because
- * it is not meant to read as a container at all.
+/**
+ * How each variant is painted.
+ *
+ * Every variant carries the same black hairline, so the difference between them
+ * is fill, not weight. Ghost is the exception: it has no border, because it is
+ * not meant to read as a container at all.
  */
 const VARIANT: Record<ButtonVariant, string> = {
   primary:
@@ -67,6 +73,9 @@ export interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
  * @remarks `asChild` renders whatever it is given and takes no icon or
  *   spinner: the slot has to receive exactly one child, and a link styled as a
  *   button has nothing to be busy about.
+ *
+ * A press that moves is what makes a flat, bordered control feel physical
+ * without adding a shadow it does not otherwise have.
  */
 export function Button({
   variant = 'secondary',
@@ -84,8 +93,6 @@ export function Button({
     'inline-flex cursor-pointer items-center justify-center font-medium tracking-tight',
     'whitespace-nowrap',
     'transition-[color,background-color,box-shadow,transform] duration-(--duration-fast) ease-(--ease-brand)',
-    // A press that moves is what makes a flat, bordered control feel
-    // physical without adding a shadow it does not otherwise have.
     'active:translate-y-px',
     'disabled:pointer-events-none disabled:opacity-55',
     VARIANT[variant],

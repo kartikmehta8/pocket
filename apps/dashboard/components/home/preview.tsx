@@ -1,5 +1,9 @@
 'use client';
 
+/**
+ * A worked example of the dashboard, on the marketing page.
+ */
+
 import { motion, useReducedMotion } from 'motion/react';
 
 import { DURATION, EASE } from '@/lib/motion';

@@ -80,7 +80,12 @@ export const chainTvl: DataSource<{ chains: ChainTvl[]; totalUsd: number }> = {
   },
 };
 
-/** Circulating supply of the largest stablecoins. */
+/**
+ * Circulating supply of the largest stablecoins.
+ *
+ * `circulating` is keyed by peg type, so each figure is read by the asset's own
+ * peg rather than assumed to be dollars.
+ */
 export const stablecoins: DataSource<{
   stablecoins: StablecoinSupply[];
   totalCirculatingUsd: number;
@@ -104,8 +109,6 @@ export const stablecoins: DataSource<{
         symbol: asset.symbol,
         pegType: asset.pegType,
         pegMechanism: asset.pegMechanism,
-        // `circulating` is keyed by peg type, so the figure is read by the
-        // asset's own peg rather than assumed to be dollars.
         circulatingUsd: usd(asset.circulating?.[asset.pegType] ?? 0),
       }))
       .filter((asset) => asset.circulatingUsd > 0)

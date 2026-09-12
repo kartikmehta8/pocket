@@ -1,5 +1,9 @@
 'use client';
 
+/**
+ * The hint that can be attached to any element.
+ */
+
 import * as TooltipPrimitive from '@radix-ui/react-tooltip';
 import type { ComponentProps, ReactNode } from 'react';
 

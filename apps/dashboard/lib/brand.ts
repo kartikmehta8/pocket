@@ -53,12 +53,13 @@ const DEFAULT_DOMAIN = 'pocket-app.xyz';
  *
  * `next.config.ts` reads `NEXT_PUBLIC_APP_DOMAIN` too, to decide which origins
  * may submit a server action. Change one and look at the other.
+ *
+ * Nothing configured and not on Vercel: a card pointing at localhost would be
+ * worse than one pointing at the domain the product actually lives on.
  */
 export function siteUrl(): string {
   const host = vercelHost();
   if (host !== null) return `https://${host}`;
-  // Nothing configured and not on Vercel: a card pointing at localhost would
-  // be worse than one pointing at the domain the product actually lives on.
   return process.env.NODE_ENV === 'production'
     ? `https://${DEFAULT_DOMAIN}`
     : 'http://localhost:3000';
@@ -68,13 +69,14 @@ export function siteUrl(): string {
  * The host this deployment should call itself, from configuration.
  *
  * @returns A bare host, or `null` when nothing says.
+ *
+ * @remarks Vercel's own name for the project's production domain. Present on
+ * every deployment, and the only variable that keeps pointing at the same place.
  */
 function vercelHost(): string | null {
   const configured = clean(process.env.NEXT_PUBLIC_APP_DOMAIN);
   if (configured !== null) return configured;
 
-  // Vercel's own name for the project's production domain. Present on every
-  // deployment, and the only variable that keeps pointing at the same place.
   if (process.env.VERCEL_ENV === 'production') {
     const canonical = clean(process.env.VERCEL_PROJECT_PRODUCTION_URL);
     if (canonical !== null) return canonical;

@@ -1,5 +1,9 @@
 'use client';
 
+/**
+ * The primary navigation inside the rail.
+ */
+
 import {
   Bot,
   LayoutDashboard,

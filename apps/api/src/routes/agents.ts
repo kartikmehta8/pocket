@@ -102,16 +102,20 @@ function hasFunds(amount: string): boolean {
  * @param ctx - Application context.
  */
 export function registerAgentRoutes(app: FastifyInstance, ctx: AppContext): void {
+  /**
+   * `POST /v1/agents` — registers an agent and provisions its wallet.
+   *
+   * Seeding happens after the agent exists and can never undo it. A treasury that
+   * cannot pay is an operational fact, not a reason to lose the operator's work.
+   * The transfer also creates the Hedera account and associates the token, so a
+   * seeded agent can pay immediately.
+   */
   app.post('/v1/agents', async (request, reply) => {
     const body = createAgentSchema.parse(request.body);
     const agent = await createAgent(ctx.db, { orgId: request.orgId, ...body });
 
     const wallet = await provisionAgentWallet(ctx, request.orgId, request.userId, agent);
 
-    // After the agent exists, and never able to undo it: a treasury that
-    // cannot pay is an operational fact, not a reason to lose the operator's
-    // work. The transfer also creates the Hedera account and associates the
-    // token, so a seeded agent can pay immediately.
     const seed = await seedAgentWallet(ctx, request.orgId, agent.id, wallet, request.log);
 
     reply.status(201);
@@ -122,6 +126,7 @@ export function registerAgentRoutes(app: FastifyInstance, ctx: AppContext): void
     };
   });
 
+  /** `GET /v1/agents` — one page, or every agent when no limit is given. */
   app.get('/v1/agents', async (request) => {
     const query = listAgentsQuerySchema.parse(request.query);
     return await summariseAllAgents(ctx.db, request.orgId, {
@@ -132,6 +137,13 @@ export function registerAgentRoutes(app: FastifyInstance, ctx: AppContext): void
     });
   });
 
+  /**
+   * `GET /v1/agents/:id` — the agent with its policy, task budgets and balance.
+   *
+   * `accountHollow` is null when there is no account to judge rather than false.
+   * "We cannot see one" and "we can see one and it is unusable" send a reader to
+   * different places.
+   */
   app.get<{ Params: { id: string } }>('/v1/agents/:id', async (request) => {
     const bundle = await requireAgent(ctx, request.orgId, request.params.id);
     const [summary, taskBudgets] = await Promise.all([
@@ -150,13 +162,11 @@ export function registerAgentRoutes(app: FastifyInstance, ctx: AppContext): void
       taskBudgets: taskBudgets.map(taskBudgetToJson),
       balance,
       accountId: account?.accountId ?? null,
-      // Null when there is no account to judge, not false: "we cannot see one"
-      // and "we can see one and it is unusable" send a reader to different
-      // places.
       accountHollow: account === null ? null : !account.keyPublished,
     };
   });
 
+  /** `PATCH /v1/agents/:id` — renames an agent, or changes its status. */
   app.patch<{ Params: { id: string } }>('/v1/agents/:id', async (request) => {
     const body = updateAgentSchema.parse(request.body);
     await requireAgent(ctx, request.orgId, request.params.id);
@@ -173,6 +183,7 @@ export function registerAgentRoutes(app: FastifyInstance, ctx: AppContext): void
     return { agent: await summariseAgent(ctx.db, request.orgId, agent) };
   });
 
+  /** `POST /v1/agents/:id/transfer` — moves a balance to another agent. */
   app.post<{ Params: { id: string } }>('/v1/agents/:id/transfer', async (request) => {
     const body = transferAgentFundsSchema.parse(request.body);
     const [from, to] = await Promise.all([
@@ -183,21 +194,28 @@ export function registerAgentRoutes(app: FastifyInstance, ctx: AppContext): void
     return { transfer };
   });
 
+  /**
+   * `DELETE /v1/agents/:id` — retires an agent for good.
+   *
+   * The wallet is read before the delete, not after: once the agent is a tombstone
+   * there is nothing on screen that would lead anyone back to the money.
+   *
+   * `force` exists because moving the balance is not always possible. A wallet
+   * with no gas cannot send, and a lone agent has nowhere to send to. Refusing
+   * outright would leave such an agent undeletable forever, so the operator may
+   * say "leave it" — and what was left behind is named in the audit trail rather
+   * than implied. The custody does not change, so reading that entry is the only
+   * way anyone finds this money later.
+   */
   app.delete<{ Params: { id: string }; Querystring: { force?: string } }>(
     '/v1/agents/:id',
     async (request, reply) => {
       const bundle = await requireAgent(ctx, request.orgId, request.params.id);
 
-      // Read before deleting, not after: once the agent is a tombstone there
-      // is nothing on screen that would lead anyone back to the wallet.
       const asset = bundle.budget?.asset ?? 'USDC';
       const balance = await readBalance(ctx, bundle.wallet, asset);
       const funded = balance !== null && hasFunds(balance.amount);
 
-      // `force` exists because moving the balance is not always possible: a
-      // wallet with no gas cannot send, and a lone agent has nowhere to send
-      // to. Refusing outright would leave such an agent undeletable forever,
-      // so the operator may say "leave it", and what was left is recorded.
       if (funded && request.query.force !== 'true') {
         throw new PocketError(
           'CONFLICT',
@@ -218,8 +236,6 @@ export function registerAgentRoutes(app: FastifyInstance, ctx: AppContext): void
         payload: {
           name: agent.name,
           walletAddress: bundle.wallet?.address ?? null,
-          // Named, not implied. The custody does not change, so the only way
-          // anyone finds this money later is by reading it here.
           ...(funded ? { fundsLeft: `${balance.amount} ${balance.asset}` } : {}),
         },
       });
@@ -228,6 +244,7 @@ export function registerAgentRoutes(app: FastifyInstance, ctx: AppContext): void
     },
   );
 
+  /** `PUT /v1/agents/:id/budget` — replaces the daily and per-purchase ceilings. */
   app.put<{ Params: { id: string } }>('/v1/agents/:id/budget', async (request) => {
     const body = setBudgetSchema.parse(request.body);
     await requireAgent(ctx, request.orgId, request.params.id);
@@ -254,6 +271,12 @@ export function registerAgentRoutes(app: FastifyInstance, ctx: AppContext): void
     };
   });
 
+  /**
+   * `PUT /v1/agents/:id/policy` — replaces the whole policy document.
+   *
+   * USD ceilings are stored in cents, so a dollar figure carries two decimal
+   * places and no more.
+   */
   app.put<{ Params: { id: string } }>('/v1/agents/:id/policy', async (request) => {
     const body = setPolicySchema.parse(request.body);
     await requireAgent(ctx, request.orgId, request.params.id);
@@ -269,7 +292,6 @@ export function registerAgentRoutes(app: FastifyInstance, ctx: AppContext): void
         body.approvalThreshold === undefined || body.approvalThreshold === null
           ? null
           : parseAmount(body.approvalThreshold, decimals),
-      // USD ceilings are stored in cents, so two decimal places.
       maxUsdCents:
         body.maxUsdPerTransaction === undefined || body.maxUsdPerTransaction === null
           ? null

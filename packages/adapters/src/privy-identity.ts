@@ -71,14 +71,14 @@ export class PrivyIdentityVerifier implements IdentityVerifier {
    * @returns The identity with an email attached, or `null` when no identity
    *   token was supplied or Privy rejects it. A failure here is not an
    *   authentication failure — it degrades to a missing display name.
+   * @remarks The identity token arrives on the same request as the access
+   *   token but is a separate credential, so a subject mismatch is refused
+   *   rather than attaching one person's email to another's organization.
    */
   public async profile(subject: string, profileToken?: string): Promise<VerifiedIdentity | null> {
     if (profileToken === undefined || profileToken === '') return null;
     try {
       const user = await this.#privy.getUser({ idToken: profileToken });
-      // The identity token arrives on the same request as the access token but
-      // is a separate credential. Refuse a mismatch rather than attaching one
-      // person's email to another person's organization.
       if (user.id !== subject) return null;
       return { subject, email: emailOf(user) };
     } catch {

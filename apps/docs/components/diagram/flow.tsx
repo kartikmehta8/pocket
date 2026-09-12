@@ -1,3 +1,8 @@
+/**
+ * The two diagrams a documentation page can draw: a flow of labelled boxes,
+ * and a sequence of exchanges between services.
+ */
+
 import type { ReactNode } from 'react';
 
 /**

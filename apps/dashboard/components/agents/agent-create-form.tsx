@@ -1,5 +1,9 @@
 'use client';
 
+/**
+ * The registration form itself, shared by the modal and the setup guide.
+ */
+
 import { Bot } from 'lucide-react';
 import { useActionState, useId } from 'react';
 

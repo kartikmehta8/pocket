@@ -25,6 +25,9 @@ export interface PolicyJson {
  * @param row - Policy as persisted, with money in base units.
  * @returns The wire representation, with money as decimal strings denominated
  *   in the policy's first allowed asset.
+ *
+ * @remarks Cents become dollars by integer division and a padded remainder,
+ * never through a float.
  */
 export function policyToJson(row: {
   allowedAssets: string[];
@@ -45,7 +48,6 @@ export function policyToJson(row: {
     trustedRecipients: row.trustedRecipients,
     unknownRecipientBehaviour: row.unknownRecipientBehaviour,
     approvalThreshold: row.approvalThreshold === null ? null : money(row.approvalThreshold, asset),
-    // Cents to dollars, never through a float.
     maxUsdPerTransaction:
       row.maxUsdCents === null
         ? null

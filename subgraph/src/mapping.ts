@@ -1,3 +1,7 @@
+/**
+ * Turning an ERC-20 Transfer log into a record Pocket can reconcile against.
+ */
+
 import { Address } from '@graphprotocol/graph-ts';
 import { ERC20, Transfer as TransferEvent } from '../generated/Token/ERC20';
 import { Token, Transfer } from '../generated/schema';

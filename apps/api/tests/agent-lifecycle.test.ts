@@ -1,3 +1,20 @@
+/**
+ * An agent from registration to retirement.
+ *
+ * The ledger is the point of the product, so deleting an agent must not take
+ * its history with it, cascade or no cascade. Renaming is the same idea from
+ * the other side: there is one agent, and the record reads back under whatever
+ * it is called now rather than keeping a copy of what it used to be.
+ *
+ * Deletion has an escape hatch. A wallet with no gas cannot send, and a wallet
+ * Pocket seeded holds only USDC — purchases go through the facilitator, which
+ * pays the gas, and a direct transfer has no facilitator. Refusing outright
+ * would leave such an agent undeletable forever.
+ *
+ * The unpaged list matters because pickers elsewhere read it. A cursor would
+ * mean the list they show is only the first page of the answer.
+ */
+
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { randomUUID } from 'node:crypto';
 import { createFundedAgent, createHarness, paymentBody, type Harness } from './helpers.js';
@@ -154,8 +171,6 @@ describe('DELETE /v1/agents/:id', () => {
     });
     expect(deleted.statusCode).toBe(204);
 
-    // The ledger is the point of the product. Deleting the agent must not take
-    // its history with it, cascade or no cascade.
     const payments = await h.app.inject({ method: 'GET', url: '/v1/payments', headers: h.auth });
     const ids = payments.json().payments.map((row: { id: string }) => row.id);
     expect(ids).toContain(paymentId);
@@ -165,8 +180,6 @@ describe('DELETE /v1/agents/:id', () => {
     const from = await register('Gasless');
     const to = await register('Ready');
     h.chain.setBalance(from.address, 'USDC', 1_000_000n);
-    // A wallet seeded by Pocket holds only USDC: purchases go through the
-    // facilitator, which pays the gas. A direct transfer has no facilitator.
     h.chain.setBalance(from.address, 'HBAR', 0n);
 
     const response = await h.app.inject({
@@ -198,8 +211,6 @@ describe('DELETE /v1/agents/:id', () => {
   });
 
   it('deletes a funded agent when forced, recording what was left', async () => {
-    // The escape hatch: a wallet with no gas cannot send, so refusing outright
-    // would leave the agent undeletable.
     const agent = await register('Stuck');
     h.chain.setBalance(agent.address, 'USDC', 10_000n);
 
@@ -275,8 +286,6 @@ describe('PATCH /v1/agents/:id', () => {
     expect(renamed.json().agent.name).toBe('Renamed');
     expect(renamed.json().agent.description).toBe('Now does something else.');
 
-    // One agent, one name. The ledger reads back under whatever it is called
-    // now rather than keeping a copy of what it used to be.
     const payments = await h.app.inject({
       method: 'GET',
       url: `/v1/payments?agentId=${agentId}`,
@@ -320,8 +329,6 @@ describe('GET /v1/agents paging', () => {
     expect(response.statusCode).toBe(200);
     const body = response.json();
     expect(body.agents.length).toBeGreaterThan(3);
-    // Pickers elsewhere read this, and a cursor would mean the list they show
-    // is only the first page of the answer.
     expect(body.nextCursor).toBeNull();
   });
 

@@ -1,3 +1,8 @@
+/**
+ * Drizzle configuration: where the schema lives and which database to push it
+ * to.
+ */
+
 import { defineConfig } from 'drizzle-kit';
 
 export default defineConfig({

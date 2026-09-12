@@ -23,6 +23,16 @@ import { decimalsOf, formatAmount, type ChainId } from '@pocket/core';
  */
 const MIN_GAS = 100_000_000n;
 
+/**
+ * Provisions the treasury that seeds new agents, or reports on it.
+ *
+ * An already-provisioned treasury is reported rather than replaced, because
+ * what it holds is the question an operator actually has when they re-run this.
+ * Both balances are shown: running out of gas looks exactly like running out of
+ * money, in that the transfer is refused and the agent is provisioned empty.
+ *
+ * @throws {Error} When Privy is not configured.
+ */
 async function main(): Promise<void> {
   const chain = (process.env['CHAIN'] ?? 'hedera-testnet') as ChainId;
   const adapters = buildAdapters({ ...process.env, CHAIN: chain });
@@ -34,8 +44,6 @@ async function main(): Promise<void> {
   const address = process.env['TREASURY_ADDRESS'] ?? '';
   const walletId = process.env['TREASURY_WALLET_ID'] ?? '';
 
-  // Already provisioned: report what it holds, which is the question an
-  // operator actually has when they re-run this.
   if (address !== '' && walletId !== '') {
     const [usdc, gas] = await Promise.all([
       adapters.chain.getBalance(address, 'USDC'),
@@ -48,8 +56,6 @@ async function main(): Promise<void> {
     if (usdc === 0n) {
       process.stdout.write('  No USDC. New agents will be provisioned with nothing.\n');
     }
-    // Both matter, and running out of gas looks exactly like running out of
-    // money: the transfer is refused and the agent is provisioned empty.
     if (gas < MIN_GAS) {
       process.stdout.write(
         `  Low on HBAR. Every seed is an ordinary transfer the treasury pays gas for,\n` +

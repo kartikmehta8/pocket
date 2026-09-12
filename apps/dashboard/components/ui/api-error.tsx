@@ -1,3 +1,7 @@
+/**
+ * The surface shown when a server-side fetch fails.
+ */
+
 import { Unplug } from 'lucide-react';
 
 import { Card } from './card';

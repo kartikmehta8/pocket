@@ -1,5 +1,9 @@
 'use client';
 
+/**
+ * The icon button that copies a value.
+ */
+
 import { Check, Copy } from 'lucide-react';
 import { useCallback, useEffect, useState } from 'react';
 

@@ -1,3 +1,7 @@
+/**
+ * The tools an agent reaches over MCP, and the prompts that exercise them.
+ */
+
 import 'server-only';
 
 /** One tool the MCP server exposes to a connected agent. */

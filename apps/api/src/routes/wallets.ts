@@ -27,6 +27,16 @@ const associateSchema = z.object({ asset: assetSchema });
  * @param ctx - Application context.
  */
 export function registerWalletRoutes(app: FastifyInstance, ctx: AppContext): void {
+  /**
+   * `POST /v1/agents/:id/wallet/associate` — opts a wallet into holding a token.
+   *
+   * Hedera requires an account to opt into a token before it can receive one.
+   * Association is checked before it is attempted, because associating twice
+   * reverts on chain and discovering that costs gas.
+   *
+   * A native asset needs no association at all, so `null` back from the provider
+   * is success rather than a no-op the caller has to interpret.
+   */
   app.post<{ Params: { id: string } }>('/v1/agents/:id/wallet/associate', async (request) => {
     const body = associateSchema.parse(request.body ?? {});
     const bundle = await getAgentBundle(ctx.db, request.orgId, request.params.id);
@@ -35,8 +45,6 @@ export function registerWalletRoutes(app: FastifyInstance, ctx: AppContext): voi
       throw new PocketError('WALLET_NOT_PROVISIONED', 'Agent has no wallet to associate.');
     }
 
-    // Associating twice reverts on chain, so check first rather than spending
-    // gas to discover it.
     const already = await ctx.chain.isTokenAssociated(bundle.wallet.address, body.asset);
     if (already === true) {
       return { asset: body.asset, associated: true, txHash: null, alreadyAssociated: true };
@@ -59,8 +67,6 @@ export function registerWalletRoutes(app: FastifyInstance, ctx: AppContext): voi
       payload: { asset: body.asset, txHash: submitted?.txHash ?? null },
     });
 
-    // A native asset needs no association, so `null` back from the provider is
-    // success rather than a no-op the caller has to interpret.
     return {
       asset: body.asset,
       associated: true,
@@ -69,6 +75,30 @@ export function registerWalletRoutes(app: FastifyInstance, ctx: AppContext): voi
     };
   });
 
+  /**
+   * `POST /v1/agents/:id/wallet/activate` — publishes the wallet's public key.
+   *
+   * An account created by an incoming transfer is hollow: it has an id and a
+   * balance but has never signed anything, so the network cannot see its key.
+   * Pocket can still pay from it, but outside services cannot, and some faucets
+   * refuse to send while reporting success. Signing a transfer of nothing to
+   * itself publishes the key and completes the account.
+   *
+   * The account is read from the chain directly rather than through
+   * `readAccount`, which answers `null` both for "no account" and for "could not
+   * read". Telling an operator to fund a wallet that is already funded, because a
+   * mirror node was briefly down, is worse than admitting the read failed.
+   *
+   * The HBAR shortfall is named before anything is attempted. Signing costs gas, a
+   * wallet Pocket seeded holds only USDC, and left to Privy this surfaces as
+   * `transaction_broadcast_failure` — which tells an operator nothing they can act
+   * on. An already-published key returns early, because signing again would cost
+   * gas to achieve nothing.
+   *
+   * The response is held until the change is readable. The caller's whole reason
+   * for asking is to re-read the account afterwards, and a mirror node that has
+   * not indexed the signature yet would report that nothing happened.
+   */
   app.post<{ Params: { id: string } }>('/v1/agents/:id/wallet/activate', async (request) => {
     const bundle = await getAgentBundle(ctx.db, request.orgId, request.params.id);
     if (bundle === null) throw new PocketError('NOT_FOUND', 'Agent not found.');
@@ -76,10 +106,6 @@ export function registerWalletRoutes(app: FastifyInstance, ctx: AppContext): voi
       throw new PocketError('WALLET_NOT_PROVISIONED', 'Agent has no wallet to activate.');
     }
 
-    // `readAccount` answers `null` for both "no account" and "could not read",
-    // so ask the chain directly here. Telling an operator to go and fund a
-    // wallet that is already funded, because a mirror node was briefly down,
-    // is worse than admitting the read failed.
     const account = await readHederaAccountState(
       ctx.config.HEDERA_MIRROR_URL,
       bundle.wallet.address,
@@ -92,10 +118,6 @@ export function registerWalletRoutes(app: FastifyInstance, ctx: AppContext): voi
       );
     }
 
-    // Signing costs gas, and a wallet seeded by Pocket holds only USDC. Left
-    // to Privy this surfaces as `transaction_broadcast_failure`, which tells
-    // an operator nothing they can act on — so the shortfall is named here,
-    // before anything is attempted.
     if (!account.keyPublished) {
       const gas = await ctx.chain.getBalance(bundle.wallet.address, 'HBAR').catch(() => null);
       if (gas === 0n) {
@@ -107,8 +129,6 @@ export function registerWalletRoutes(app: FastifyInstance, ctx: AppContext): voi
       }
     }
 
-    // Signing again would cost gas to achieve nothing. The key is published
-    // once and stays published.
     if (account.keyPublished) {
       return {
         accountId: account.accountId,
@@ -136,10 +156,6 @@ export function registerWalletRoutes(app: FastifyInstance, ctx: AppContext): voi
       payload: { accountId: account.accountId, txHash: submitted?.txHash ?? null },
     });
 
-    // Hold the response until the change is readable. The caller's whole
-    // reason for asking is to re-read the account afterwards, and a mirror
-    // node that has not indexed the signature yet would tell it the account is
-    // still hollow — so it would report that nothing happened.
     const confirmed = await awaitKeyPublished(ctx, bundle.wallet);
 
     return {

@@ -5,6 +5,16 @@
  * only public source of testnet USDC on Hedera rate-limits, refuses, and
  * sometimes reports success while sending nothing. Seeding from a wallet
  * Pocket controls takes that out of the operator's first five minutes.
+ *
+ * 0.02 USDC is 20,000 base units at six decimals. Getting that wrong is a
+ * money bug no test of the happy path would notice. The idempotency key is
+ * unique per attempt: keyed to the agent alone, the provider replays the first
+ * outcome for that key forever, so an agent registered while the treasury was
+ * empty could never be funded again even once it was refilled. A configured
+ * treasury with a zero amount is a deliberate off switch rather than a
+ * transfer of nothing, and the operator’s work survives an empty treasury —
+ * losing a registered agent to report a shortfall the funding step already
+ * explains is the worse of the two outcomes by a distance.
  */
 
 import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
@@ -60,16 +70,11 @@ describe('seeding a new agent', () => {
   });
 
   it('sends base units, not the decimal string', async () => {
-    // 0.02 USDC is 20_000 base units at six decimals. Getting this wrong is a
-    // money bug that no test of the happy path would notice.
     await register();
     expect(h.wallet.sent.at(-1)?.amount).toBe(20_000n);
   });
 
   it('uses a fresh idempotency key each attempt', async () => {
-    // Keyed to the agent alone, the provider replays the first outcome for
-    // that key forever — so an agent registered while the treasury was empty
-    // could never be funded again, even once it was refilled.
     const first = await register();
     const second = await register();
     const keys = h.wallet.sent.slice(-2).map((s) => s.idempotencyKey);
@@ -100,9 +105,6 @@ describe('seeding a new agent', () => {
 
 describe('when the treasury cannot pay', () => {
   it('still registers the agent', async () => {
-    // The operator's work must survive an empty treasury. Losing a registered
-    // agent to report a shortfall the funding step already explains is the
-    // worse of the two outcomes by a distance.
     vi.spyOn(h.wallet, 'sendPayment').mockRejectedValue(new Error('treasury is empty'));
 
     const body = await register();
@@ -137,8 +139,6 @@ describe('when no treasury is configured', () => {
   });
 
   it('sends nothing when the amount is zero', async () => {
-    // A configured treasury with a zero amount is a deliberate off switch,
-    // not a transfer of nothing.
     h.config.AGENT_SEED_AMOUNT = '0';
 
     const before = h.wallet.sent.length;

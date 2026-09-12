@@ -1,5 +1,9 @@
 'use client';
 
+/**
+ * The API key list on the settings screen.
+ */
+
 import { Ban, CircleCheck, KeyRound, Trash2 } from 'lucide-react';
 import { useState, useTransition } from 'react';
 

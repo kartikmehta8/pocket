@@ -15,6 +15,16 @@ import { decimalsOf, formatAmount, type AssetId, type ChainId } from '@pocket/co
 /** The placeholder that must not survive into a live configuration. */
 const BURN_PLACEHOLDER = '0x000000000000000000000000000000000000dead';
 
+/**
+ * Provisions the seller's wallet, or associates its token.
+ *
+ * Runs in two passes. The first mints the wallet and prints the address to put
+ * in `.env`. Once that address holds a little HBAR, running it again performs
+ * the token association, which needs the wallet to exist on chain and hold gas.
+ *
+ * @throws {Error} When Privy is not configured, or when the address is set but
+ *   the wallet id is not.
+ */
 async function main(): Promise<void> {
   const chain = (process.env['CHAIN'] ?? 'hedera-testnet') as ChainId;
   const asset: AssetId = process.env['HEDERA_USDC_ADDRESS'] ? 'USDC' : 'HBAR';
@@ -28,9 +38,6 @@ async function main(): Promise<void> {
   const walletId = process.env['MERCHANT_PRIVY_WALLET_ID'] ?? '';
   const provisioned = existing !== '' && existing.toLowerCase() !== BURN_PLACEHOLDER;
 
-  // Already provisioned: the remaining work is the token association, which
-  // needs the wallet to exist on chain and hold gas. Re-running after funding
-  // is the intended second step.
   if (provisioned) {
     if (asset === 'HBAR') {
       process.stdout.write(`Seller is ${existing}, settling in HBAR. No association needed.\n`);

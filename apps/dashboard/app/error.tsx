@@ -1,5 +1,9 @@
 'use client';
 
+/**
+ * The global error boundary.
+ */
+
 import { TriangleAlert } from 'lucide-react';
 import { useEffect } from 'react';
 

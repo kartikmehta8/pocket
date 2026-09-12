@@ -1,3 +1,12 @@
+/**
+ * One step of the setup guide. lucide renders the glyph name into a class,
+ * which is how the check is told apart from the step’s own icon without
+ * matching path data. "Complete" then "Done" for one step is a stutter, not
+ * redundancy the way a glyph beside a label is. The marker is `size-7`
+ * (1.75rem), so its centre is 0.875rem and a 1px rule sits there exactly:
+ * changing either number without the other leaves a visibly bent spine.
+ */
+
 import { Bot } from 'lucide-react';
 import { renderToStaticMarkup } from 'react-dom/server';
 import { describe, expect, it } from 'vitest';
@@ -33,8 +42,6 @@ describe('Step', () => {
   describe('state is never carried by colour alone', () => {
     it('marks a finished step with a check and a written pill', () => {
       const html = render('done');
-      // lucide renders the glyph name into a class, which is how the check is
-      // told apart from the step's own icon without matching path data.
       expect(html).toContain('lucide-check');
       expect(html).toContain('Done');
     });
@@ -55,8 +62,6 @@ describe('Step', () => {
     });
 
     it('does not say aloud what the pill already says', () => {
-      // "Complete" then "Done" for one step is a stutter, not redundancy the
-      // way a glyph beside a label is.
       expect(render('done')).not.toContain('Not started');
       expect(render('current')).not.toContain('Not started');
     });
@@ -85,9 +90,6 @@ describe('Step', () => {
     });
 
     it('sits on the marker’s centre line', () => {
-      // The marker is size-7 (1.75rem), so its centre is 0.875rem, and a 1px
-      // rule sits there exactly. A change to either number without the other
-      // leaves a visibly bent spine.
       const html = render('todo');
       expect(html).toContain('size-7');
       expect(html).toContain('left-[0.875rem]');

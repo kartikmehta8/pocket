@@ -1,5 +1,9 @@
 'use client';
 
+/**
+ * The active / paused / revoked control in an agent's header.
+ */
+
 import { useState, useTransition } from 'react';
 
 import { Segmented } from '@/components/ui/segmented';

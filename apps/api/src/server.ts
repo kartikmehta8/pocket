@@ -39,12 +39,22 @@ function bigintSafe(_key: string, value: unknown): unknown {
  *
  * @param ctx - Application context carrying config, database and adapters.
  * @returns A configured, unstarted Fastify instance.
+ *
+ * Credentials must never reach a log line, in any environment, which is what
+ * the redaction list is for. The rate limit is keyed on the organization key
+ * rather than the IP, so one noisy agent cannot exhaust the budget of every
+ * caller behind the same NAT.
+ *
+ * Routes are collected as they register and handed to `GET /` at the end, so
+ * the service can list its own surface. A hook rather than a hand-written list:
+ * one of those goes stale and the other cannot. `HEAD` is generated for every
+ * `GET` and is left out, because listing both would double the index without
+ * telling a reader anything.
  */
 export async function buildServer(ctx: AppContext): Promise<FastifyInstance> {
   const app = Fastify({
     logger: {
       level: ctx.config.LOG_LEVEL,
-      // Credentials must never reach a log line, in any environment.
       redact: {
         paths: [
           'req.headers.authorization',
@@ -70,20 +80,13 @@ export async function buildServer(ctx: AppContext): Promise<FastifyInstance> {
   await app.register(rateLimit, {
     max: ctx.config.RATE_LIMIT_MAX,
     timeWindow: '1 minute',
-    // Rate limit per organization key rather than per IP, so one noisy agent
-    // cannot exhaust the budget of every caller behind the same NAT.
     keyGenerator: (request) => request.headers.authorization ?? request.ip,
   });
 
-  // Collected as routes register, and handed to `GET /` at the end so the
-  // service can list its own surface. A hook rather than a hand-written list:
-  // one of those goes stale and the other cannot.
   const routes: string[] = [];
   app.addHook('onRoute', (route) => {
     const methods = Array.isArray(route.method) ? route.method : [route.method];
     for (const method of methods) {
-      // HEAD is generated for every GET, and listing both would double the
-      // index without telling a reader anything.
       if (method !== 'HEAD') routes.push(`${method} ${route.url}`);
     }
   });
@@ -105,7 +108,6 @@ export async function buildServer(ctx: AppContext): Promise<FastifyInstance> {
   registerX402Routes(app, ctx);
   registerAnalyticsRoutes(app, ctx);
 
-  // Last, so the index it serves has every other route in it.
   registerAboutRoute(app, ctx, routes);
 
   return app;

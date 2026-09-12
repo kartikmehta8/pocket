@@ -1,5 +1,9 @@
 'use client';
 
+/**
+ * The spend-over-time chart on the overview.
+ */
+
 import {
   Area,
   AreaChart,
@@ -34,14 +38,15 @@ export interface SpendAreaChartProps {
 /**
  * Endpoint marker: an 8px dot with a 2px surface ring plus the one direct
  * label this chart carries, drawn on the final day only.
+ *
+ * @remarks Recharts invokes this once per point, so each returned element needs
+ * its own key or React warns about a list without keys.
  */
 function renderEndpoint(props: unknown, lastIndex: number, text: string) {
   const record = (props ?? {}) as Record<string, unknown>;
   const cx = record['cx'];
   const cy = record['cy'];
   const index = typeof record['index'] === 'number' ? record['index'] : 0;
-  // Recharts invokes this once per point, so each returned element needs its
-  // own key or React warns about a list without keys.
   const key = `endpoint-${index}`;
   if (index !== lastIndex || typeof cx !== 'number' || typeof cy !== 'number') {
     return <g key={key} />;

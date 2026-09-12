@@ -1,3 +1,8 @@
+/**
+ * The key list, and what it says about revoking. Revoking is a server action,
+ * which does not exist outside Next, so it is mocked.
+ */
+
 import { renderToStaticMarkup } from 'react-dom/server';
 import { describe, expect, it, vi } from 'vitest';
 
@@ -6,7 +11,6 @@ import type { ApiKey } from '@/lib/types';
 
 import { ApiKeysTable } from './api-keys-table';
 
-// Revoking is a server action, which does not exist outside Next.
 vi.mock('@/lib/actions-account', () => ({ revokeApiKeyAction: async () => ({}) }));
 
 /** Strips tags so visible text can be matched. */

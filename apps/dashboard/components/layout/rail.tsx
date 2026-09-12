@@ -1,3 +1,7 @@
+/**
+ * Everything the left rail contains, shared by the fixed copy and the drawer.
+ */
+
 import { POWERED_BY } from '@/lib/brand';
 import { Wordmark } from './wordmark';
 import { AdapterHealth } from './adapter-health';

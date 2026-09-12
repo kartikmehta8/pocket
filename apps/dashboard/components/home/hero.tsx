@@ -1,5 +1,9 @@
 'use client';
 
+/**
+ * The marketing hero.
+ */
+
 import { ArrowRight, Ban, Check, Compass } from 'lucide-react';
 import { motion, useReducedMotion } from 'motion/react';
 import Link from 'next/link';

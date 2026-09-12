@@ -1,5 +1,9 @@
 'use client';
 
+/**
+ * The marketing section about who an agent may buy from.
+ */
+
 import { motion, useReducedMotion } from 'motion/react';
 
 import { DURATION, EASE } from '@/lib/motion';

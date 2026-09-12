@@ -1,3 +1,8 @@
+/**
+ * What the delete dialog may offer, given a balance and what has already been
+ * tried. Pure, so every branch is a table rather than a fixture.
+ */
+
 import { hasAmount } from './format';
 import type { AgentSummary, Balance } from './types';
 
@@ -37,6 +42,9 @@ export interface DeletePlan {
  * `moved` matters because the delete can fail after a successful transfer: a
  * chain that has not caught up still reports the old balance. Pressing again
  * must finish the delete, not send the money a second time.
+ *
+ * Forcing is always available once there is a balance to force past, so the
+ * only unpressable state is one the operator has not answered yet.
  */
 export function planDelete(
   balance: Balance | null,
@@ -50,8 +58,6 @@ export function planDelete(
   return {
     moveFirst,
     stranded,
-    // Forcing is always available once there is a balance to force past, so
-    // the only unpressable state is one the operator has not answered yet.
     canProceed: !stranded || leaveFunds,
     label: moveFirst ? 'Move funds and delete' : 'Delete agent',
     offerLeaveFunds: funded && !moved,

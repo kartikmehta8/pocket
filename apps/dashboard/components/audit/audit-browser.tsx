@@ -1,5 +1,9 @@
 'use client';
 
+/**
+ * The filter bar, results and paging that make up the audit screen.
+ */
+
 import { Pager } from '@/components/ui/pager';
 import { Select } from '@/components/ui/select';
 import { AUDIT_ACTIVITIES, AUDIT_ACTORS } from '@/lib/catalog';

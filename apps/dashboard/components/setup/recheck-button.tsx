@@ -1,5 +1,9 @@
 'use client';
 
+/**
+ * The control that re-reads a step's state.
+ */
+
 import { RefreshCw } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useTransition } from 'react';

@@ -1,10 +1,16 @@
+/**
+ * The step that checks a policy is really saved. The re-read button is a
+ * client component that reaches for the app router, which does not exist
+ * outside Next, so only its presence is under test. Steps six and seven say "I
+ * have done this" and mean it literally; this one re-reads the record and
+ * ticks only if the rules are really saved.
+ */
+
 import { renderToStaticMarkup } from 'react-dom/server';
 import { describe, expect, it, vi } from 'vitest';
 
 import { ConfigureStep } from './configure-step';
 
-// The re-read button is a client component that reaches for the app router,
-// which does not exist outside Next. Only its presence is under test here.
 vi.mock('next/navigation', () => ({
   useRouter: () => ({ refresh: () => undefined }),
 }));
@@ -32,8 +38,6 @@ describe('ConfigureStep', () => {
   });
 
   it('does not borrow the wording of a step that is confirmed, not checked', () => {
-    // Steps six and seven use "I have done this" and mean it literally. This
-    // one re-reads the record and ticks only if the rules are really saved.
     expect(text(render('agent_1'))).not.toContain('I have done this');
   });
 

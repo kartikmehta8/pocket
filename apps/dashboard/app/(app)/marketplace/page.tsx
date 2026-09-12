@@ -1,3 +1,8 @@
+/**
+ * The marketplace. Paid feeds from the example seller, bought with a chosen
+ * agent through the same policy engine an agent uses.
+ */
+
 import type { Metadata } from 'next';
 import { PackageOpen } from 'lucide-react';
 

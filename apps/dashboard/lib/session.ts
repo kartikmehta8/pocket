@@ -1,3 +1,7 @@
+/**
+ * The session cookie: its name, its attributes, and who is signed in.
+ */
+
 import 'server-only';
 
 import { cookies } from 'next/headers';
@@ -19,6 +23,9 @@ export const SESSION_COOKIE = 'pocket_session';
  *   HTTP in local development, where the attribute would prevent it being set
  *   at all.
  * @returns Attributes for `cookies().set`.
+ *
+ * @remarks Privy access tokens are short-lived and refreshed by the browser, so
+ * the cookie only needs to outlive a single page view. An hour is generous.
  */
 export function sessionCookieOptions(secure: boolean) {
   return {
@@ -26,8 +33,6 @@ export function sessionCookieOptions(secure: boolean) {
     sameSite: 'lax' as const,
     secure,
     path: '/',
-    // Privy access tokens are short-lived and refreshed by the browser, so the
-    // cookie only needs to outlive a single page view. An hour is generous.
     maxAge: 60 * 60,
   };
 }

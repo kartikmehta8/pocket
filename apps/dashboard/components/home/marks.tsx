@@ -1,3 +1,7 @@
+/**
+ * Small typographic marks the marketing page reuses.
+ */
+
 import Image from 'next/image';
 
 import { cn } from '@/lib/cn';

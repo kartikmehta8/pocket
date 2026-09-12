@@ -1,3 +1,8 @@
+/**
+ * What a connected agent can do. The eight MCP tools, and prompts filled in
+ * with this organization's own agent and seller.
+ */
+
 import type { Metadata } from 'next';
 import Image from 'next/image';
 import Link from 'next/link';

@@ -1,5 +1,9 @@
 'use client';
 
+/**
+ * The faucet links, as a menu and as a single link.
+ */
+
 import * as DropdownMenu from '@radix-ui/react-dropdown-menu';
 import { ArrowUpRight, ChevronDown } from 'lucide-react';
 import Image from 'next/image';

@@ -1,5 +1,9 @@
 'use client';
 
+/**
+ * The task budgets column on an agent's page.
+ */
+
 import { Plus, Target } from 'lucide-react';
 import { AnimatePresence, motion, useReducedMotion } from 'motion/react';
 import { useState, useTransition } from 'react';

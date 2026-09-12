@@ -1,3 +1,7 @@
+/**
+ * What Pocket runs on, shown beside the sign-in control.
+ */
+
 import Image from 'next/image';
 
 import { AgentRotator } from '@/components/home/agent-rotator';
@@ -43,6 +47,9 @@ const STAGGER_MS = 45;
  *
  * The marks fade up in sequence on load, which is the only motion here beyond
  * the line above them.
+ *
+ * Rounded because one of these marks ships as a filled square and the rest are
+ * circles; raw, it reads as the odd one out.
  */
 export function TrustMarks({ className }: { className?: string }) {
   return (
@@ -72,8 +79,6 @@ export function TrustMarks({ className }: { className?: string }) {
                 width={64}
                 height={64}
                 unoptimized
-                // Rounded because one of these marks ships as a filled square and the
-                // rest are circles; raw, it reads as the odd one out.
                 className="size-8 shrink-0 rounded-lg object-contain"
               />
               <span className="min-w-0">

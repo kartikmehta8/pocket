@@ -1,3 +1,7 @@
+/**
+ * The 404 surface.
+ */
+
 import { Compass } from 'lucide-react';
 import Link from 'next/link';
 

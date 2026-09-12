@@ -1,3 +1,13 @@
+/**
+ * How far through the setup guide an organization has got. The last two steps
+ * happen in a terminal and are confirmed by the operator, so this module must
+ * not pretend to know about them. A malformed count has to be rejected rather
+ * than carried: otherwise every comparison against NaN is false and the guide
+ * freezes at "1 of 7" with nothing on screen to explain why. The API refuses
+ * the key list for an API-key caller, so nothing the operator does on that
+ * page can ever satisfy step five.
+ */
+
 import { describe, expect, it } from 'vitest';
 
 import { DERIVED_STEPS, newestFirst, reachedSteps } from './setup-progress';
@@ -69,8 +79,6 @@ function complete() {
 
 describe('reachedSteps', () => {
   it('answers only for the steps that leave a record', () => {
-    // The last two happen in a terminal and are confirmed by the operator, so
-    // this module must not pretend to know about them.
     expect(reachedSteps(complete())).toHaveLength(DERIVED_STEPS);
   });
 
@@ -125,8 +133,6 @@ describe('reachedSteps', () => {
     });
 
     it('still counts a run whose agent has an unreadable registration date', () => {
-      // Otherwise every comparison against NaN is false and the guide freezes
-      // at "1 of 7" with nothing on screen to explain why.
       const steps = reachedSteps({ ...complete(), agent: agentFixture('agent_1', 'not a date') });
       expect(steps).toEqual([true, true, true, true, true]);
     });
@@ -134,8 +140,6 @@ describe('reachedSteps', () => {
 
   describe('when key management is unreachable', () => {
     it('counts the key step as behind a machine principal', () => {
-      // The API refuses the key list for an API-key caller, so nothing the
-      // operator does on this page can ever satisfy step five.
       const steps = reachedSteps({ ...complete(), keys: [], keysAvailable: false });
       expect(steps[4]).toBe(true);
     });

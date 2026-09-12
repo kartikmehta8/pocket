@@ -1,3 +1,8 @@
+/**
+ * The sign-in screen. What Pocket is on one side, the Privy sign-in on the
+ * other.
+ */
+
 import { Suspense } from 'react';
 import type { Metadata } from 'next';
 

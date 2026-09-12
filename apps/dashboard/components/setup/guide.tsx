@@ -1,5 +1,9 @@
 'use client';
 
+/**
+ * The setup guide, and the control that starts it over.
+ */
+
 import { useRouter } from 'next/navigation';
 import { useState, useTransition } from 'react';
 
@@ -54,6 +58,14 @@ const COOKIE_MAX_AGE = 60 * 60 * 24 * 365;
  * you had got to, which is the only thing anybody wants back when they say
  * "start again" — and it is offered at every point in the run, not only at the
  * end, because that is when people want it.
+ *
+ * The plaintext of a key created on this visit is held in memory only, so step
+ * six can fill it into the connection command. It is never persisted.
+ *
+ * Whether the purchase dialog is open is tracked separately from whether a
+ * purchase happened. Closing the dialog must not undo the step that opened it,
+ * and Radix reports every dismissal — escape, the scrim, the close button, a
+ * destination link — through `onOpenChange`.
  */
 export function Guide({
   derived,
@@ -70,12 +82,7 @@ export function Guide({
   const [pending, startTransition] = useTransition();
   const [connected, setConnected] = useState(false);
   const [purchased, setPurchased] = useState(false);
-  // The plaintext of a key created on this visit, held in memory only so step
-  // six can fill it into the connection command. Never persisted.
   const [apiKey, setApiKey] = useState<string | null>(null);
-  // Separate from `purchased` on purpose. Closing the dialog must not undo
-  // the step that opened it, and Radix reports every dismissal — escape, the
-  // scrim, the close button, a destination link — through `onOpenChange`.
   const [celebrating, setCelebrating] = useState(false);
 
   const restart = (): void => {

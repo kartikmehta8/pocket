@@ -1,3 +1,7 @@
+/**
+ * The spend-by-category composition on the overview.
+ */
+
 import { categoryLabel } from '@/lib/catalog';
 import { cn } from '@/lib/cn';
 import { formatAmount, toPlotNumber } from '@/lib/format';
@@ -53,6 +57,9 @@ export interface CategorySplitProps {
  *
  * Plain CSS, no plotting library: there is no axis, no scale and no
  * interaction to get right, and this renders on the server with the page.
+ *
+ * Hues are seated after ranking, so the largest slice always wears series one
+ * and the bar reads darkest-first from the left.
  */
 export function CategorySplit({ byCategory, asset }: CategorySplitProps) {
   const ranked = [...byCategory]
@@ -66,8 +73,6 @@ export function CategorySplit({ byCategory, asset }: CategorySplitProps) {
     .sort((a, b) => b.value - a.value);
 
   const total = ranked.reduce((sum, entry) => sum + entry.value, 0);
-  // Hues are seated after ranking, so the largest slice always wears series
-  // one and the bar reads darkest-first from the left.
   const slices: Slice[] = ranked.map((entry, index) => ({
     ...entry,
     share: total > 0 ? entry.value / total : 0,

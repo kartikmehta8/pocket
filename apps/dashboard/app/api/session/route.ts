@@ -42,6 +42,10 @@ function apiBaseUrl(): string {
  *   first time a person signs in. The response can carry a one-time API key,
  *   and it is passed straight back to the browser without being stored: the
  *   setup screen shows it once, and nothing can retrieve it afterwards.
+ *
+ * Behind a proxy the inbound hop can be plain HTTP even though the browser is on
+ * HTTPS, so the forwarded protocol decides too. Getting this wrong writes the
+ * session token into a cookie that is not marked `Secure`.
  */
 export async function POST(request: Request): Promise<NextResponse> {
   const body = (await request.json().catch(() => ({}))) as SessionRequest;
@@ -78,9 +82,6 @@ export async function POST(request: Request): Promise<NextResponse> {
   }
 
   const store = await cookies();
-  // Behind a proxy the inbound hop can be plain HTTP even though the browser
-  // is on HTTPS, so the forwarded protocol decides too. Getting this wrong
-  // writes the session token into a cookie that is not marked `Secure`.
   const secure =
     request.url.startsWith('https://') || request.headers.get('x-forwarded-proto') === 'https';
   store.set(SESSION_COOKIE, token, sessionCookieOptions(secure));

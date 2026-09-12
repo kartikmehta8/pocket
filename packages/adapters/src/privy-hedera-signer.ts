@@ -67,6 +67,10 @@ export interface PrivyHederaSignerOptions {
  *
  * @param options - Signing callback, wallet identity and network endpoints.
  * @returns A signer the x402 Hedera scheme can use directly.
+ * @remarks The transaction id names the facilitator, which is what makes the
+ * facilitator the fee payer: the agent never needs gas of its own. Privy
+ * returns a 65-byte signature with a trailing recovery id, and Hedera wants the
+ * 64-byte `r || s` pair, so the tail is dropped.
  */
 export async function createPrivyHederaSigner(
   options: PrivyHederaSignerOptions,
@@ -107,8 +111,6 @@ export async function createPrivyHederaSigner(
         transaction.addTokenTransfer(token, payTo, amount);
       }
 
-      // The transaction id names the facilitator, which is what makes the
-      // facilitator the fee payer. The agent never needs gas of its own.
       transaction.setTransactionId(TransactionId.generate(AccountId.fromString(feePayer)));
 
       const client = createHederaClient(requirements.network);
@@ -119,8 +121,6 @@ export async function createPrivyHederaSigner(
             options.walletId,
             keccak256(bytes) as `0x${string}`,
           );
-          // Privy returns 65 bytes with a trailing recovery id; Hedera wants
-          // the 64-byte r||s pair.
           return getBytes(signature).slice(0, 64);
         });
         return Buffer.from(signed.toBytes()).toString('base64');

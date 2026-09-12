@@ -1,5 +1,9 @@
 'use client';
 
+/**
+ * The control that starts the guide over.
+ */
+
 import { ListRestart } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';

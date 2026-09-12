@@ -1,3 +1,8 @@
+/**
+ * Chrome for every documentation page: the sidebar tree, the top bar and the
+ * table of contents.
+ */
+
 import type { ReactNode } from 'react';
 import { DocsLayout } from 'fumadocs-ui/layouts/docs';
 

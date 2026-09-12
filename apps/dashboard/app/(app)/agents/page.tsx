@@ -1,3 +1,8 @@
+/**
+ * The agents index. One card per agent holding a wallet, filterable by status
+ * and by name, address or description.
+ */
+
 import { Bot } from 'lucide-react';
 import type { Metadata } from 'next';
 import { Suspense } from 'react';
@@ -41,6 +46,9 @@ function readStatus(value: string): AgentStatus | undefined {
  * @remarks Filters and the cursor live in the URL, so any view can be shared
  * and the browser's back button walks the pages. An unknown status in a stale
  * link is ignored rather than forwarded to an API that would refuse it.
+ *
+ * An empty organization is not the same as a filter that matched nothing, and
+ * the two want different things said to them.
  */
 export default async function AgentsPage({
   searchParams,
@@ -59,8 +67,6 @@ export default async function AgentsPage({
     ...(search === '' ? {} : { q: search }),
   });
 
-  // An empty organization is not the same as a filter that matched nothing,
-  // and the two want different things said to them.
   const unfiltered = status === undefined && search === '' && cursor === '';
 
   return (

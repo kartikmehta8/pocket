@@ -1,3 +1,11 @@
+/**
+ * Ring-fenced budgets scoped to one unit of work.
+ *
+ * A task budget sits alongside the daily one rather than replacing it, so a
+ * purchase has to fit both. A refusal tells the agent what it can still afford,
+ * so it can pick a cheaper provider rather than retrying the same request.
+ */
+
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { randomUUID } from 'node:crypto';
 import { createFundedAgent, createHarness, paymentBody, type Harness } from './helpers.js';
@@ -46,7 +54,6 @@ describe('task budgets', () => {
     const secondBody = second.json();
     expect(secondBody.payment.status).toBe('blocked');
     expect(secondBody.decision.violations.map((v) => v.code)).toContain('TASK_BUDGET_EXCEEDED');
-    // The agent is told what it can still afford, so it can pick a cheaper provider.
     expect(secondBody.decision.headroom.taskRemaining).toBe('0.42');
   });
 

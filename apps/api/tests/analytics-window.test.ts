@@ -54,8 +54,6 @@ describe('GET /v1/analytics/timeseries', () => {
     expect(points[6]?.date).toBe(new Date().toISOString().slice(0, 10));
     expect(points[0]?.date).toBe(utcDayStart(new Date(), 6).toISOString().slice(0, 10));
 
-    // Dense and in order: every gap is exactly one day, so a chart cannot
-    // close a quiet day by joining the two either side of it.
     const spacing = points
       .slice(1)
       .map((point, index) => Date.parse(point.date) - Date.parse(points[index]?.date ?? ''));

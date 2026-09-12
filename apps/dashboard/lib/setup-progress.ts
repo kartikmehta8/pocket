@@ -1,3 +1,8 @@
+/**
+ * How far through the setup guide an organization has got, decided from live
+ * state rather than from anything it was told.
+ */
+
 import { hasAmount } from './format';
 import type { ApiKey } from './types-account';
 import type { AgentDetail, AgentSummary } from './types';
@@ -71,12 +76,13 @@ export function newestFirst(a: AgentSummary, b: AgentSummary): number {
  * The agent is the run. Registering one starts the guide over, and every
  * later step asks only about that agent and about what has happened since it
  * was registered.
+ *
+ * An agent whose registration time cannot be read is treated as having always
+ * existed, so its own records still count rather than none of them.
  */
 export function reachedSteps({ agent, detail, keys, keysAvailable }: ProgressInput): boolean[] {
   if (agent === null) return Array.from({ length: DERIVED_STEPS }, () => false);
 
-  // An agent whose registration time cannot be read is treated as having
-  // always existed, so its own records still count rather than none of them.
   const start = instant(agent.createdAt) ?? -Infinity;
   const since = (createdAt: string): boolean => {
     const at = instant(createdAt);

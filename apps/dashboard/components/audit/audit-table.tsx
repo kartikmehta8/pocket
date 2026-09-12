@@ -1,5 +1,9 @@
 'use client';
 
+/**
+ * The audit table itself, one row per event.
+ */
+
 import { ScrollText } from 'lucide-react';
 import Link from 'next/link';
 import { useState } from 'react';

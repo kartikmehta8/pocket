@@ -33,7 +33,16 @@ export const budgets = pgTable(
   (table) => [uniqueIndex('budgets_agent_idx').on(table.agentId)],
 );
 
-/** A budget scoped to one unit of work. `spent` advances inside the payment transaction. */
+/**
+ * A budget scoped to one unit of work.
+ *
+ * `spent` advances inside the payment transaction, so two purchases arriving at
+ * once cannot both pass on the same remaining balance.
+ *
+ * Its default is a SQL literal rather than `0n`: drizzle-kit serialises column
+ * defaults to JSON when diffing a migration, and JSON cannot represent a
+ * bigint.
+ */
 export const taskBudgets = pgTable(
   'task_budgets',
   {
@@ -47,8 +56,6 @@ export const taskBudgets = pgTable(
     label: text('label').notNull(),
     asset: text('asset').notNull(),
     limit: baseUnits('spend_limit').notNull(),
-    // A SQL literal rather than `0n`: drizzle-kit serialises defaults to JSON
-    // when diffing, and JSON cannot represent a bigint.
     spent: baseUnits('spent')
       .notNull()
       .default(sql`0`),

@@ -1,3 +1,7 @@
+/**
+ * The body of a step that sends the operator to an agent's settings.
+ */
+
 import { ArrowUpRight } from 'lucide-react';
 import Link from 'next/link';
 

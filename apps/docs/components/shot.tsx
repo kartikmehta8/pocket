@@ -1,3 +1,7 @@
+/**
+ * A screenshot of the product, framed the way the site frames a diagram.
+ */
+
 import { ImageZoom } from 'fumadocs-ui/components/image-zoom';
 
 /**

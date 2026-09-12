@@ -1,3 +1,7 @@
+/**
+ * One purchasable feed, as a card.
+ */
+
 import { ArrowUpRight, Clock, Link2 } from 'lucide-react';
 import Image from 'next/image';
 
@@ -78,6 +82,9 @@ function shortfall(resource: CatalogResource, balance: Balance | null): string |
  * @param resource The seller's advertised feed.
  * @param agentId The agent paying, or `''` when none is registered yet.
  * @param balance What that agent's wallet holds, or `null` when unknown.
+ *
+ * The endpoint is shown as host and path only. The scheme is noise at this
+ * size, and the copy button hands over the full URL anyway.
  */
 export function ResourceCard({
   resource,
@@ -90,8 +97,6 @@ export function ResourceCard({
 }) {
   const price = `${resource.price} ${resource.assetSymbol}`;
   const unaffordable = shortfall(resource, balance);
-  // Host and path only. The scheme is noise at this size, and the copy button
-  // hands over the full URL anyway.
   const endpoint = resource.url.replace(/^https?:\/\//, '');
 
   return (

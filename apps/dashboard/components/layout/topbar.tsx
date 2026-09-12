@@ -1,3 +1,7 @@
+/**
+ * The top bar.
+ */
+
 import { BookOpen, CircleHelp, Rocket } from 'lucide-react';
 import Link from 'next/link';
 

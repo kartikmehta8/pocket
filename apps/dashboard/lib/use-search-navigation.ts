@@ -1,5 +1,10 @@
 'use client';
 
+/**
+ * Filters and paging carried in the URL, so a narrowed list survives a reload
+ * and can be shared.
+ */
+
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useTransition } from 'react';
 

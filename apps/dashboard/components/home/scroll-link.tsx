@@ -1,5 +1,9 @@
 'use client';
 
+/**
+ * An in-page link that scrolls without writing a fragment into the URL.
+ */
+
 import type { ReactNode } from 'react';
 
 /**
@@ -13,6 +17,10 @@ import type { ReactNode } from 'react';
  * @param targetId `id` of the section to scroll to.
  * @param className Styling for the anchor.
  * @param children Link content.
+ *
+ * @remarks With no target the click falls through to the browser’s own anchor
+ * handling rather than being swallowed. Focus moves with the scroll, or a
+ * keyboard user’s next Tab resumes from the navigation.
  */
 export function ScrollLink({
   targetId,
@@ -32,12 +40,9 @@ export function ScrollLink({
       className={className}
       onClick={(event) => {
         const target = document.getElementById(targetId);
-        // With no target, fall through to the browser's own anchor handling
-        // rather than swallowing the click.
         if (target === null) return;
         event.preventDefault();
         target.scrollIntoView({ behavior: 'smooth', block: 'start' });
-        // Move focus too, or a keyboard user's next Tab resumes from the nav.
         target.focus({ preventScroll: true });
         onNavigate?.();
       }}

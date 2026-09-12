@@ -1,5 +1,9 @@
 'use client';
 
+/**
+ * The account menu in the top bar.
+ */
+
 import * as DropdownMenu from '@radix-ui/react-dropdown-menu';
 import { usePrivy } from '@privy-io/react-auth';
 import { ChevronsUpDown, LoaderCircle, LogOut, Settings, Sparkles } from 'lucide-react';
@@ -20,6 +24,9 @@ const ITEM = cn(
  *
  * @param orgName Organization display name.
  * @param email Signed-in address, or `null` when the identity provider gave none.
+ *
+ * @remarks Clear the server cookie first. If the Privy call then fails, the
+ * session is already dead server-side, which is the safer order to fail in.
  */
 export function UserMenu({ orgName, email }: { orgName: string; email: string | null }) {
   const { logout } = usePrivy();
@@ -28,8 +35,6 @@ export function UserMenu({ orgName, email }: { orgName: string; email: string | 
 
   async function signOut() {
     setSigningOut(true);
-    // Clear the server cookie first. If the Privy call then fails, the session
-    // is already dead server-side, which is the safer order to fail in.
     await fetch('/api/session', { method: 'DELETE' }).catch(() => null);
     await logout().catch(() => null);
     router.replace('/login');

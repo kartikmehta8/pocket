@@ -1,3 +1,7 @@
+/**
+ * Crawler rules for the documentation site.
+ */
+
 import type { MetadataRoute } from 'next';
 
 import { siteUrl } from '@/lib/brand';

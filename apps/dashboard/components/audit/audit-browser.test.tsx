@@ -1,3 +1,11 @@
+/**
+ * Filtering and paging the audit trail. The browser reaches for the app router
+ * and the live query string, neither of which exists outside Next. The query
+ * string is what paging links build on, so it is the one part the mock lets a
+ * test set. The actor badges carry hints, which need the provider the app
+ * layout supplies.
+ */
+
 import { renderToStaticMarkup } from 'react-dom/server';
 import { describe, expect, it, vi } from 'vitest';
 
@@ -6,9 +14,6 @@ import type { AuditEvent } from '@/lib/types';
 
 import { AuditBrowser, type AuditBrowserProps } from './audit-browser';
 
-// The browser reaches for the app router and the live query string, neither of
-// which exists outside Next. The query string is what paging links build on,
-// so it is the one part the mock lets a test set.
 let search = '';
 vi.mock('next/navigation', () => ({
   useRouter: () => ({ replace: () => undefined }),
@@ -40,7 +45,6 @@ const EVENTS = [
   event({ id: 'evt_3', action: 'org.created', subjectType: 'org', subjectId: null, payload: {} }),
 ];
 
-// The actor badges carry hints, which need the provider the app layout supplies.
 const render = (props: Partial<Omit<AuditBrowserProps, 'agents'>> = {}) =>
   renderToStaticMarkup(
     <TooltipProvider>

@@ -1,3 +1,7 @@
+/**
+ * The funding panel: the addresses a faucet asks for, and the faucets.
+ */
+
 import { ActivateButton } from '@/components/setup/activate-button';
 import { CodeBlock } from '@/components/ui/code-block';
 

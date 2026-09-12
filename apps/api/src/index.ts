@@ -14,11 +14,18 @@ import { buildServer } from './server.js';
  * @throws {Error} When configuration is invalid or the port cannot be bound.
  *   Failing at startup is deliberate: a half-configured financial service
  *   should not accept traffic.
+ *
+ * @remarks `loadEnvFile()` runs before anything reads configuration. Without it
+ * a service keeps whatever environment its shell had when it started, so a
+ * variable added to `.env` afterwards reads as unset for as long as that
+ * process lives.
+ *
+ * Whether new agents will be funded is the difference between an operator
+ * finishing the demo and being sent to a faucet, and it is decided entirely by
+ * configuration. Logging it at startup turns a silent misconfiguration into one
+ * line in the log.
  */
 async function main(): Promise<void> {
-  // Before anything reads configuration. Without it a service keeps whatever
-  // environment its shell had when it started, so a variable added to `.env`
-  // afterwards reads as unset for as long as that process lives.
   loadEnvFile();
   const config = loadConfig();
   const db = getDb(config.DATABASE_URL);
@@ -47,10 +54,6 @@ async function main(): Promise<void> {
   }
 
   await app.listen({ port: config.PORT, host: config.HOST });
-  // Whether new agents will be funded is the difference between an operator
-  // finishing the demo and being sent to a faucet, and it is decided entirely
-  // by configuration. Saying so at startup turns a silent misconfiguration
-  // into one line in the log.
   app.log.info(
     {
       adapters: adapters.modes,

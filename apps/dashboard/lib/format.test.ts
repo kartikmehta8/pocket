@@ -1,3 +1,7 @@
+/**
+ * Formatting money, time and addresses for a reader.
+ */
+
 import { describe, expect, it } from 'vitest';
 
 import {

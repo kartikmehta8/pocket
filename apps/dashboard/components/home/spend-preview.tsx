@@ -1,5 +1,9 @@
 'use client';
 
+/**
+ * The marketing page's spend chart.
+ */
+
 import {
   CartesianGrid,
   Line,

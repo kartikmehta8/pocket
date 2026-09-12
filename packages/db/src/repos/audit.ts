@@ -78,6 +78,10 @@ export interface AuditFilter {
  * `createdAt`, so events written in the same millisecond still page correctly.
  * Filters apply before the page is cut, so a filtered page is always full
  * until the trail runs out.
+ *
+ * An `action` filter matches a whole family: `payment` covers `payment.settled`
+ * and every other action under it. The family is escaped before it reaches the
+ * LIKE pattern, because `_` is a wildcard there and `task_budget` contains one.
  */
 export async function listAuditEvents(
   db: Database,
@@ -90,8 +94,6 @@ export async function listAuditEvents(
     conditions.push(lt(auditEvents.seq, Number(options.cursor)));
   }
   if (options.action !== undefined) {
-    // `_` is a LIKE wildcard, and `task_budget` has one. Escaped, so the
-    // family matches exactly the actions that carry it.
     const family = options.action.replace(/[\\%_]/g, '\\$&');
     const inFamily = or(
       eq(auditEvents.action, options.action),

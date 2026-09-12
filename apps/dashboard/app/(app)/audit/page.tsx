@@ -1,3 +1,8 @@
+/**
+ * The audit trail: every actor and every action, newest first, narrowed by
+ * activity family or by who acted.
+ */
+
 import type { Metadata } from 'next';
 import { Suspense } from 'react';
 
@@ -38,6 +43,9 @@ function readActor(value: string): AuditEvent['actorType'] | undefined {
  * and the browser's back button walks the pages. Unknown filter values are
  * ignored rather than forwarded: the API would refuse them, and a stale link
  * should show the trail, not an error.
+ *
+ * Names are a courtesy. A failed listing leaves ids in the agent column rather
+ * than taking the trail down with it.
  */
 export default async function AuditPage({ searchParams }: { searchParams: Promise<SearchParams> }) {
   const params = await searchParams;
@@ -54,8 +62,6 @@ export default async function AuditPage({ searchParams }: { searchParams: Promis
     }),
     listAgents(),
   ]);
-  // Names are a courtesy. A failed listing leaves ids in the agent column
-  // rather than taking the trail down with it.
   const agents = Object.fromEntries(
     (agentsResult.ok ? agentsResult.data.agents : []).map((agent) => [agent.id, agent.name]),
   );

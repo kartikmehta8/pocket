@@ -95,6 +95,8 @@ export class GraphMarketDataProvider implements MarketDataProvider {
    *   source failed or the two disagreed beyond the tolerance.
    * @throws {PocketError} `VALIDATION_FAILED` when the asset has no configured
    *   contract address, because guessing one would price the wrong token.
+   * @remarks When the two agree, the lower quote wins, so a ceiling never lets
+   *   more value through than the most conservative source would have allowed.
    */
   public async priceUsdCents(asset: AssetId): Promise<PriceResult> {
     const contract = this.#options.contracts[asset];
@@ -132,22 +134,21 @@ export class GraphMarketDataProvider implements MarketDataProvider {
       };
     }
 
-    // The lower of two agreeing quotes, so a ceiling never lets more value
-    // through than the most conservative source would have allowed.
     return { usdCentsPerUnit: Math.min(a.usdCentsPerUnit, b.usdCentsPerUnit), quotes };
   }
 
   /**
    * Reads a price from The Graph's Token API.
    *
-   * @param contract - Token contract address on the configured network.
+   * @param pool - Liquidity pool address on the configured network.
    * @returns A quote, or `null` when the response carried no usable price.
+   * @remarks The address is lowercased before it is sent. A checksummed one is
+   *   answered with a 500, which is indistinguishable from the service being
+   *   down.
    */
   async #fromTokenApi(pool: string): Promise<PriceQuote | null> {
     const url = new URL('/v1/evm/pools/ohlc', this.#options.tokenApiUrl);
     url.searchParams.set('network', this.#options.network);
-    // Addresses must be lowercase. A checksummed one is answered with a 500,
-    // which is indistinguishable from the service being down.
     url.searchParams.set('pool', pool.toLowerCase());
     url.searchParams.set('interval', '1h');
     url.searchParams.set('limit', '1');

@@ -1,3 +1,7 @@
+/**
+ * The chevron that opens a row's detail.
+ */
+
 import { ChevronRight } from 'lucide-react';
 
 import { cn } from '@/lib/cn';

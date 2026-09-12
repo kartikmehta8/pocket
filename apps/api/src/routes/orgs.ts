@@ -23,28 +23,40 @@ import type { AppContext } from '../context.js';
  * @param ctx - Application context.
  */
 export function registerOrgRoutes(app: FastifyInstance, ctx: AppContext): void {
+  /** `GET /v1/health` — adapter wiring and the chain, without a credential. */
   app.get('/v1/health', () => ({
     ok: true,
     adapters: ctx.modes,
     chain: ctx.config.CHAIN,
   }));
 
+  /**
+   * `POST /v1/orgs` — creates an organization and its first key.
+   *
+   * The only door into an organization with no signed-in person, so it mints the
+   * first key itself. Sign-in deliberately does not: a dashboard user can see the
+   * form and create one on purpose.
+   *
+   * The plaintext key exists only in this response. It is never persisted, never
+   * logged, and cannot be retrieved again.
+   */
   app.post('/v1/orgs', async (request, reply) => {
     const body = createOrgSchema.parse(request.body);
     const org = await createOrganization(ctx.db, body.name);
-    // This endpoint is the only door into an organization with no signed-in
-    // person, so it mints the first key itself. Sign-in does not: a dashboard
-    // user can see the form and create one deliberately.
     const { plaintext } = await issueApiKey(ctx.db, org.id, 'Bootstrap key');
     reply.status(201);
-    // The plaintext key exists only in this response. It is never persisted,
-    // never logged, and cannot be retrieved again.
     return {
       org: { id: org.id, name: org.name, createdAt: org.createdAt.toISOString() },
       apiKey: plaintext,
     };
   });
 
+  /**
+   * `GET /v1/orgs/me` — the calling organization, and the person if there is one.
+   *
+   * `user` is null for a machine caller. An API key belongs to an organization
+   * rather than to a person, and inventing one would misattribute the audit trail.
+   */
   app.get('/v1/orgs/me', async (request) => {
     const org = await findOrganizationById(ctx.db, request.orgId);
     if (org === null) throw new PocketError('NOT_FOUND', 'Organization not found.');
@@ -54,8 +66,6 @@ export function registerOrgRoutes(app: FastifyInstance, ctx: AppContext): void {
     ]);
     return {
       org: { id: org.id, name: org.name, createdAt: org.createdAt.toISOString(), members },
-      // Null for a machine caller. An API key belongs to an organization, not
-      // to a person, and inventing one would misattribute the audit trail.
       user:
         user === null
           ? null
@@ -64,6 +74,7 @@ export function registerOrgRoutes(app: FastifyInstance, ctx: AppContext): void {
     };
   });
 
+  /** `PATCH /v1/orgs/me` — renames the organization. Signed-in humans only. */
   app.patch('/v1/orgs/me', async (request) => {
     requireHuman(request);
     const body = renameOrgSchema.parse(request.body);

@@ -54,7 +54,6 @@ describe('a seller that fails after signing', () => {
 
     expect(outcome.status).toBe('failed');
     expect(outcome).toHaveProperty('code', 'UPSTREAM_UNAVAILABLE');
-    // Recording it is what releases the reservation.
     expect(recordSettlement).toHaveBeenCalledWith(
       deps.db,
       'org_x',

@@ -1,3 +1,7 @@
+/**
+ * The fixed left rail.
+ */
+
 import { cn } from '@/lib/cn';
 import { Rail } from './rail';
 

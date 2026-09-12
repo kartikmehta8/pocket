@@ -1,3 +1,7 @@
+/**
+ * The class fragments each semantic tone is painted with.
+ */
+
 import type { Tone } from '@/lib/status';
 
 /**

@@ -1,3 +1,7 @@
+/**
+ * Choosing which categories an agent may spend on.
+ */
+
 import { describe, expect, it } from 'vitest';
 
 import { CATEGORIES } from '@/lib/catalog';

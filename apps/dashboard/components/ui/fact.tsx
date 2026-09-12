@@ -1,3 +1,7 @@
+/**
+ * One row of a definition list.
+ */
+
 import type { ReactNode } from 'react';
 
 /** Props for {@link Fact}. */

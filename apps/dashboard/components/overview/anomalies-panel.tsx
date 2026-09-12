@@ -1,3 +1,7 @@
+/**
+ * The anomalies panel on the overview.
+ */
+
 import { ShieldCheck, TriangleAlert } from 'lucide-react';
 
 import { Badge } from '@/components/ui/badge';

@@ -1,5 +1,10 @@
 'use server';
 
+/**
+ * Server actions for the organization and its credentials: renaming, minting
+ * and revoking keys, and registering an agent.
+ */
+
 import { revalidatePath } from 'next/cache';
 
 import { activateWallet, createAgent, createApiKey, renameOrg, revokeApiKey } from './api';
@@ -105,6 +110,9 @@ export async function createAgentAction(
  * key until it signs something, and Circle's faucet refuses to send to one.
  * Moves no money: the wallet signs a transfer of nothing to itself and pays
  * only the gas.
+ *
+ * The signature is on chain either way. Only the confirmation can be late, and
+ * saying so beats claiming a result the next read will contradict.
  */
 export async function activateWalletAction(agentId: string): Promise<ActionState> {
   const result = await activateWallet(agentId);
@@ -114,8 +122,6 @@ export async function activateWalletAction(agentId: string): Promise<ActionState
   if (result.data.alreadyActive) {
     return { status: 'success', message: 'This wallet had already published its key.' };
   }
-  // The signature is on chain either way. Only the confirmation can be late,
-  // and saying so beats claiming a result the next read will contradict.
   return {
     status: 'success',
     message: result.data.confirmed

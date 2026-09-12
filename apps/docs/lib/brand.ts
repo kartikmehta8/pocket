@@ -48,12 +48,14 @@ const DEFAULT_APP_URL = 'https://www.pocket-app.xyz';
  * production, where it changes on every deploy and matches no domain anybody
  * recognises. Production therefore asks Vercel for the project's own domain
  * first, and only a preview falls back to addressing itself.
+ *
+ * With nothing configured and no Vercel environment, a production build assumes
+ * the documentation domain: a card pointing at localhost would be worse than
+ * one pointing at the domain the site actually lives on.
  */
 export function siteUrl(): string {
   const host = configuredHost();
   if (host !== null) return `https://${host}`;
-  // Nothing configured and not on Vercel: a card pointing at localhost would
-  // be worse than one pointing at the domain the site actually lives on.
   return process.env.NODE_ENV === 'production'
     ? `https://${DEFAULT_DOCS_DOMAIN}`
     : 'http://localhost:3001';
@@ -73,13 +75,14 @@ export function appUrl(): string {
  * The host this deployment should call itself, from configuration.
  *
  * @returns A bare host, or `null` when nothing says.
+ * @remarks `VERCEL_PROJECT_PRODUCTION_URL` is Vercel's own name for the
+ * project's production domain. It is present on every deployment and is the
+ * only variable that keeps pointing at the same place.
  */
 function configuredHost(): string | null {
   const configured = clean(process.env.NEXT_PUBLIC_DOCS_DOMAIN);
   if (configured !== null) return configured;
 
-  // Vercel's own name for the project's production domain. Present on every
-  // deployment, and the only variable that keeps pointing at the same place.
   if (process.env.VERCEL_ENV === 'production') {
     const canonical = clean(process.env.VERCEL_PROJECT_PRODUCTION_URL);
     if (canonical !== null) return canonical;

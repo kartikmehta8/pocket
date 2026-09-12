@@ -1,5 +1,9 @@
 'use client';
 
+/**
+ * The inline result of a server action.
+ */
+
 import { CircleCheck, TriangleAlert } from 'lucide-react';
 import { AnimatePresence, motion, useReducedMotion } from 'motion/react';
 

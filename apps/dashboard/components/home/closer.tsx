@@ -1,5 +1,9 @@
 'use client';
 
+/**
+ * The closing panel of the marketing page.
+ */
+
 import { ArrowRight } from 'lucide-react';
 import Image from 'next/image';
 import Link from 'next/link';

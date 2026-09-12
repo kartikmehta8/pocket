@@ -1,5 +1,9 @@
 'use client';
 
+/**
+ * The modal that registers an agent, opened from the agents index.
+ */
+
 import * as DialogPrimitive from '@radix-ui/react-dialog';
 import { Bot, Plus, X } from 'lucide-react';
 import { useState } from 'react';

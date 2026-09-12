@@ -25,6 +25,7 @@ export interface WalletPolicyOptions {
  *
  * @param options - The ceiling to enforce.
  * @returns Rules in Privy's expected shape, with money as decimal wei strings.
+ * @remarks Decimal wei is the form Privy documents. Hex is rejected.
  */
 export function walletPolicyRules(options: WalletPolicyOptions) {
   return [
@@ -43,7 +44,6 @@ export function walletPolicyRules(options: WalletPolicyOptions) {
           fieldSource: 'ethereum_transaction' as const,
           field: 'value' as const,
           operator: 'gt' as const,
-          // Decimal wei, which is the form Privy documents. Hex is rejected.
           value: options.ceilingWei.toString(),
         },
       ],

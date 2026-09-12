@@ -1,5 +1,9 @@
 'use client';
 
+/**
+ * What a purchase attempt produced, shown inline.
+ */
+
 import { ArrowUpRight, Ban, CircleCheck, Clock, TriangleAlert } from 'lucide-react';
 import { AnimatePresence, motion, useReducedMotion } from 'motion/react';
 import Link from 'next/link';
@@ -39,7 +43,14 @@ const INK = {
   danger: 'text-danger-ink',
 };
 
-/** The data a purchase returned, or the reason it did not happen. */
+/**
+ * The data a purchase returned, or the reason it did not happen.
+ *
+ * @remarks A settlement failure is usually about the wallet, which is two clicks
+ * away on a page the reader may not think to look for. The payment is absent
+ * when the attempt failed before a row existed, and then there is nothing to
+ * point at.
+ */
 function Body({ outcome }: { outcome: PurchaseOutcome }) {
   if (outcome.status === 'paid' || outcome.status === 'free') {
     return (
@@ -78,10 +89,6 @@ function Body({ outcome }: { outcome: PurchaseOutcome }) {
     );
   }
 
-  // A settlement failure is usually about the wallet, which is two clicks away
-  // on a page the reader may not think to look for. The payment is absent when
-  // the attempt failed before a row existed, and then there is nothing to
-  // point at.
   const payment = outcome.payment;
   return (
     <div className="mt-1 flex flex-col gap-2">

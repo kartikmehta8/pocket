@@ -1,5 +1,9 @@
 'use client';
 
+/**
+ * The two-state toggle.
+ */
+
 import * as SwitchPrimitive from '@radix-ui/react-switch';
 
 import { cn } from '@/lib/cn';

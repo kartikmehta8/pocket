@@ -1,5 +1,9 @@
 'use client';
 
+/**
+ * The rotating agent name in the marketing headline.
+ */
+
 import Image from 'next/image';
 import { AnimatePresence, motion, useReducedMotion } from 'motion/react';
 import { useEffect, useState } from 'react';

@@ -1,3 +1,10 @@
+/**
+ * What the delete dialog may offer, and when. Without the force path an agent
+ * whose wallet has no gas can be neither emptied nor deleted, which is an
+ * agent nobody can ever be rid of. After a sweep the chain can still report
+ * the old balance, and pressing again must not send the money twice.
+ */
+
 import { describe, expect, it } from 'vitest';
 
 import { planDelete } from './agent-delete';
@@ -34,8 +41,6 @@ describe('planDelete', () => {
   });
 
   it('lets the operator delete and leave the balance, once they say so', () => {
-    // Without this an agent whose wallet has no gas can be neither emptied nor
-    // deleted, which is an agent nobody can ever be rid of.
     const plan = planDelete(FUNDED, [], false, true);
     expect(plan.canProceed).toBe(true);
     expect(plan.moveFirst).toBe(false);
@@ -47,8 +52,6 @@ describe('planDelete', () => {
   });
 
   it('finishes the delete after a transfer that already went through', () => {
-    // The chain can still report the old balance here. Pressing again must
-    // not send the money twice.
     const plan = planDelete(FUNDED, [OTHER], true);
     expect(plan.moveFirst).toBe(false);
     expect(plan.stranded).toBe(false);

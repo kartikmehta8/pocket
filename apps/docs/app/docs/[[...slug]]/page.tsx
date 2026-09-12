@@ -1,3 +1,8 @@
+/**
+ * One documentation page, and the metadata a crawler and a chat client read
+ * off it.
+ */
+
 import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import { DocsBody, DocsDescription, DocsPage, DocsTitle } from 'fumadocs-ui/layouts/docs/page';
@@ -49,6 +54,10 @@ export function generateStaticParams() {
  * time that draws this page's own title. The file convention that would
  * normally do this cannot be used: `opengraph-image` is a route segment, and
  * Next refuses one after the optional catch-all this route is.
+ *
+ * `/docs/using/budgets` is drawn by `/og/using/budgets`, and `/docs` by `/og`.
+ * The canonical address is relative because `metadataBase` on the root layout
+ * resolves it.
  */
 export async function generateMetadata(props: DocsPageProps): Promise<Metadata> {
   const params = await props.params;
@@ -56,7 +65,6 @@ export async function generateMetadata(props: DocsPageProps): Promise<Metadata> 
   if (!page) notFound();
 
   const { title, description } = page.data;
-  // `/docs/using/budgets` is drawn by `/og/using/budgets`; `/docs` by `/og`.
   const image = {
     url: page.url.replace(/^\/docs/, '/og'),
     width: 1200,
@@ -67,7 +75,6 @@ export async function generateMetadata(props: DocsPageProps): Promise<Metadata> 
   return {
     title,
     description,
-    // Absolute in effect: `metadataBase` on the root layout resolves it.
     alternates: { canonical: page.url },
     openGraph: {
       type: 'article',

@@ -1,3 +1,8 @@
+/**
+ * The contract vocabulary the interface offers: categories, statuses, audit
+ * families and actors, each in the order a reader should meet them.
+ */
+
 import { humanize } from './format';
 import type {
   AgentStatus,

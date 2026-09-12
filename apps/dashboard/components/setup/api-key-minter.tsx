@@ -1,5 +1,9 @@
 'use client';
 
+/**
+ * The control that mints an API key and reveals it once.
+ */
+
 import { KeyRound, TriangleAlert } from 'lucide-react';
 import { AnimatePresence, motion, useReducedMotion } from 'motion/react';
 import { useActionState, useEffect, useId } from 'react';
@@ -32,14 +36,15 @@ export interface ApiKeyMinterProps {
  * the reveal is emphatic about being the only chance to copy it.
  *
  * @param props How many live keys exist, and where to hand the new one.
+ *
+ * @remarks Keyed on the revision, not the secret: two keys are never the same,
+ * but the effect should fire once per creation, not on every re-render.
  */
 export function ApiKeyMinter({ existing, onMinted }: ApiKeyMinterProps) {
   const [state, submit, pending] = useActionState(createApiKeyAction, IDLE_SECRET);
 
   useEffect(() => {
     if (state.secret !== '') onMinted?.(state.secret);
-    // Keyed on the revision, not the secret: two keys are never the same, but
-    // the effect should fire once per creation, not on every re-render.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [state.revision]);
   const labelId = useId();

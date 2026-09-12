@@ -1,5 +1,9 @@
 'use client';
 
+/**
+ * Client providers shared by every route.
+ */
+
 import { PrivyProvider } from '@privy-io/react-auth';
 import { TooltipProvider } from '@/components/ui/tooltip';
 import type { ReactNode } from 'react';
@@ -20,6 +24,9 @@ const PRIVY_APPEARANCE = {
  *   configured. Without it the tree renders unchanged, so the dashboard still
  *   works in the single-tenant local setup that authenticates with an API key.
  * @param children The application.
+ *
+ * @remarks Operators sign in as people. Wallets belong to their agents and are
+ * created server-side, so no wallet is provisioned for the human here.
  */
 export function Providers({ appId, children }: { appId: string; children: ReactNode }) {
   const tree = <TooltipProvider delayDuration={180}>{children}</TooltipProvider>;
@@ -31,8 +38,6 @@ export function Providers({ appId, children }: { appId: string; children: ReactN
       appId={appId}
       config={{
         appearance: PRIVY_APPEARANCE,
-        // Operators sign in as people. Wallets belong to their agents and are
-        // created server-side, so no wallet is provisioned for the human here.
         loginMethods: ['email', 'google', 'github', 'wallet'],
         embeddedWallets: { ethereum: { createOnLogin: 'off' } },
       }}

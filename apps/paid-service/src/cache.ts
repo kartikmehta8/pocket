@@ -59,6 +59,10 @@ export class SourceCache {
    *   registered for sale at all, and routes are fixed when the port binds, so
    *   one slow upstream at the wrong moment used to cost that feed for the
    *   lifetime of the process — and every composed feed that reads it with it.
+   *
+   *   The result is in declaration order rather than the order the feeds
+   *   happened to succeed in. The catalogue is read by people, and a feed
+   *   should not move because its upstream was slow the first time.
    */
   public async warm(
     stages: ReadonlyArray<readonly DataSource[]>,
@@ -80,9 +84,6 @@ export class SourceCache {
       }
     }
 
-    // Declaration order, not the order they happened to succeed in: the
-    // catalog is read by people, and a feed should not move because its
-    // upstream was slow the first time.
     return stages.flat().filter((source) => warmed.has(source.id));
   }
 
@@ -90,11 +91,12 @@ export class SourceCache {
    * Starts background refresh for the given feeds.
    *
    * @param sources - The feeds that warmed successfully.
+   * @remarks Every timer is unreferenced, so a refresh schedule never holds the
+   *   process open.
    */
   public start(sources: readonly DataSource[]): void {
     for (const source of sources) {
       const timer = setInterval(() => void this.#refresh(source), source.ttlMs);
-      // Never hold the process open for a refresh timer.
       timer.unref();
       this.#timers.push(timer);
     }
@@ -131,7 +133,6 @@ export class SourceCache {
       this.#onError(source.id, cause);
       const previous = this.#snapshots.get(source.id);
       if (previous === undefined) return false;
-      // Keep serving the last good data, but say that is what it is.
       this.#snapshots.set(source.id, { ...previous, stale: true });
       return true;
     }

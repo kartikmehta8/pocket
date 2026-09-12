@@ -5,6 +5,12 @@
  * a test can impersonate distinct people by presenting distinct strings. That
  * is enough to exercise the parts that matter: which tenant a session lands
  * in, and what a machine credential is refused.
+ *
+ * Signing in must not hand back a secret, and must not leave one behind for
+ * the account to be reached with either. A fresh organization holds no keys at
+ * all, so telling it to replace the last one before revoking would name a key
+ * it has never had. The tenancy cases give the stranger two live keys of their
+ * own, so the refusal proves tenancy scoping rather than the last-key guard.
  */
 
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
@@ -49,8 +55,6 @@ describe('session bootstrap', () => {
     const subject = `dana-${Date.now()}`;
     const { body } = await signIn(subject);
 
-    // Signing in must not hand back a secret, and must not leave one behind
-    // for the account to be reached with either.
     expect(body).not.toHaveProperty('apiKey');
 
     const keys = await h.app.inject({
@@ -169,8 +173,6 @@ describe('api key management', () => {
     const subject = `ivan-${Date.now()}`;
     await signIn(subject);
 
-    // A fresh organization holds no keys at all. Telling it to replace the
-    // last one before revoking would name a key it has never had.
     const response = await h.app.inject({
       method: 'DELETE',
       url: '/v1/api-keys/key_doesnotexist',
@@ -182,7 +184,6 @@ describe('api key management', () => {
   it('revokes a key and stops accepting it', async () => {
     const subject = `frank-${Date.now()}`;
     await signIn(subject);
-    // Two, because the last live key cannot be revoked.
     await mintKey(subject, 'Keeper');
     const minted = await mintKey(subject, 'Throwaway');
 
@@ -215,8 +216,6 @@ describe('api key management', () => {
     });
     const keyId = created.json<{ key: { id: string } }>().key.id;
 
-    // The stranger needs two live keys of their own, so the refusal proves
-    // tenancy scoping rather than the last-key guard.
     await h.app.inject({
       method: 'POST',
       url: '/v1/api-keys',

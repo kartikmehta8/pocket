@@ -1,5 +1,9 @@
 'use client';
 
+/**
+ * The marketplace body: who pays, what is for sale, and the custom-URL box.
+ */
+
 import { ArrowUpRight, Bot } from 'lucide-react';
 import Link from 'next/link';
 import { useEffect, useId, useState } from 'react';
@@ -139,6 +143,11 @@ function Payer({
  * @param agents Every agent in the organization.
  * @remarks Revoked agents are not offered. They cannot pay, and listing them
  * would only produce a refusal the reader could have been spared.
+ *
+ * The payer falls back to the first one offered when the chosen agent is no
+ * longer in the list. The balance read is slower than a click, so a stale
+ * answer can arrive after the reader has already switched agents; `live` drops
+ * it rather than labelling one agent’s wallet with another’s balance.
  */
 export function Marketplace({
   resources,
@@ -149,14 +158,10 @@ export function Marketplace({
 }) {
   const payers = agents.filter((agent) => agent.status !== 'revoked');
   const [chosen, setChosen] = useState(payers.find((agent) => agent.status === 'active')?.id ?? '');
-  // Falls back to the first payer when the chosen one is no longer offered.
   const agentId = payers.some((agent) => agent.id === chosen) ? chosen : (payers[0]?.id ?? '');
   const [balance, setBalance] = useState<Balance | null>(null);
 
   useEffect(() => {
-    // The read is slower than a click, so a stale answer can arrive after the
-    // reader has already switched agents. `live` drops it rather than
-    // labelling one agent's wallet with another's balance.
     let live = true;
     setBalance(null);
     void agentBalanceAction(agentId).then((next) => {

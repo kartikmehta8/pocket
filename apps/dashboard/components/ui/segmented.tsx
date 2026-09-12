@@ -1,5 +1,9 @@
 'use client';
 
+/**
+ * The segmented control, for small mutually exclusive choices.
+ */
+
 import * as ToggleGroup from '@radix-ui/react-toggle-group';
 
 import { cn } from '@/lib/cn';

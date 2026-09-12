@@ -1,5 +1,9 @@
 'use client';
 
+/**
+ * The overview's four headline numbers.
+ */
+
 import { Ban, CircleCheck, Coins, Gauge } from 'lucide-react';
 
 import { Meter } from '@/components/ui/meter';
@@ -24,6 +28,9 @@ export interface KpiRowProps {
 /**
  * The four numbers the dashboard leads with. Each is a stat tile rather than a
  * one-bar chart, revealed with a short stagger and rolled up from zero.
+ *
+ * @remarks The meter plots the share consumed, so its severity escalates as
+ * headroom runs out, while the tile’s own value states what is left.
  */
 export function KpiRow({
   asset,
@@ -33,8 +40,6 @@ export function KpiRow({
   settledCount,
   blockedCount,
 }: KpiRowProps) {
-  // The meter plots the share consumed, so its severity escalates as headroom
-  // runs out; the tile's own value states what is left.
   const consumedRatio = usageRatio(spendToday, dailyLimit);
 
   return (

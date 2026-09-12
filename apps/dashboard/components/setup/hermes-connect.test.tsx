@@ -1,3 +1,7 @@
+/**
+ * The connection recipes, one tab per agent runtime.
+ */
+
 import { renderToStaticMarkup } from 'react-dom/server';
 import { describe, expect, it } from 'vitest';
 

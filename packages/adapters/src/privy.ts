@@ -179,12 +179,12 @@ export class PrivyWalletProvider implements WalletProvider {
    * @throws {PocketError} `PAYMENT_FAILED` when Privy rejects the call, which
    *   for this transaction almost always means the wallet has no HBAR to pay
    *   the gas with.
+   * @remarks Nothing moves, but the send helper labels every transaction with
+   *   an asset for its error reporting, and the gas asset is the honest label.
    */
   public async completeAccount(input: CompleteAccountInput): Promise<SubmittedTransaction | null> {
     return await sendPrivyTransaction(this.#privy, {
       ...input,
-      // Nothing is being moved, but the send helper labels every transaction
-      // with an asset for its error reporting. The gas asset is the honest one.
       asset: chainConfig(input.chain).nativeAsset,
       transaction: buildCompleteAccountTransaction(input),
       refusal: 'Privy rejected the account completion.',

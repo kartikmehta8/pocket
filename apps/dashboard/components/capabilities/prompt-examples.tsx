@@ -1,5 +1,9 @@
 'use client';
 
+/**
+ * The ready-made prompts on the capabilities screen.
+ */
+
 import * as ToggleGroup from '@radix-ui/react-toggle-group';
 import { useState } from 'react';
 
@@ -23,15 +27,18 @@ interface Example {
  * @param agent The agent to name, or `null` when none exists yet.
  * @param resources The seller's advertised feeds.
  * @returns Four prompts covering buying, refusal, budgeting and reporting.
+ *
+ * @remarks The agent is named, not identified. A runtime resolves the name
+ * through pocket_list_agents, and a person reading the prompt knows who it is
+ * about.
+ *
+ * Placeholders, not a guess at an address: a prompt that names a service nobody
+ * has deployed should read as one to edit, not one to run.
  */
 function buildExamples(agent: AgentSummary | null, resources: CatalogResource[]): Example[] {
-  // The agent is named, not identified. A runtime resolves the name through
-  // pocket_list_agents, and a person reading the prompt knows who it is about.
   const who = agent === null ? 'my agent' : `my agent "${agent.name}"`;
   const cheapest = [...resources].sort((a, b) => Number(a.price) - Number(b.price))[0];
   const dearest = [...resources].sort((a, b) => Number(b.price) - Number(a.price))[0];
-  // Placeholders, not a guess at an address: a prompt that names a service
-  // nobody has deployed should read as one to edit, not one to run.
   const cheapUrl = cheapest?.url ?? '<paid resource URL>';
   const dearUrl = dearest?.url ?? '<paid resource URL>';
 

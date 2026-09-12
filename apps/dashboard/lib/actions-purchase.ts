@@ -1,5 +1,10 @@
 'use server';
 
+/**
+ * Server actions that spend money: buying a resource on an agent's behalf, and
+ * previewing what a purchase would cost.
+ */
+
 import { revalidatePath } from 'next/cache';
 
 import { purchaseResource } from './api';

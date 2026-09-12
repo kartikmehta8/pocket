@@ -1,3 +1,7 @@
+/**
+ * One agent's card on the agents index.
+ */
+
 import { ArrowUpRight, Wallet } from 'lucide-react';
 import Link from 'next/link';
 

@@ -1,3 +1,8 @@
+/**
+ * The Pocket API, as this app calls it. One function per endpoint, each
+ * answering a result union rather than throwing.
+ */
+
 import 'server-only';
 
 import { cache } from 'react';
@@ -21,7 +26,7 @@ import type {
 
 export type { ApiErr, ApiOk, ApiResult } from './http';
 
-// Account administration — organization, credentials and agent registration.
+/** Account administration — organization, credentials and agent registration. */
 export * from './api-account';
 
 /**

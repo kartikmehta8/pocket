@@ -1,5 +1,9 @@
 'use client';
 
+/**
+ * The organization rename form.
+ */
+
 import { Save } from 'lucide-react';
 import { useActionState, useId } from 'react';
 

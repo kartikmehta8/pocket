@@ -1,5 +1,9 @@
 'use client';
 
+/**
+ * The dropdown, used for table filters and pickers.
+ */
+
 import * as SelectPrimitive from '@radix-ui/react-select';
 import { Check, ChevronDown } from 'lucide-react';
 

@@ -1,3 +1,7 @@
+/**
+ * The body of the step that produces the first settled payment.
+ */
+
 import Link from 'next/link';
 
 import { ConfirmStepButton } from './confirm-step-button';

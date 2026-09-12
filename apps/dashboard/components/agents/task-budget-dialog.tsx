@@ -1,5 +1,9 @@
 'use client';
 
+/**
+ * The modal that opens a task-scoped budget.
+ */
+
 import { Target } from 'lucide-react';
 import { useState, useTransition } from 'react';
 

@@ -1,5 +1,9 @@
 'use client';
 
+/**
+ * The guide's header.
+ */
+
 import { RestartButton } from './restart-button';
 import { CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 
@@ -63,11 +67,12 @@ function guidance(restarted: boolean, done: number, total: number): string {
  * @remarks The restart is offered at every point in the run. Withholding it
  * until the end assumed the only reason to start over is having finished,
  * which is the opposite of true.
+ *
+ * Wraps rather than squeezing: on a phone the description and the control cannot
+ * share a row without one of them losing.
  */
 export function GuideHeader({ done, total, restarted, pending, onRestart }: GuideHeaderProps) {
   return (
-    // Wraps rather than squeezing: on a phone the description and the control
-    // cannot share a row without one of them losing.
     <CardHeader className="flex-wrap">
       <div className="min-w-0">
         <CardTitle>{headline(restarted, done, total)}</CardTitle>

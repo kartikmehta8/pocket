@@ -1,5 +1,9 @@
 'use client';
 
+/**
+ * A stat-tile value that counts up on mount.
+ */
+
 import { animate, useMotionValue, useReducedMotion } from 'motion/react';
 import { useEffect, useState } from 'react';
 

@@ -1,3 +1,15 @@
+/**
+ * The setup guide, at each stage an organization can be in. The fixtures pick
+ * the states that carry a distinct reading: a part-finished run leaves step
+ * four current and five to seven todo, which is the only state that carries
+ * the spoken "Not started"; every record the server can read saying done still
+ * leaves the guide waiting to be told about the terminal; and with no key yet,
+ * neither terminal step can be confirmed. A restart hands the guide no agent
+ * at all, which is exactly what a new organization looks like, so step one
+ * must offer the register form again — without it there is no way to name the
+ * next agent and "start again" leaves the reader with nothing to press.
+ */
+
 import { renderToStaticMarkup } from 'react-dom/server';
 import { describe, expect, it, vi } from 'vitest';
 
@@ -10,11 +22,14 @@ vi.mock('next/navigation', () => ({
   useRouter: () => ({ refresh: () => undefined }),
 }));
 
-/** The agent the guide follows. Only the fields the tree reads matter. */
+/**
+ * The agent the guide follows. Only the fields the tree reads matter.
+ *
+ * @remarks Not 'Hermes': that is the register form's placeholder, and the point
+ * of one assertion below is that the previous agent leaves no trace.
+ */
 const AGENT: AgentSummary = {
   id: 'agent_1',
-  // Not 'Hermes': that is the register form's placeholder, and the point of
-  // one assertion below is that the previous agent leaves no trace.
   name: 'Zephyr',
   description: null,
   status: 'active',
@@ -71,8 +86,6 @@ describe('Guide', () => {
   });
 
   it('points at the first outstanding step, and leaves the rest not started', () => {
-    // PART finishes three, so step four is current and steps five to seven
-    // are todo — the only state that carries the spoken "Not started".
     expect(render(PART).match(/Not started/g)).toHaveLength(3);
   });
 
@@ -82,8 +95,6 @@ describe('Guide', () => {
 
   describe('the last two steps', () => {
     it('are not ticked by the five recorded ones', () => {
-      // Every record the server can read says done, and the guide still waits
-      // to be told about the terminal.
       const html = render(ALL);
       expect(html).toContain('5 of 7 done');
       expect(html).not.toContain('That is the whole flow');
@@ -94,9 +105,7 @@ describe('Guide', () => {
     });
 
     it('unlock one at a time: six after the key, seven after six', () => {
-      // Every recorded step done: connecting is open, buying still waits on it.
       expect(confirmButtons(markup(ALL))).toEqual([false, true]);
-      // No key yet: neither terminal step can be confirmed.
       expect(confirmButtons(markup(PART))).toEqual([true, true]);
     });
 
@@ -122,10 +131,6 @@ describe('Guide', () => {
   });
 
   describe('a restarted run', () => {
-    // A restart hands the guide no agent at all, which is exactly what a new
-    // organization looks like. Step one must therefore offer the register
-    // form again — without it there is no way to name the next agent, and
-    // "start again" leaves the reader with nothing to press.
     const fresh = render(NONE, null);
 
     it('offers the register form, so a new agent can be named', () => {

@@ -1,3 +1,7 @@
+/**
+ * The footer of a cursor-paged list.
+ */
+
 import { ArrowLeft, ArrowRight } from 'lucide-react';
 import Link from 'next/link';
 

@@ -1,3 +1,8 @@
+/**
+ * The shape every mutation server action answers with, so a form can report
+ * success or failure inline without throwing.
+ */
+
 import type { PurchaseOutcome } from './types';
 
 /** Result of a mutation server action, surfaced inline beside its form. */

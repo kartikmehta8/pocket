@@ -1,3 +1,7 @@
+/**
+ * The search index, built from the same loader the navigation tree comes from.
+ */
+
 import { createFromSource } from 'fumadocs-core/search/server';
 
 import { source } from '@/lib/source';

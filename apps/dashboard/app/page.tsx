@@ -1,3 +1,7 @@
+/**
+ * The marketing page, and the only route a stranger can reach.
+ */
+
 import type { Metadata } from 'next';
 
 import { TAGLINE, DESCRIPTION } from '@/lib/brand';

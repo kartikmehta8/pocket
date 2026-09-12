@@ -6,6 +6,13 @@
  * the wallet cannot sign for, a mirror node that is down, Privy refusing — and
  * a reservation that outlives the attempt costs the agent budget it never
  * spent, silently and for good.
+ *
+ * The token address is set here rather than read from the developer’s own
+ * `.env`: the seller asks to be paid in a token id, and Pocket resolves that
+ * to an asset through the configured address rather than a hard-coded one. The
+ * payee lookup happens before any payment exists and is not what these cases
+ * are about, so it is answered from memory rather than the network. The point
+ * of all of them is that a failed attempt costs the agent nothing.
  */
 
 import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest';
@@ -28,13 +35,8 @@ const { loadConfig } = await import('../src/config.js');
 let h: Awaited<ReturnType<typeof createHarness>>;
 
 beforeAll(async () => {
-  // The seller asks to be paid in token 0.0.429274, and Pocket resolves that
-  // to an asset through the configured address rather than a hard-coded id.
-  // Set it here so the test does not depend on the developer's own `.env`.
   vi.stubEnv('HEDERA_USDC_ADDRESS', '0x0000000000000000000000000000000000068cda');
   h = await createHarness();
-  // The payee lookup happens before any payment exists and is not what this
-  // test is about, so it is answered from memory rather than the network.
   resolveHederaAccount.mockResolvedValue({
     accountId: '0.0.10425079',
     evmAddress: SELLER,
@@ -90,7 +92,6 @@ describe('a wallet that cannot sign', () => {
       }),
     ).rejects.toThrow(/public key/);
 
-    // The whole point: the failed attempt costs the agent nothing.
     expect(await spendToday(agentId)).toBe(before);
 
     const listed = await h.app.inject({

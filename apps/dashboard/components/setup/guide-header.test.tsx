@@ -1,3 +1,9 @@
+/**
+ * The guide header, and when it offers to start over. Somebody who wants to
+ * start over halfway through wants it more than somebody who has just
+ * finished.
+ */
+
 import { renderToStaticMarkup } from 'react-dom/server';
 import { describe, expect, it } from 'vitest';
 
@@ -31,8 +37,6 @@ describe('GuideHeader', () => {
 
   describe('the restart control', () => {
     it.each([0, 3, 7])('is offered at every point in the run (%i done)', (done) => {
-      // Somebody who wants to start over halfway through wants it more than
-      // somebody who has just finished.
       expect(render(done)).toContain('Restart guide');
     });
 

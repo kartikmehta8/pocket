@@ -1,5 +1,9 @@
 'use client';
 
+/**
+ * The editable list of short strings, for assets, chains and recipients.
+ */
+
 import { Plus, X } from 'lucide-react';
 import { AnimatePresence, motion, useReducedMotion } from 'motion/react';
 import { useState } from 'react';

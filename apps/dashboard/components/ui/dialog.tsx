@@ -1,5 +1,9 @@
 'use client';
 
+/**
+ * The modal dialog.
+ */
+
 import * as DialogPrimitive from '@radix-ui/react-dialog';
 import { X } from 'lucide-react';
 import { AnimatePresence, motion } from 'motion/react';

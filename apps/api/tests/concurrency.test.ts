@@ -10,6 +10,16 @@
  * reads queue behind each other. These tests exist to prove that holds under
  * contention rather than only in the reading of it, so they run against real
  * Postgres: an in-memory fake cannot fail the way a database can.
+ *
+ * The numbers are chosen, not arbitrary. Ten payments at 2.00 against a 20.00
+ * daily limit all fit, and the point is that none is lost or double-counted;
+ * fifteen at 2.00 means ten can be afforded and five must be refused. The
+ * invariant is never a cent over the limit, and one payment means one transfer
+ * however many callers asked. The pool holds ten connections, and each
+ * authorisation runs in a transaction that owns one for its whole life — so a
+ * read taken off the pool from inside would wait for a connection only another
+ * transaction can release. Forty at once is four times the pool, which turns
+ * that mistake from a rare stall into a certainty.
  */
 
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
@@ -49,8 +59,6 @@ function committed(bodies: { payment: { status: string; amount: string } }[]): n
 
 describe('a daily limit under contention', () => {
   it('lets exactly the affordable number through when ten fire at once', async () => {
-    // Ten at 2.00 against a 20.00 daily limit: every one fits, and the point is
-    // that none of them is lost or double-counted.
     const agentId = await createFundedAgent(h);
     const bodies = await stampede(agentId, 10, '2');
 
@@ -60,7 +68,6 @@ describe('a daily limit under contention', () => {
   });
 
   it('refuses the overflow rather than letting the limit be exceeded', async () => {
-    // Fifteen at 2.00 against 20.00. Ten can be afforded; five must be refused.
     const agentId = await createFundedAgent(h);
     const bodies = await stampede(agentId, 15, '2');
 
@@ -70,7 +77,6 @@ describe('a daily limit under contention', () => {
     expect(settled.length + blocked.length).toBe(15);
     expect(settled).toHaveLength(10);
     expect(blocked).toHaveLength(5);
-    // The invariant that matters: never a cent over the limit.
     expect(committed(bodies)).toBeLessThanOrEqual(20);
   });
 
@@ -117,7 +123,6 @@ describe('one idempotency key under contention', () => {
         .filter((b) => b.payment !== undefined)
         .map((b) => b.payment.id),
     );
-    // One payment, one transfer, however many callers asked.
     expect(ids.size).toBe(1);
     expect(h.wallet.sent.length - before).toBe(1);
   });
@@ -125,11 +130,6 @@ describe('one idempotency key under contention', () => {
 
 describe('more callers at once than the connection pool has room for', () => {
   it('does not deadlock when concurrency exceeds the pool', async () => {
-    // The pool holds ten connections. Each authorisation runs in a transaction
-    // that owns one for its whole life, so any read taken off the pool from
-    // inside would wait for a connection that only another transaction can
-    // release. Forty at once is four times the pool, which turns that mistake
-    // from a rare stall into a certainty.
     const agentId = await createFundedAgent(h);
     const bodies = await stampede(agentId, 40, '1');
 

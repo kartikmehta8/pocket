@@ -1,3 +1,8 @@
+/**
+ * Social preview images, one per documentation page, drawn in the product's
+ * own materials and prerendered at build time.
+ */
+
 import { ImageResponse } from 'next/og';
 
 import { POWERED_BY, SITE_NAME, siteUrl } from '@/lib/brand';
@@ -139,8 +144,6 @@ export async function GET(
                 fontSize: 28,
                 lineHeight: 1.4,
                 color: THEME.muted,
-                // Two lines at most. A description long enough to need a
-                // third is a description nobody reads off a preview card.
                 display: '-webkit-box',
                 WebkitLineClamp: 2,
                 WebkitBoxOrient: 'vertical',

@@ -1,5 +1,9 @@
 'use client';
 
+/**
+ * The navigation rail on a narrow viewport.
+ */
+
 import * as Dialog from '@radix-ui/react-dialog';
 import * as VisuallyHidden from '@radix-ui/react-visually-hidden';
 import { Menu, X } from 'lucide-react';
@@ -20,12 +24,13 @@ import { cn } from '@/lib/cn';
  * @remarks Built on the dialog primitive for the parts that are easy to get
  * wrong by hand: focus is trapped while open, Escape closes, the page behind
  * stops scrolling, and the trigger is described to a screen reader.
+ *
+ * Choosing a destination should leave; the drawer has done its job.
  */
 export function MobileNav({ children }: { children: ReactNode }) {
   const [open, setOpen] = useState(false);
   const pathname = usePathname();
 
-  // Choosing a destination should leave; the drawer has done its job.
   useEffect(() => {
     setOpen(false);
   }, [pathname]);

@@ -1,3 +1,9 @@
+/**
+ * The setup guide. Seven steps from an empty organization to an agent that has
+ * paid for its own data, each read from live state rather than from a
+ * checkbox.
+ */
+
 import type { Metadata } from 'next';
 import { cookies } from 'next/headers';
 import Link from 'next/link';
@@ -33,6 +39,19 @@ export const dynamic = 'force-dynamic';
  * exactly what somebody arriving for the first time sees — an empty run, with
  * the register form back on step one — until a new agent is named, at which
  * point the guide follows that one and the restart is spent.
+ *
+ * Newest first, so the guide follows the agent most recently registered.
+ *
+ * A failed listing is not an empty one. Treating it as empty would let a
+ * transient API error read as "no agent registered since the restart" and
+ * silently reopen a fresh run over an organization that has been set up for
+ * weeks — with nothing on screen to explain it.
+ *
+ * A restart is a blank run: no agent to fetch, and nothing of the last one to
+ * show. Skipping the reads is the point, not an optimisation.
+ *
+ * Key management needs a signed-in person. In API-key mode the call is refused,
+ * which is not an error worth showing: the step explains why.
  */
 export default async function SetupPage() {
   const [store, agentsResult, keysResult] = await Promise.all([
@@ -41,27 +60,18 @@ export default async function SetupPage() {
     listApiKeys(),
   ]);
 
-  // Newest first, so the guide follows the agent most recently registered.
   const agents = agentsResult.ok ? [...agentsResult.data.agents].sort(newestFirst) : null;
   const newest = agents?.[0] ?? null;
 
-  // A failed listing is not an empty one. Treating it as empty would let a
-  // transient API error read as "no agent registered since the restart" and
-  // silently reopen a fresh run over an organization that has been set up for
-  // weeks — with nothing on screen to explain it.
   const restartAt =
     agents === null ? null : readRestartAt(store.get(RESTART_COOKIE)?.value, Date.now());
   const restarted = restartInEffect(restartAt, newest?.createdAt ?? null);
 
-  // A restart is a blank run: no agent to fetch, and nothing of the last one
-  // to show. Skipping the reads is the point, not an optimisation.
   const followed = restarted ? null : newest;
   const detailResult = followed === null ? null : await getAgent(followed.id);
   const detail = detailResult?.ok === true ? detailResult.data : null;
   const agent = detail?.agent ?? followed;
 
-  // Key management needs a signed-in person. In API-key mode the call is
-  // refused, which is not an error worth showing: the step explains why.
   const keys = keysResult.ok ? keysResult.data.keys.filter((key) => key.revokedAt === null) : [];
   const urls = serviceUrls();
 

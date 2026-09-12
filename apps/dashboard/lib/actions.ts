@@ -1,5 +1,10 @@
 'use server';
 
+/**
+ * Server actions for an agent: its status, its budget, its policy and its task
+ * budgets.
+ */
+
 import { revalidatePath } from 'next/cache';
 
 import {

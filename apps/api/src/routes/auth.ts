@@ -38,6 +38,18 @@ function orgNameFor(email: string | null): string {
  * @param ctx - Application context.
  */
 export function registerAuthRoutes(app: FastifyInstance, ctx: AppContext): void {
+  /**
+   * `POST /v1/auth/session` — turns an identity token into a tenancy.
+   *
+   * Creates the organization on a first sign-in and answers `201`; an existing
+   * subject is answered `200` with what it already has. It mints no key: a
+   * credential the operator was never shown is one nobody is accountable for.
+   *
+   * The access token carries a subject but no contact detail. Privy's identity
+   * token does, so the browser forwards it and the lookup costs no rate-limited
+   * call. Absent, the organization simply gets a generic name the operator can
+   * rename.
+   */
   app.post('/v1/auth/session', async (request, reply) => {
     const token = bearerToken(request);
     if (token === null) {
@@ -46,10 +58,6 @@ export function registerAuthRoutes(app: FastifyInstance, ctx: AppContext): void 
     const body = createSessionSchema.parse(request.body ?? {});
     const identity = await ctx.identity.verify(token);
 
-    // The access token carries a subject but no contact detail. Privy's
-    // identity token does, so the browser forwards it here and the lookup
-    // costs no rate-limited call. Absent, the organization simply gets a
-    // generic name the operator can rename.
     const profileToken = request.headers['x-identity-token'];
     const profile = await ctx.identity.profile(
       identity.subject,

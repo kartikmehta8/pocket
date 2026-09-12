@@ -1,3 +1,7 @@
+/**
+ * The budget usage meter.
+ */
+
 import { cn } from '@/lib/cn';
 import { usageTone } from '@/lib/status';
 

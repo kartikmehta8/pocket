@@ -57,7 +57,13 @@ function round(value: number | undefined, places: number): number | null {
   return Math.round(value * factor) / factor;
 }
 
-/** Live spot prices for six major assets. */
+/**
+ * Live spot prices for six major assets.
+ *
+ * An asset the upstream did not quote is omitted rather than sent as zero. A
+ * missing price and a price of nothing are different facts, and a buyer acting
+ * on the second when the first is true would be acting on a lie.
+ */
 export const marketPrices: DataSource<MarketPrices> = {
   id: 'market-prices',
   path: '/v1/market/prices',
@@ -72,8 +78,6 @@ export const marketPrices: DataSource<MarketPrices> = {
     const quotes = ASSETS.flatMap(({ id, symbol }) => {
       const entry = body[id];
       const priceUsd = round(entry?.usd, 6);
-      // An asset the upstream did not quote is omitted rather than sent as
-      // zero. A missing price and a price of nothing are different facts.
       if (entry === undefined || priceUsd === null) return [];
       return [
         {

@@ -55,11 +55,11 @@ function env(name: string): string | null {
  * @returns Build identity and uptime, safe to serve publicly.
  * @remarks `startedAt` is derived from the process clock rather than captured
  * when this module loads, so it is the moment the runtime started and not the
- * moment the first import happened to run.
+ * moment the first import happened to run. The clock is read once and used
+ * twice: two readings would let the reported start time and uptime disagree by
+ * however long the object took to build.
  */
 export function release(version: string): Release {
-  // One reading of the clock, used twice. Two calls would let the reported
-  // start time and uptime disagree by however long the object took to build.
   const uptime = process.uptime();
   return {
     version,

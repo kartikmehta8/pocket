@@ -16,15 +16,18 @@ import { PocketError } from '@pocket/core';
 import { findOrganizationByApiKey, findSession } from '@pocket/db';
 import type { AppContext } from './context.js';
 
-/** Routes that may be called without a key. Everything else is protected. */
+/**
+ * Routes that may be called without a key. Everything else is protected.
+ *
+ * @remarks The service description names endpoints and vendors, all of which
+ * are public, and nothing that belongs to an organization. Session bootstrap
+ * authenticates the identity token itself and cannot require an organization,
+ * because establishing one is what it does.
+ */
 const PUBLIC_ROUTES = new Set([
   'POST:/v1/orgs',
-  // The service's own description. It names endpoints and vendors, all of
-  // which are public, and nothing that belongs to an organization.
   'GET:/',
   'GET:/v1/health',
-  // Session bootstrap authenticates the identity token itself; it cannot
-  // require an organization, because establishing one is what it does.
   'POST:/v1/auth/session',
 ]);
 

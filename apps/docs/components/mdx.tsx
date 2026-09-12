@@ -1,3 +1,7 @@
+/**
+ * Components every MDX page can use without importing them.
+ */
+
 import defaultComponents from 'fumadocs-ui/mdx';
 import { Callout } from 'fumadocs-ui/components/callout';
 import { Card, Cards } from 'fumadocs-ui/components/card';

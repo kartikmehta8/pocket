@@ -1,5 +1,9 @@
 'use client';
 
+/**
+ * One navigation link, marked active the way the product's own rail marks one.
+ */
+
 import type * as PageTree from 'fumadocs-core/page-tree';
 import { motion, useReducedMotion } from 'motion/react';
 import Link from 'next/link';

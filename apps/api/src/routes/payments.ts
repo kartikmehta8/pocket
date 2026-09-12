@@ -63,12 +63,14 @@ export function registerPaymentRoutes(app: FastifyInstance, ctx: AppContext): vo
     logger: app.log,
   };
 
+  /** `POST /v1/payments/preview` — the real decision, recorded nowhere. */
   app.post('/v1/payments/preview', async (request) => {
     const body = paymentRequestSchema.parse(request.body);
     const decision = await previewPayment(deps, request.orgId, body);
     return { decision: decisionToJson(decision, body.asset) };
   });
 
+  /** `POST /v1/payments` — records an attempt and decides it. Idempotent. */
   app.post('/v1/payments', async (request) => {
     const body = paymentRequestSchema.parse(request.body);
     const key = requireIdempotencyKey(request.headers['idempotency-key']);
@@ -83,6 +85,7 @@ export function registerPaymentRoutes(app: FastifyInstance, ctx: AppContext): vo
     };
   });
 
+  /** `GET /v1/payments` — attempts, refusals included, newest first. */
   app.get('/v1/payments', async (request) => {
     const query = listQuerySchema.parse(request.query);
     const page = await listPayments(ctx.db, request.orgId, {
@@ -99,12 +102,14 @@ export function registerPaymentRoutes(app: FastifyInstance, ctx: AppContext): vo
     };
   });
 
+  /** `GET /v1/payments/:id` — one attempt in full. */
   app.get<{ Params: { id: string } }>('/v1/payments/:id', async (request) => {
     const payment = await getPayment(ctx.db, request.orgId, request.params.id);
     if (payment === null) throw new PocketError('NOT_FOUND', 'Payment not found.');
     return { payment: paymentToJson(payment, (hash) => ctx.chain.explorerUrl(hash)) };
   });
 
+  /** `POST /v1/payments/:id/approve` — releases a held payment. */
   app.post<{ Params: { id: string } }>('/v1/payments/:id/approve', async (request) => {
     const body = approvalSchema.parse(request.body ?? {});
     const payment = await getPayment(ctx.db, request.orgId, request.params.id);
@@ -152,6 +157,12 @@ export function registerPaymentRoutes(app: FastifyInstance, ctx: AppContext): vo
     };
   });
 
+  /**
+   * `POST /v1/payments/:id/reject` — refuses a held payment.
+   *
+   * Releases the reservation taken at authorization time. This money will never
+   * move, and holding the headroom would starve later payments.
+   */
   app.post<{ Params: { id: string } }>('/v1/payments/:id/reject', async (request) => {
     const body = approvalSchema.parse(request.body ?? {});
     const payment = await getPayment(ctx.db, request.orgId, request.params.id);
@@ -169,8 +180,6 @@ export function registerPaymentRoutes(app: FastifyInstance, ctx: AppContext): vo
         approved: false,
         note: body.note,
       });
-      // Release the reservation taken at authorization time; this money will
-      // never move, so holding the headroom would starve later payments.
       if (payment.taskBudgetId !== null) {
         await chargeTaskBudget(tx, payment.taskBudgetId, -payment.amount);
       }

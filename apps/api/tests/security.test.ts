@@ -1,3 +1,11 @@
+/**
+ * What the API refuses to tell a stranger.
+ *
+ * A resource in another tenant and a resource that does not exist answer with
+ * the same code and the same message, so the API never distinguishes the two.
+ * The details echo only the id the caller already supplied, which leaks nothing.
+ */
+
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { randomUUID } from 'node:crypto';
 import { createFundedAgent, createHarness, paymentBody, type Harness } from './helpers.js';
@@ -65,9 +73,6 @@ describe('tenant isolation', () => {
 
     expect(foreign.statusCode).toBe(404);
     expect(missing.statusCode).toBe(404);
-    // Same code and message either way, so the API never distinguishes "belongs
-    // to another tenant" from "does not exist". The details only echo the id the
-    // caller already supplied, which leaks nothing.
     const shape = (r: typeof foreign) => {
       const { error } = r.json();
       return { code: error.code, message: error.message };

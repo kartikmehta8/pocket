@@ -33,6 +33,9 @@ const NOT_REQUIRED: PricingOutcome = { usdCents: null, quotes: [] };
  * @remarks A failure returns `null` rather than throwing. The policy engine
  *   treats `null` as a denial when a ceiling applies, so a broken price feed
  *   blocks spending instead of quietly disabling the control.
+ *
+ * Cents per whole unit, scaled by the payment’s base units. Integer maths
+ * throughout: a price is money and never goes through a float.
  */
 export async function priceIfRequired(
   market: MarketDataProvider,
@@ -55,8 +58,6 @@ export async function priceIfRequired(
         ...(result.disagreementReason === undefined ? {} : { reason: result.disagreementReason }),
       };
     }
-    // Cents per whole unit, scaled by the payment's base units. Integer maths
-    // throughout: a price is money and never goes through a float.
     const scale = 10n ** BigInt(decimalsOf(asset));
     const usdCents = (amount * BigInt(result.usdCentsPerUnit)) / scale;
     return { usdCents, quotes };

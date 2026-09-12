@@ -1,3 +1,8 @@
+/**
+ * The seller's public catalogue, read fresh on every request so a price on
+ * screen is the price the policy engine will see.
+ */
+
 import 'server-only';
 
 /** One purchasable feed, as the seller advertises it before payment. */

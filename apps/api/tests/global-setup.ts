@@ -33,8 +33,6 @@ export async function setup(): Promise<void> {
   await client.connect();
   try {
     const existing = await client.query('select 1 from pg_database where datname = $1', [name]);
-    // No CREATE DATABASE IF NOT EXISTS in Postgres, and the identifier cannot
-    // be a bound parameter, so the name is quoted rather than interpolated raw.
     if (existing.rowCount === 0) {
       await client.query(`create database "${name.replaceAll('"', '""')}"`);
     }

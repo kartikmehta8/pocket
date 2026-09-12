@@ -1,3 +1,10 @@
+/**
+ * Paging the payment list.
+ *
+ * The fixtures are made back to back so at least two are likely to share a
+ * millisecond, which is what gives the keyset something to disambiguate.
+ */
+
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { randomUUID } from 'node:crypto';
 import { createFundedAgent, createHarness, paymentBody, type Harness } from './helpers.js';
@@ -8,8 +15,6 @@ let agentId: string;
 beforeAll(async () => {
   h = await createHarness();
   agentId = await createFundedAgent(h);
-  // Three payments, made back to back, so at least two are likely to share a
-  // millisecond and the keyset has something to disambiguate.
   for (let i = 0; i < 3; i += 1) {
     const response = await h.app.inject({
       method: 'POST',

@@ -1,3 +1,8 @@
+/**
+ * The page tree. Everything — the sidebar, the search index, the sitemap and
+ * the social cards — is built from this one loader.
+ */
+
 import { loader } from 'fumadocs-core/source';
 import { defineDocs } from 'fumadocs-mdx/macro';
 import { metaSchema, pageSchema } from 'fumadocs-core/source/schema';

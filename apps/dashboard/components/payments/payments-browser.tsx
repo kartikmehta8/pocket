@@ -1,5 +1,9 @@
 'use client';
 
+/**
+ * The filter bar, results and paging that make up the payments screen.
+ */
+
 import { useMemo } from 'react';
 
 import { Pager } from '@/components/ui/pager';

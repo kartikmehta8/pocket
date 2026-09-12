@@ -1,3 +1,7 @@
+/**
+ * Turning an audit event into something a person can read.
+ */
+
 import { humanize, truncateAddress } from './format';
 import type { AuditEvent } from './types';
 

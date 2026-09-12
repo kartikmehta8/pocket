@@ -1,3 +1,7 @@
+/**
+ * The small `i` that explains what a figure means.
+ */
+
 import { Info } from 'lucide-react';
 import type { ReactNode } from 'react';
 

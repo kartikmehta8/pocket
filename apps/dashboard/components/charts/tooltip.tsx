@@ -1,3 +1,7 @@
+/**
+ * The tooltip surface every chart shares.
+ */
+
 import type { ReactNode } from 'react';
 
 /**

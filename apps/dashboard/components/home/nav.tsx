@@ -1,5 +1,9 @@
 'use client';
 
+/**
+ * The marketing page's floating navigation.
+ */
+
 import { BookOpen, Menu, X } from 'lucide-react';
 import { AnimatePresence, motion, useReducedMotion } from 'motion/react';
 import Link from 'next/link';

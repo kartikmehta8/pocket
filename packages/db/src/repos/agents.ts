@@ -78,6 +78,11 @@ export interface AgentsPage {
  * Filtering happens here rather than in the browser for the same reason it
  * does on Payments: a page narrowed after it arrives is a page missing the
  * matches that fell on the other side of the cut.
+ *
+ * The search term is escaped, so a `%` typed into the search box matches a
+ * literal percent rather than everything. An omitted limit returns every agent
+ * and produces no cursor. The wallet join exists for the address search and
+ * cannot duplicate a row: a unique index allows one wallet per agent.
  */
 export async function listAgents(
   db: Database,
@@ -89,8 +94,6 @@ export async function listAgents(
 
   const search = filter.search?.trim() ?? '';
   if (search !== '') {
-    // Escaped, so a `%` typed into the search box matches a literal percent
-    // rather than everything.
     const term = `%${search.replace(/[\\%_]/g, '\\$&')}%`;
     const matches = or(
       ilike(agents.name, term),
@@ -107,14 +110,11 @@ export async function listAgents(
     );
   }
 
-  // No limit means every agent, so nothing is cut and no cursor is produced.
   const limit = filter.limit === undefined ? null : Math.min(filter.limit, 200);
 
   const query = db
     .select({ agent: agents, createdAtText: sql<string>`${agents.createdAt}::text` })
     .from(agents)
-    // Exactly one wallet per agent, enforced by a unique index, so this cannot
-    // duplicate a row. It is here for the address search.
     .leftJoin(wallets, eq(wallets.agentId, agents.id))
     .where(and(...conditions))
     .orderBy(desc(agents.createdAt), desc(agents.id));

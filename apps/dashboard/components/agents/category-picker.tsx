@@ -1,5 +1,9 @@
 'use client';
 
+/**
+ * The spend-category chooser inside the Policy panel.
+ */
+
 import { Check, ListChecks, X } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
@@ -30,6 +34,9 @@ export interface CategoryPickerProps {
  *
  * Each pill is a real checkbox with a visible focus ring, not a div listening
  * for clicks: the group is reachable by keyboard and announced as what it is.
+ *
+ * A policy is read back in contract order rather than click order, so what it
+ * says does not depend on which pill was pressed first.
  */
 export function CategoryPicker({ selected, onChange }: CategoryPickerProps) {
   const all = selected.length === CATEGORIES.length;
@@ -91,9 +98,7 @@ export function CategoryPicker({ selected, onChange }: CategoryPickerProps) {
                   onChange(
                     checked
                       ? selected.filter((entry) => entry !== category)
-                      : // Contract order, not click order: a policy read back
-                        // should not depend on which pill was pressed first.
-                        CATEGORIES.filter(
+                      : CATEGORIES.filter(
                           (entry) => entry === category || selected.includes(entry),
                         ),
                   )

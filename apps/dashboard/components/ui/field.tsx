@@ -1,3 +1,7 @@
+/**
+ * The labelled form field every control is wrapped in.
+ */
+
 import * as LabelPrimitive from '@radix-ui/react-label';
 import type { InputHTMLAttributes, ReactNode } from 'react';
 

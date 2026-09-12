@@ -83,6 +83,18 @@ async function markFailed(
  * @remarks Never throws for a settlement problem. The caller receives a
  *   payment whose status is the answer, because an exception here would leave
  *   the agent unable to tell "did not happen" from "do not know".
+ *
+ * Association is checked first. Hedera will not let an account receive a token
+ * it has not opted into, so the transfer would revert and burn gas, and
+ * catching it here turns an opaque on-chain failure into a reason an operator
+ * can act on. `null` means the question does not apply or could not be
+ * answered, and is not treated as a refusal.
+ *
+ * Only a blocked payment has no idempotency key, and a blocked payment never
+ * reaches settlement; its own id is a stable fallback either way. A missing
+ * receipt is not evidence of failure: the payment is left `submitted` with its
+ * hash so an operator can reconcile it, and the budget stays reserved because
+ * the money may well have moved.
  */
 export async function settlePayment(
   deps: SettlementDeps,
@@ -91,11 +103,6 @@ export async function settlePayment(
   providerWalletId: string,
   fromAddress = '',
 ): Promise<Payment> {
-  // Hedera will not let an account receive a token it has not opted into, so
-  // the transfer would revert and burn gas. Catching it here turns an opaque
-  // on-chain failure into a reason an operator can act on. `null` means the
-  // question does not apply or could not be answered, and is not treated as a
-  // refusal.
   const associated = await deps.chain.isTokenAssociated(
     payment.recipient,
     payment.asset as AssetId,
@@ -118,8 +125,6 @@ export async function settlePayment(
       amount: payment.amount,
       asset: payment.asset as AssetId,
       chain: payment.chain as ChainId,
-      // Only a blocked payment has no key, and a blocked payment never
-      // reaches settlement. Its own id is a stable fallback either way.
       idempotencyKey: payment.idempotencyKey ?? payment.id,
     });
     txHash = submitted.txHash;
@@ -147,9 +152,6 @@ export async function settlePayment(
       return await markFailed(deps, orgId, submitted, 'The transaction reverted on chain.');
     }
   } catch (cause) {
-    // A missing receipt is not evidence of failure. Leave the payment
-    // `submitted` with its hash so an operator can reconcile it, and keep the
-    // budget reserved because the money may well have moved.
     deps.logger.error({ paymentId: payment.id, txHash }, 'Receipt not confirmed in time');
     await appendAuditEvent(deps.db, {
       orgId,

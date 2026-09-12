@@ -1,3 +1,7 @@
+/**
+ * The testnet faucets, in the sidebar footer.
+ */
+
 import Image from 'next/image';
 import { ArrowUpRight } from 'lucide-react';
 

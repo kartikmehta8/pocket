@@ -50,7 +50,13 @@ const GUARANTEES = [
  * @param routes - Every route the server registered, as `METHOD /path`.
  * @remarks Registered last, once `routes` is populated. The list is collected
  * from Fastify rather than written out here, so an endpoint cannot be added to
- * the API and left out of its own index.
+ * the API and left out of its own index. `adapters` names which vendor is
+ * answering for each thing Pocket deliberately does not do itself, and whether
+ * it is the real one.
+ *
+ * The response is `no-store`: uptime and the running build change under the
+ * reader's feet, and an intermediary holding a copy would answer confidently
+ * with yesterday's.
  */
 export function registerAboutRoute(
   app: FastifyInstance,
@@ -58,8 +64,6 @@ export function registerAboutRoute(
   routes: readonly string[],
 ): void {
   app.get('/', (_request, reply) => {
-    // Uptime and the running build change under the reader's feet, so an
-    // intermediary holding a copy would answer confidently with yesterday's.
     reply.header('cache-control', 'no-store');
     return {
       service: 'pocket-api',
@@ -73,8 +77,6 @@ export function registerAboutRoute(
       role: 'Policy engine, ledger and audit trail. The dashboard and the MCP server are both clients of this API.',
       guarantees: GUARANTEES,
       chain: ctx.config.CHAIN,
-      // Which vendor is answering for each thing Pocket deliberately does not do
-      // itself, and whether it is the real one.
       adapters: ctx.modes,
       auth: {
         scheme: 'Bearer',

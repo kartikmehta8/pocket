@@ -1,3 +1,7 @@
+/**
+ * A vendor's mark beside its name.
+ */
+
 import Image from 'next/image';
 
 import { cn } from '@/lib/cn';

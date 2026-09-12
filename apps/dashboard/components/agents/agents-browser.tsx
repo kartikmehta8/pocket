@@ -1,5 +1,9 @@
 'use client';
 
+/**
+ * The filter bar, results and paging that make up the agents index.
+ */
+
 import { Bot } from 'lucide-react';
 import { useId } from 'react';
 
@@ -44,6 +48,13 @@ const STATUS_OPTIONS = [
  * The search is submitted rather than typed into the URL on every keystroke.
  * A round trip per character would be a request per character, and the back
  * button would then walk through half-typed words.
+ *
+ * Remounted when the applied search changes, so the box agrees with the URL
+ * after a back button or a cleared filter. An uncontrolled input keeps whatever
+ * was typed otherwise.
+ *
+ * A search box that only reacts to Enter should say so, since the button it
+ * would otherwise need is not worth the row it costs.
  */
 export function AgentsBrowser({ agents, status, search, nextCursor }: AgentsBrowserProps) {
   const statusId = useId();
@@ -78,17 +89,12 @@ export function AgentsBrowser({ agents, status, search, nextCursor }: AgentsBrow
             Search
           </label>
           <Input
-            // Remounted when the applied search changes, so the box agrees
-            // with the URL after a back button or a cleared filter. An
-            // uncontrolled input keeps whatever was typed otherwise.
             key={search}
             id={searchId}
             name="q"
             type="search"
             placeholder="Name, description or wallet…"
             defaultValue={search}
-            // A search box that only reacts to Enter should say so, since the
-            // button it would otherwise need is not worth the row it costs.
             aria-describedby={`${searchId}-hint`}
           />
           <span id={`${searchId}-hint`} className="sr-only">

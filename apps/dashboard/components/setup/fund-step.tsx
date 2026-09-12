@@ -1,3 +1,7 @@
+/**
+ * The body of the funding step.
+ */
+
 import { CircleCheck, Info } from 'lucide-react';
 
 import { FundingStages } from './funding-stages';
@@ -33,6 +37,12 @@ export interface FundStepProps {
  * accounts that have never signed anything, and reports success either way.
  * That is now an optional path for testing at length rather than the only way
  * to begin, and the traps are named rather than left to be discovered.
+ *
+ * The faucet route is ordinarily unreachable, because an agent is funded at
+ * registration. It is here for the wallet that missed it — no treasury
+ * configured, or an empty one — and it deliberately says nothing about
+ * treasuries: why Pocket did not pay is Pocket’s problem, and the only useful
+ * thing to tell an operator is how to carry on.
  */
 export function FundStep({
   address,
@@ -94,11 +104,6 @@ export function FundStep({
     );
   }
 
-  // Ordinarily unreachable: an agent is funded at registration. This is the
-  // wallet that missed it — no treasury configured, or an empty one — and the
-  // guide still has to work, so the faucet route stays. Deliberately says
-  // nothing about treasuries: why Pocket did not pay is Pocket's problem, and
-  // the only useful thing to tell an operator is how to carry on.
   return (
     <>
       <FundingStages hasAccount={accountId !== null} hollow={hollow} />

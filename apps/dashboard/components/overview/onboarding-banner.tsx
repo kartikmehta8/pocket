@@ -1,3 +1,7 @@
+/**
+ * The prompt at the top of the overview while setup is unfinished.
+ */
+
 import Link from 'next/link';
 import { ArrowRight, Bot, KeyRound, PlugZap } from 'lucide-react';
 

@@ -140,6 +140,10 @@ function refusalReason(response: Response): string | null {
  * @param url - The resource.
  * @param payload - The signed x402 payload.
  * @returns The resource and the settlement receipt, or the seller's refusal.
+ *
+ * The header is read first: it is the only place an x402 seller says what was
+ * wrong. The body is the fallback for a seller that is not speaking x402 at all
+ * by this point — a gateway error page, say.
  */
 export async function payForResource(url: URL, payload: X402PaymentPayload): Promise<PaidResponse> {
   const response = await fetch(url, {
@@ -153,9 +157,6 @@ export async function payForResource(url: URL, payload: X402PaymentPayload): Pro
     return {
       kind: 'rejected',
       status: response.status,
-      // The header first: it is the only place an x402 seller says what was
-      // wrong. The body is the fallback for a seller that is not speaking
-      // x402 at all by this point — a gateway error page, say.
       detail: stated ?? (body === '' || body === '{}' ? '' : body),
     };
   }

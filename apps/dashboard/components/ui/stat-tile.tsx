@@ -1,3 +1,7 @@
+/**
+ * A single headline number.
+ */
+
 import type { LucideIcon } from 'lucide-react';
 import type { ReactNode } from 'react';
 

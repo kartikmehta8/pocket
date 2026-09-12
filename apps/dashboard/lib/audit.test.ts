@@ -1,3 +1,8 @@
+/**
+ * Reading an audit event back: which agent it is about, and how it should read
+ * on screen.
+ */
+
 import { describe, expect, it } from 'vitest';
 
 import { agentIdOf, describeEvent } from './audit';

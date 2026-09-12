@@ -1,5 +1,10 @@
 'use client';
 
+/**
+ * One easing curve and three durations, mirrored from the CSS tokens so a
+ * component and a stylesheet cannot disagree.
+ */
+
 import type { Transition, Variants } from 'motion/react';
 
 /**

@@ -1,3 +1,7 @@
+/**
+ * Class name merging, with later Tailwind utilities winning.
+ */
+
 import { clsx, type ClassValue } from 'clsx';
 import { twMerge } from 'tailwind-merge';
 
