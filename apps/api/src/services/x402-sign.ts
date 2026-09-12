@@ -7,16 +7,16 @@
  * never existed.
  */
 
-import { createPrivyHederaSigner, type PrivyWalletProvider } from '@pocket/adapters';
+import { createPrivyHederaSigner } from '@pocket/adapters';
 import { recordWalletPublicKey, type Database } from '@pocket/db';
-import type { Payment, Wallet } from '@pocket/core';
+import type { Payment, Wallet, WalletProvider } from '@pocket/core';
 import { recordSettlement } from './x402-settle.js';
 import type { X402Requirements } from './x402-types.js';
 
 /** What signing needs: a wallet provider, a database, and the mirror node. */
 export interface SignDeps {
   db: Database;
-  wallet: PrivyWalletProvider;
+  wallet: WalletProvider;
   mirrorNodeUrl: string;
 }
 

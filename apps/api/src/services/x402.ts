@@ -9,7 +9,7 @@
  * submit. Pocket never broadcasts and never holds a key.
  */
 
-import { assetForTokenId, PrivyWalletProvider } from '@pocket/adapters';
+import { assetForTokenId } from '@pocket/adapters';
 import {
   PocketError,
   newId,
@@ -18,6 +18,7 @@ import {
   type ChainId,
   type Payment,
   type PaymentRequest,
+  type WalletProvider,
 } from '@pocket/core';
 import {
   appendAuditEvent,
@@ -39,7 +40,7 @@ import { type X402PaymentPayload, type X402Requirements } from './x402-types.js'
 export interface X402Deps {
   db: Database;
   market: MarketDataProvider;
-  wallet: PrivyWalletProvider;
+  wallet: WalletProvider;
   chain: ChainId;
   mirrorNodeUrl: string;
 }
@@ -65,6 +66,15 @@ export interface X402Authorization {
  * @returns The recorded payment, the decision, and the signed payload when allowed.
  * @throws {PocketError} `VALIDATION_FAILED` when the seller's asset is not one
  *   Pocket is configured for, or `WALLET_NOT_PROVISIONED` when the agent has no wallet.
+ *
+ * @remarks Only an outright allow produces a signed payload. A payment awaiting
+ * a human must not become payable, or the approval step would be decorative.
+ *
+ * By the time signing happens the row is already `approved`, which reserves the
+ * amount against the daily budget. Signing can still fail — an account the
+ * wallet cannot sign for, a mirror node that is down, Privy refusing — and a
+ * reservation that outlives the attempt would consume budget for a payment that
+ * never existed.
  */
 export async function authorizeX402Payment(
   deps: X402Deps,
@@ -164,8 +174,6 @@ export async function authorizeX402Payment(
     return { payment: row, decision: verdict, wallet: context.wallet };
   });
 
-  // Only an outright allow produces a signed payload. A payment awaiting a
-  // human must not become payable, or the approval step would be decorative.
   if (payment.status !== 'approved') {
     return { payment, decision, paymentPayload: null, replayed: false };
   }
@@ -173,10 +181,6 @@ export async function authorizeX402Payment(
     throw new PocketError('WALLET_NOT_PROVISIONED', 'Agent has no wallet to pay from.');
   }
 
-  // The row is already `approved`, which reserves the amount against the daily
-  // budget. Signing can still fail — an account the wallet cannot sign for, a
-  // mirror node that is down, Privy refusing — and a reservation that outlives
-  // the attempt would consume budget for a payment that never existed.
   const transaction = await signAuthorizedPayment(deps, orgId, payment, wallet, input.requirements);
 
   return {

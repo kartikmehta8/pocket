@@ -1,16 +1,11 @@
+/**
+ * The blue header at the top of the overview.
+ */
+
+import { HeaderStat } from '@/components/ui/header-stat';
 import { categoryLabel } from '@/lib/catalog';
 import { formatAmount, formatPercentDelta } from '@/lib/format';
 import type { Category } from '@/lib/types';
-
-/** One figure in the strip beneath the headline. */
-function Stat({ label, value }: { label: string; value: string }) {
-  return (
-    <div className="min-w-0">
-      <p className="text-2xs font-medium tracking-wide text-white/60 uppercase">{label}</p>
-      <p className="figures mt-0.5 truncate text-sm font-semibold text-white">{value}</p>
-    </div>
-  );
-}
 
 /** Props for {@link OverviewHeader}. */
 export interface OverviewHeaderProps {
@@ -73,10 +68,10 @@ export function OverviewHeader({
       </div>
 
       <div className="grid grid-cols-2 gap-4 border-t border-white/20 bg-white/5 p-5 sm:grid-cols-4 sm:px-6">
-        <Stat label="Payments" value={String(paymentCount)} />
-        <Stat label="Agents" value={String(agentCount)} />
-        <Stat label="Active" value={`${activeCount} of ${agentCount}`} />
-        <Stat
+        <HeaderStat label="Payments" value={String(paymentCount)} />
+        <HeaderStat label="Agents" value={String(agentCount)} />
+        <HeaderStat label="Active" value={`${activeCount} of ${agentCount}`} />
+        <HeaderStat
           label="Largest category"
           value={largestCategory === null ? 'None yet' : categoryLabel(largestCategory)}
         />

@@ -4,6 +4,14 @@
  * Builds the real application against the real database and the deterministic
  * adapters, then gives each test its own organization so tests cannot see one
  * another's data.
+ *
+ * Rate limiting is raised because the concurrency tests fire hundreds of
+ * requests on purpose; throttling them would prove nothing about the row lock
+ * and everything about the rate limiter, which has tests of its own. Treasury
+ * variables are cleared rather than inherited: a developer with a treasury in
+ * their shell would otherwise have every suite that registers an agent quietly
+ * spend real testnet money, and the results would depend on whose machine ran
+ * them. `agent-seed.test.ts` opts back in through `h.config`.
  */
 
 import {
@@ -40,23 +48,19 @@ export interface Harness {
 /**
  * Stands up the API with fake adapters and a fresh organization.
  *
+ * @param options - `walletLive` declares the fake wallet provider live, which
+ *   is what the facilitator-settled routes ask before they will run. The
+ *   provider is still the deterministic one; only the mode it reports changes.
  * @returns The harness. Call `app.close()` when the suite finishes.
  */
-export async function createHarness(): Promise<Harness> {
+export async function createHarness(options: { walletLive?: boolean } = {}): Promise<Harness> {
   const config = loadConfig({
     ...process.env,
     NODE_ENV: 'test',
     LOG_LEVEL: process.env['TEST_LOG_LEVEL'] ?? 'silent',
     DATABASE_URL:
       process.env['DATABASE_URL'] ?? 'postgres://pocket:pocket@localhost:5434/pocket_test',
-    // The concurrency tests fire hundreds of requests on purpose. Throttling
-    // them would prove nothing about the row lock and everything about the
-    // rate limiter, which has tests of its own.
     RATE_LIMIT_MAX: '100000',
-    // Cleared rather than inherited. A developer with a treasury in their
-    // shell would otherwise have every suite that registers an agent quietly
-    // spend real testnet money, and the results would depend on whose machine
-    // ran them. `agent-seed.test.ts` opts back in through `h.config`.
     TREASURY_WALLET_ID: '',
     TREASURY_ADDRESS: '',
   });
@@ -75,7 +79,7 @@ export async function createHarness(): Promise<Harness> {
     market,
     identity: new OpenIdentityVerifier(),
     modes: {
-      wallet: { provider: 'mock', live: false },
+      wallet: { provider: 'mock', live: options.walletLive === true },
       chain: { provider: 'mock', live: false },
       analytics: { provider: 'ledger', live: false },
       market: { provider: 'unpriced', live: false },

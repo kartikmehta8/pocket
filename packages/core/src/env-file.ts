@@ -31,3 +31,21 @@ export function loadEnvFile(): void {
   if (!existsSync(ENV_FILE)) return;
   process.loadEnvFile(ENV_FILE);
 }
+
+/**
+ * Drops variables that are present but empty.
+ *
+ * Half of a `.env` is meant to be left blank: a blank vendor key is how an
+ * adapter is told to fall back. Zod reads `FOO=` as the string `""`, which
+ * satisfies no enum, no URL and no positive number, so a blank would refuse to
+ * boot rather than take its default. Treating empty as absent is what an
+ * operator means by it.
+ *
+ * @param env - Raw environment.
+ * @returns The same environment without its empty values.
+ */
+export function withoutBlanks(env: NodeJS.ProcessEnv): NodeJS.ProcessEnv {
+  return Object.fromEntries(
+    Object.entries(env).filter(([, value]) => value !== undefined && value.trim() !== ''),
+  );
+}

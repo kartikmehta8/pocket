@@ -93,6 +93,15 @@ export interface WalletProvider {
    * money. Chains without the concept should resolve to `null`.
    */
   completeAccount(input: CompleteAccountInput): Promise<SubmittedTransaction | null>;
+  /**
+   * Signs a 32-byte digest with the wallet's key.
+   *
+   * @remarks The primitive behind settling on a chain the provider has no
+   * native integration with: the caller supplies the digest, so the hashing
+   * rule stays with whoever knows the target chain. A provider that cannot
+   * sign for real should reject rather than return something unsettleable.
+   */
+  signDigest(providerWalletId: string, digest: `0x${string}`): Promise<string>;
 }
 
 /** Instruction to publish a managed wallet's key on chain. */

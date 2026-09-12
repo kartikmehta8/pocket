@@ -1,8 +1,13 @@
 'use client';
 
+/**
+ * The blue header at the top of an agent's page.
+ */
+
 import { Pencil, Trash2, Wallet } from 'lucide-react';
 import { useState } from 'react';
 
+import { HeaderStat } from '@/components/ui/header-stat';
 import { Button } from '@/components/ui/button';
 import { CopyButton } from '@/components/ui/copy-button';
 import { formatAmount, truncateAddress, usageRatio } from '@/lib/format';
@@ -12,16 +17,6 @@ import type { AgentDetail, AgentSummary } from '@/lib/types';
 import { AgentDeleteDialog } from './agent-delete-dialog';
 import { AgentEditDialog } from './agent-edit-dialog';
 import { AgentStatusControl } from './agent-status-control';
-
-/** One figure in the row beneath the agent's name. */
-function Stat({ label, value }: { label: string; value: string }) {
-  return (
-    <div className="min-w-0">
-      <p className="text-2xs font-medium tracking-wide text-white/60 uppercase">{label}</p>
-      <p className="figures mt-0.5 truncate text-sm font-semibold text-white">{value}</p>
-    </div>
-  );
-}
 
 /** Props for {@link AgentHeader}. */
 export interface AgentHeaderProps {
@@ -38,6 +33,10 @@ export interface AgentHeaderProps {
  * the page that says what the agent *is* rather than how it is configured, and
  * the status control belongs to it: pausing an agent is the fastest thing an
  * operator ever needs to do here, and it should never be hunted for.
+ *
+ * Separators lead their item rather than trailing the one before, so a line that
+ * wraps takes its separator with it instead of leaving a stranded dot at the
+ * end.
  */
 export function AgentHeader({ detail, others }: AgentHeaderProps) {
   const { agent, balance } = detail;
@@ -94,9 +93,6 @@ export function AgentHeader({ detail, others }: AgentHeaderProps) {
               No wallet provisioned
             </p>
           ) : (
-            // Separators lead their item rather than trailing the one before,
-            // so a line that wraps takes its separator with it instead of
-            // leaving a stranded dot at the end.
             <ul className="flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-white/75 [&>li+li]:before:mr-2 [&>li+li]:before:text-white/50 [&>li+li]:before:content-['·']">
               <li className="flex min-w-0 items-center gap-1.5">
                 <Wallet aria-hidden className="size-3.5 shrink-0" strokeWidth={1.75} />
@@ -118,18 +114,18 @@ export function AgentHeader({ detail, others }: AgentHeaderProps) {
         </div>
 
         <div className="grid grid-cols-2 gap-4 border-t border-white/20 bg-white/5 p-5 sm:grid-cols-4 sm:px-6">
-          <Stat
+          <HeaderStat
             label="Balance"
             value={balance ? formatAmount(balance.amount, balance.asset) : 'Unknown'}
           />
-          <Stat label="Spend today" value={formatAmount(agent.spend.today, asset)} />
-          <Stat
+          <HeaderStat label="Spend today" value={formatAmount(agent.spend.today, asset)} />
+          <HeaderStat
             label="Daily limit"
             value={
               agent.budget ? formatAmount(agent.budget.dailyLimit, agent.budget.asset) : 'Not set'
             }
           />
-          <Stat label="Payments" value={String(agent.spend.paymentCount)} />
+          <HeaderStat label="Payments" value={String(agent.spend.paymentCount)} />
 
           {agent.budget ? (
             <div className="col-span-2 sm:col-span-4">

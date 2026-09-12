@@ -12,8 +12,12 @@
  * and leave the same evidence.
  */
 
-import type { ChainProvider, MarketDataProvider, PaymentRequest } from '@pocket/core';
-import type { PrivyWalletProvider } from '@pocket/adapters';
+import type {
+  ChainProvider,
+  MarketDataProvider,
+  PaymentRequest,
+  WalletProvider,
+} from '@pocket/core';
 import type { Database } from '@pocket/db';
 import { decisionToJson, paymentToJson, type PaymentJson } from '../serialize.js';
 import { parseResourceUrl } from './resource-url.js';
@@ -27,7 +31,7 @@ import type { X402Requirements } from './x402-types.js';
 export interface PurchaseDeps {
   db: Database;
   market: MarketDataProvider;
-  wallet: PrivyWalletProvider;
+  wallet: WalletProvider;
   chain: ChainProvider;
   chainId: 'hedera-testnet' | 'hedera-mainnet';
   mirrorNodeUrl: string;
@@ -83,6 +87,15 @@ export type PurchaseOutcome =
  *   cheaper provider rather than retrying blindly.
  * @throws {PocketError} Only for a malformed or refused URL, which is a caller
  *   error rather than an outcome of the purchase.
+ *
+ * @remarks A free resource has nothing to authorise. It is not a payment, so it
+ * leaves no payment row and consumes no budget.
+ *
+ * A retry of an attempt that already paid is not a refusal: the money moved,
+ * and reporting it as blocked would tell an agent its policy stopped a payment
+ * that in fact succeeded. When Pocket refuses or holds it for a human, nothing
+ * was signed, so there is no payload to present and the seller is never
+ * contacted again.
  */
 export async function purchaseResource(
   deps: PurchaseDeps,
@@ -109,8 +122,6 @@ export async function purchaseResource(
       message: `The seller answered ${first.status}: ${first.detail}`,
     };
   }
-  // Nothing to authorise. A free resource is not a payment, so it leaves no
-  // payment row and consumes no budget.
   if (first.kind === 'free') return { status: 'free', result: first.body };
 
   const requirement = first.challenge.accepts[0];
@@ -149,15 +160,10 @@ export async function purchaseResource(
   const explorer = (hash: string): string => deps.chain.explorerUrl(hash) ?? '';
   const payment = paymentToJson(authorized.payment, explorer);
 
-  // A retry of an attempt that already paid. Not a refusal: the money moved,
-  // and reporting it as blocked would tell an agent its policy stopped a
-  // payment that in fact succeeded.
   if (authorized.replayed) {
     return { status: 'replayed', payment };
   }
 
-  // Pocket refused, or held it for a human. Either way nothing was signed, so
-  // there is no payload to present and the seller is never contacted again.
   if (authorized.paymentPayload === null) {
     return {
       status: 'blocked',

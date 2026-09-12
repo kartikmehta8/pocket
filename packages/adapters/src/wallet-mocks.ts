@@ -7,6 +7,7 @@
  */
 
 import { createHash } from 'node:crypto';
+import { PocketError } from '@pocket/core';
 import type {
   AssetId,
   AssociateTokenInput,
@@ -122,6 +123,27 @@ export class MockWalletProvider implements WalletProvider {
   }
 
   /** Every transfer this provider was asked to make, for assertions in tests. */
+  /**
+   * Refuses to sign, because a fake signature is worse than none.
+   *
+   * @param providerWalletId - The wallet asked to sign.
+   * @returns Never.
+   * @throws {PocketError} `UPSTREAM_UNAVAILABLE` always. The routes that settle
+   *   through a facilitator already refuse when no live custodian is wired, so
+   *   reaching this means a caller went around that guard — and a deterministic
+   *   signature would be presented to a real seller and rejected on chain,
+   *   which is a far harder failure to read.
+   */
+  public signDigest(providerWalletId: string): Promise<string> {
+    return Promise.reject(
+      new PocketError(
+        'UPSTREAM_UNAVAILABLE',
+        'The deterministic wallet cannot sign for a real chain.',
+        { providerWalletId },
+      ),
+    );
+  }
+
   public get sent(): readonly SendPaymentInput[] {
     return this.#sent;
   }

@@ -7,6 +7,7 @@
  */
 
 import { z } from 'zod';
+import { withoutBlanks } from '@pocket/core/env';
 
 const schema = z.object({
   PAID_SERVICE_PORT: z.coerce.number().int().positive().default(8402),
@@ -48,22 +49,6 @@ export type Caip2 = `${string}:${string}`;
 export type SellerConfig = Omit<z.infer<typeof schema>, 'X402_NETWORK'> & {
   X402_NETWORK: Caip2;
 };
-
-/**
- * Drops variables that are present but empty.
- *
- * Half of a `.env` is meant to be left blank, and Zod reads `FOO=` as `""`,
- * which satisfies no enum, no URL and no positive number. Treating empty as
- * absent lets those variables take their defaults instead of refusing to boot.
- *
- * @param env - Raw environment.
- * @returns The same environment without its empty values.
- */
-function withoutBlanks(env: NodeJS.ProcessEnv): NodeJS.ProcessEnv {
-  return Object.fromEntries(
-    Object.entries(env).filter(([, value]) => value !== undefined && value.trim() !== ''),
-  );
-}
 
 /**
  * Parses seller configuration.

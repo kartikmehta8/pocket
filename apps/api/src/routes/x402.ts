@@ -11,7 +11,6 @@
 import type { FastifyInstance } from 'fastify';
 import { z } from 'zod';
 import { PocketError, categorySchema } from '@pocket/core';
-import { PrivyWalletProvider } from '@pocket/adapters';
 import type { AppContext } from '../context.js';
 import { decisionToJson, paymentToJson } from '../serialize.js';
 import { authorizeX402Payment } from '../services/x402.js';
@@ -62,14 +61,36 @@ const settlementSchema = z.object({
  * @param app - Fastify instance.
  * @param ctx - Application context.
  */
+/**
+ * Refuses a facilitator-settled route when no custodian can sign.
+ *
+ * @param ctx - Application context.
+ * @throws {PocketError} `UPSTREAM_UNAVAILABLE` when the wallet adapter is a
+ *   fake. These two routes present a signed payload to a real seller, so a
+ *   deterministic stand-in would produce a signature nobody can settle.
+ * @remarks Reads the adapter's declared mode rather than testing its class. A
+ *   route that asks whether its collaborator is one particular vendor knows
+ *   more about the wiring than a route should, and the port exists so that it
+ *   does not have to.
+ */
+function requireLiveWallet(ctx: AppContext): void {
+  if (!ctx.modes.wallet.live) {
+    throw new PocketError(
+      'UPSTREAM_UNAVAILABLE',
+      'Facilitator-settled payments need a live Privy wallet provider.',
+    );
+  }
+}
+
 export function registerX402Routes(app: FastifyInstance, ctx: AppContext): void {
+  /**
+   * `POST /v1/payments/x402/authorize` — decides a quoted x402 payment.
+   *
+   * The idempotency key is supplied by the caller, so it keeps exact semantics and
+   * no window of its own.
+   */
   app.post('/v1/payments/x402/authorize', async (request) => {
-    if (!(ctx.wallet instanceof PrivyWalletProvider)) {
-      throw new PocketError(
-        'UPSTREAM_UNAVAILABLE',
-        'Facilitator-settled payments need a live Privy wallet provider.',
-      );
-    }
+    requireLiveWallet(ctx);
     const key = request.headers['idempotency-key'];
     if (typeof key !== 'string' || key.trim() === '') {
       throw new PocketError('VALIDATION_FAILED', 'An Idempotency-Key header is required.');
@@ -85,7 +106,6 @@ export function registerX402Routes(app: FastifyInstance, ctx: AppContext): void 
         mirrorNodeUrl: ctx.config.HEDERA_MIRROR_URL,
       },
       request.orgId,
-      // A caller-supplied key, so it keeps exact semantics and no window.
       [key.trim()],
       body,
     );
@@ -98,24 +118,28 @@ export function registerX402Routes(app: FastifyInstance, ctx: AppContext): void 
     };
   });
 
+  /** `POST /v1/payments/:id/settlement` — records what the facilitator did. */
   app.post<{ Params: { id: string } }>('/v1/payments/:id/settlement', async (request) => {
     const body = settlementSchema.parse(request.body ?? {});
     const payment = await recordSettlement(ctx.db, request.orgId, request.params.id, body);
     return { payment: paymentToJson(payment, (hash) => ctx.chain.explorerUrl(hash)) };
   });
 
+  /**
+   * `POST /v1/payments/x402/purchase` — the whole exchange in one call.
+   *
+   * Fetch, authorise, sign, present, settle, all server-side. A caller cannot skip
+   * the policy step because there is no step to skip: it never holds a signed
+   * payload of its own.
+   *
+   * A machine credential means an agent asked and a session means a person
+   * clicked. Both are subject to identical policy; who asked is recorded, not
+   * acted on.
+   */
   app.post('/v1/payments/x402/purchase', async (request) => {
-    if (!(ctx.wallet instanceof PrivyWalletProvider)) {
-      throw new PocketError(
-        'UPSTREAM_UNAVAILABLE',
-        'Facilitator-settled payments need a live Privy wallet provider.',
-      );
-    }
+    requireLiveWallet(ctx);
     const body = purchaseSchema.parse(request.body);
 
-    // The whole flow runs server-side: fetch, authorise, sign, present, settle.
-    // A caller cannot skip the policy step, because there is no step to skip —
-    // it never holds a signed payload of its own.
     return purchaseResource(
       {
         db: ctx.db,
@@ -134,8 +158,6 @@ export function registerX402Routes(app: FastifyInstance, ctx: AppContext): void 
         category: body.category,
         ...(body.taskBudgetId === undefined ? {} : { taskBudgetId: body.taskBudgetId }),
         ...(body.purchaseId === undefined ? {} : { purchaseId: body.purchaseId }),
-        // A machine credential means an agent asked; a session means a person
-        // clicked. Both are subject to identical policy.
         initiatedBy: request.principal === 'session' ? 'human' : 'agent',
       },
     );

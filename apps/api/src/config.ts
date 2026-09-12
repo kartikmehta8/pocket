@@ -7,6 +7,7 @@
  */
 
 import { z } from 'zod';
+import { withoutBlanks } from '@pocket/core/env';
 
 /** Decimal places of the asset agents are seeded with. */
 const USDC_DECIMALS = 6;
@@ -20,6 +21,14 @@ const USDC_DECIMALS = 6;
  */
 const MAX_AGENT_SEED = 5;
 
+/**
+ * Every variable this service reads, and what a valid value looks like.
+ *
+ * The treasury pair is refined together. Half a treasury pays nobody and says
+ * nothing about why: without that rule, a typo in one of the two variables
+ * looks exactly like seeding switched off, and the operator is told their new
+ * agent "arrived empty" with no way to discover the real reason.
+ */
 const schema = z
   .object({
     NODE_ENV: z.enum(['development', 'test', 'production']).default('development'),
@@ -85,10 +94,6 @@ const schema = z
       )
       .default('0.02'),
   })
-  // Half a treasury pays nobody, and says nothing about why. Without this, a
-  // typo in one of the two variables looks exactly like seeding switched off:
-  // the operator is told their new agent "arrived empty" and has no way to
-  // discover the real reason.
   .refine(
     (config) =>
       (config.TREASURY_WALLET_ID === undefined) === (config.TREASURY_ADDRESS === undefined),
@@ -100,24 +105,6 @@ const schema = z
 
 /** Validated configuration for this process. */
 export type Config = z.infer<typeof schema> & { corsOrigins: string[] };
-
-/**
- * Drops variables that are present but empty.
- *
- * `.env` files are written by hand and half of this one is meant to be left
- * blank, because a blank vendor key is how an adapter is told to fall back.
- * Zod sees `FOO=` as the string `""`, which satisfies no enum, no URL and no
- * positive number, so a blank would refuse to boot rather than take its
- * default. Treating empty as absent is what an operator means by it.
- *
- * @param env - Raw environment.
- * @returns The same environment without its empty values.
- */
-function withoutBlanks(env: NodeJS.ProcessEnv): NodeJS.ProcessEnv {
-  return Object.fromEntries(
-    Object.entries(env).filter(([, value]) => value !== undefined && value.trim() !== ''),
-  );
-}
 
 /**
  * Parses and validates process configuration.
