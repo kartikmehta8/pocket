@@ -6,7 +6,8 @@
 #   docker build --build-arg APP=mcp -t pocket-mcp .
 #   docker build --build-arg APP=paid-service -t pocket-paid .
 #
-# The dashboard is a Next.js app and builds separately; see DEPLOY.md.
+# The dashboard is a Next.js app and builds separately, from
+# apps/dashboard/Dockerfile.
 
 FROM node:22-alpine AS base
 ENV PNPM_HOME=/pnpm PATH=/pnpm:$PATH
