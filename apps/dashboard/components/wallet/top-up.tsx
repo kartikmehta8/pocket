@@ -1,14 +1,7 @@
-import { ArrowUpRight } from 'lucide-react';
-
-import { ActivateButton } from './activate-button';
-import { Button } from '@/components/ui/button';
+import { ActivateButton } from '@/components/setup/activate-button';
 import { CodeBlock } from '@/components/ui/code-block';
 
-/** Circle's faucet, the only public source of testnet USDC on Hedera. */
-const USDC_FAUCET = 'https://faucet.circle.com';
-
-/** Hedera's own faucet. Hands out HBAR, which is what creates an account. */
-const HBAR_FAUCET = 'https://portal.hedera.com/faucet';
+import { FaucetLink } from './faucet-menu';
 
 /** Props for {@link TopUp}. */
 export interface TopUpProps {
@@ -20,27 +13,14 @@ export interface TopUpProps {
   agentId: string;
 }
 
-/** One faucet, as a button that says what it hands out. */
-function Faucet({ href, label, primary }: { href: string; label: string; primary: boolean }) {
-  return (
-    <Button variant={primary ? 'primary' : 'secondary'} asChild>
-      <a href={href} target="_blank" rel="noreferrer noopener">
-        {label}
-        <ArrowUpRight aria-hidden className="size-3.5" strokeWidth={2} />
-        <span className="sr-only">(opens in a new tab)</span>
-      </a>
-    </Button>
-  );
-}
-
 /**
  * Adding more testnet funds, for anyone who wants to keep going.
  *
  * @remarks Both faucets are always offered. Which one is useful depends on
- * where the wallet has got to, so the copy leads with that and the buttons
- * take their emphasis from it — but neither is ever withheld, because an
- * operator who wants to stock a wallet before they need to should not have to
- * reach a particular state first to be shown the link.
+ * where the wallet has got to, so the copy leads with that — but neither is
+ * ever withheld, because an operator who wants to stock a wallet before they
+ * need to should not have to reach a particular state first to be shown the
+ * link.
  *
  * Circle's has two traps worth naming rather than discovering: it asks for a
  * `0.0.x` id rather than an address, and it will not send to an account that
@@ -88,12 +68,8 @@ export function TopUp({ accountId, hollow, agentId }: TopUpProps) {
       ) : null}
 
       <div className="flex flex-wrap items-center gap-2">
-        <Faucet href={USDC_FAUCET} label="Circle faucet, for USDC" primary={usable} />
-        <Faucet
-          href={HBAR_FAUCET}
-          label="Hedera faucet, for HBAR"
-          primary={accountId === null || hollow}
-        />
+        <FaucetLink asset="USDC" />
+        <FaucetLink asset="HBAR" />
       </div>
 
       <p className="text-text-muted text-xs leading-relaxed">

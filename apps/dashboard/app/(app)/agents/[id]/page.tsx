@@ -8,8 +8,10 @@ import { BudgetEditor } from '@/components/agents/budget-editor';
 import { PolicyEditor } from '@/components/agents/policy-editor';
 import { TaskBudgets } from '@/components/agents/task-budgets';
 import { PaymentsTable } from '@/components/payments/payments-table';
+import { TopUp } from '@/components/wallet/top-up';
 import { ApiErrorState } from '@/components/ui/api-error';
 import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { getAgent, listAgents, listPayments } from '@/lib/api';
 
 /** Agent detail reflects live budget and policy state on every request. */
@@ -77,6 +79,28 @@ export default async function AgentDetailPage({ params }: RouteProps) {
       <div className="grid grid-cols-[minmax(0,1fr)] items-start gap-6 xl:grid-cols-[minmax(0,1fr)_22rem]">
         <div className="flex min-w-0 flex-col gap-6">
           <BudgetEditor agentId={detail.agent.id} budget={detail.agent.budget} />
+
+          {/* Under the budget, because that is where the question arises: the
+              limits above say what this agent may spend, and this says what it
+              has to spend. */}
+          <Card>
+            <CardHeader>
+              <div>
+                <CardTitle>Fund this wallet</CardTitle>
+                <CardDescription>
+                  Testnet funds, from the faucets that hand them out.
+                </CardDescription>
+              </div>
+            </CardHeader>
+            <CardContent>
+              <TopUp
+                accountId={detail.accountId}
+                hollow={detail.accountHollow ?? false}
+                agentId={detail.agent.id}
+              />
+            </CardContent>
+          </Card>
+
           <PolicyEditor agentId={detail.agent.id} policy={detail.policy} />
         </div>
         {/* Follows a long policy form down the page rather than leaving a

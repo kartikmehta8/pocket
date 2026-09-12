@@ -1,7 +1,7 @@
 import { CircleCheck, Info } from 'lucide-react';
 
 import { FundingStages } from './funding-stages';
-import { TopUp } from './top-up';
+import { TopUp } from '@/components/wallet/top-up';
 import { RecheckButton } from './recheck-button';
 import { CodeBlock } from '@/components/ui/code-block';
 

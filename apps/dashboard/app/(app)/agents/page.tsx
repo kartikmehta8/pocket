@@ -3,6 +3,7 @@ import type { Metadata } from 'next';
 import { Suspense } from 'react';
 
 import { AgentCreateDialog } from '@/components/agents/agent-create-dialog';
+import { FaucetMenu } from '@/components/wallet/faucet-menu';
 import { AgentsBrowser } from '@/components/agents/agents-browser';
 import { ApiErrorState } from '@/components/ui/api-error';
 import { EmptyState } from '@/components/ui/empty-state';
@@ -67,7 +68,12 @@ export default async function AgentsPage({
       <PageHeader
         title="Agents"
         description="Every agent holding a Pocket wallet, with today's spend against its daily budget."
-        actions={<AgentCreateDialog />}
+        actions={
+          <>
+            <FaucetMenu />
+            <AgentCreateDialog />
+          </>
+        }
       />
       {!result.ok ? (
         <ApiErrorState subject="agents" code={result.code} message={result.message} />

@@ -10,6 +10,7 @@ import { Dialog } from '@/components/ui/dialog';
 import { Field } from '@/components/ui/field';
 import { Select } from '@/components/ui/select';
 import { Switch } from '@/components/ui/switch';
+import { FaucetLink } from '@/components/wallet/faucet-menu';
 import { IDLE_ACTION, type ActionState } from '@/lib/action-state';
 import { deleteAgentAction, transferAgentFundsAction } from '@/lib/actions';
 import { planDelete } from '@/lib/agent-delete';
@@ -73,6 +74,11 @@ export function AgentDeleteDialog({
   const [pending, startTransition] = useTransition();
 
   const plan = planDelete(balance, others, moved, leaveFunds);
+  // The transfer is the only thing here that costs gas, and the API refuses it
+  // up front with a message naming HBAR. Matching that word is enough to know
+  // which faucet helps; offering both would make the reader choose again
+  // having just been told what is missing.
+  const needsGas = state.status === 'error' && state.message.includes('HBAR');
 
   const run = () =>
     startTransition(async () => {
@@ -187,6 +193,16 @@ export function AgentDeleteDialog({
         </p>
 
         <ActionFeedback state={state} />
+
+        {needsGas ? (
+          <div className="border-border bg-ash-25 flex flex-col gap-2 rounded-md border p-3">
+            <p className="text-text-secondary text-xs leading-relaxed">
+              A transfer is a transaction, so the wallet pays a fee in HBAR. Take a little from the
+              faucet and try again — the agent never spends it on anything else.
+            </p>
+            <FaucetLink asset="HBAR" className="w-fit" />
+          </div>
+        ) : null}
 
         <div className="flex justify-end gap-2">
           <Button type="button" size="sm" disabled={pending} onClick={() => onOpenChange(false)}>

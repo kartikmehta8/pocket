@@ -15,6 +15,7 @@ import { InlineCode } from '@/components/ui/inline-code';
 import { Meter } from '@/components/ui/meter';
 import { Stagger, StaggerItem } from '@/components/ui/reveal';
 import { Select } from '@/components/ui/select';
+import { FaucetMenu } from '@/components/wallet/faucet-menu';
 import { BuyForm } from './buy-form';
 import { ResourceCard } from './resource-card';
 
@@ -120,9 +121,10 @@ function Payer({
               {balance === null ? '—' : formatAmount(balance.amount, balance.asset)}
             </span>
           </div>
-          <p className="text-text-muted text-xs leading-snug">
-            {balance === null ? 'Reading the chain…' : 'On chain, right now.'}
-          </p>
+          {/* Beside the figure rather than inside a failed purchase: someone
+              looking at an empty wallet on a page of prices is about to need
+              this, whether or not they have pressed Buy yet. */}
+          <FaucetMenu className="w-full justify-center sm:w-fit" />
         </div>
       </CardContent>
     </Card>
